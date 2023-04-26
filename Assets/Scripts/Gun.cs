@@ -1,12 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
 
-public enum  FireMode
-{
-    Auto,
-    Single
-}
-
 public enum SlotType
 {
     Primary,
@@ -26,7 +20,6 @@ public enum GunType
 [RequireComponent(typeof(AudioSource))]
 public class Gun : Weapon
 {
-    public event System.Action Shot;
     public event System.Action AmmoChanged;
 
     [SerializeField]
@@ -96,9 +89,6 @@ public class Gun : Weapon
                       _reloadSound;
 
     [SerializeField]
-    private FireMode _fireMode;
-    public FireMode FireMode => _fireMode;
-    [SerializeField]
     private GunType _gunType;
 
     new void Start()
@@ -148,7 +138,6 @@ public class Gun : Weapon
         _isShooting = true;
         _audioSource.PlayOneShot(_shotSound);
 
-        Shot?.Invoke();
         AmmoChanged.Invoke();
     }
 

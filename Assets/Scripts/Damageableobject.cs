@@ -1,9 +1,9 @@
 using UnityEngine;
-
+using UnityEngine.Events;
 
 public interface IDamageableObject
 {
-    public event System.Action<string> Died;
+    public event UnityAction<string> Died;
 
     public string Name { get; set; }
 

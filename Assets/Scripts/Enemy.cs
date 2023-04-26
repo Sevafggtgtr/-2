@@ -2,9 +2,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.AI;
 using Unity.Netcode;
+using UnityEngine.Events;
 
 public class Enemy : NetworkBehaviour, IDamageableObject
 {
+    public event UnityAction<string> Died;
+
     private int _health = 100;
 
     private Animation _animation;
@@ -27,8 +30,6 @@ public class Enemy : NetworkBehaviour, IDamageableObject
     private Slider _healthBar;
 
     public string Name { get; set; }
-
-    public event System.Action<string> Died;
 
     [ClientRpc]
     public void DamegeClientRpc(int value, string killer)
