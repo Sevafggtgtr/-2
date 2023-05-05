@@ -76,6 +76,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
     private CharacterController _controller;
 
+    private Animator _animator;
+
     private Weapon _weapon;
     public Weapon Weapon => _weapon;
 
@@ -108,6 +110,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         _handCameraStartPosition = _handCamera.transform.localPosition;      
 
+<<<<<<< Updated upstream
         _networkWeapons.OnListChanged += (a) =>
         {
             _weapons = new List<Weapon>(_networkWeapons.Count);
@@ -131,6 +134,9 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                 _weapon.gameObject.SetActive(true);
             }
         };
+=======
+        _animator = GetComponent<Animator>();
+>>>>>>> Stashed changes
 
         if (!IsOwner)
         {           
@@ -140,6 +146,34 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         
         else
         {
+            _networkWeapons.OnListChanged += (_) =>
+            {
+                _weapons = new List<Weapon>(_networkWeapons.Count);
+                for (int i = 0; i < _networkWeapons.Count; i++)
+                {
+                    if (_networkWeapons[i].TryGet(out Weapon weapon))
+                    {
+                        _weapons.Add(weapon);
+
+                        weapon.gameObject.layer = 3;
+                        for (int j = 0; j < weapon.transform.childCount; j++)
+                        {
+                            weapon.transform.GetChild(j).gameObject.layer = 3;
+                            for (int k = 0; k < weapon.transform.GetChild(j).childCount; k++)
+                                weapon.transform.GetChild(j).GetChild(k).gameObject.layer = 3;
+                        }
+
+                        weapon.transform.SetParent(_weaponPivot);
+                        weapon.transform.localPosition = new Vector3(0, 0, 0);
+                        weapon.gameObject.SetActive(false);
+                    }
+                }
+
+                _weapon = _weapons[0];
+                WeaponChanged.Invoke();
+                _weapon.gameObject.SetActive(true);
+            };
+
             _healthBar = FindObjectOfType<Slider>();
 
             SpawnWeaponsServerRpc();            
@@ -207,7 +241,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
     protected void Die(string killer)
     {
-        //Died?.Invoke(killer);
+        _animator.SetBool("Death_b", true);
     }
 
     void Update()
@@ -340,5 +374,37 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             _head.localEulerAngles = new Vector3(0, _angle, 0);
 
         }
+<<<<<<< Updated upstream
+=======
+
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+            _speed = _runSpeed;
+        if (Input.GetKeyUp(KeyCode.LeftShift))
+            _speed = _walkSpeed;
+
+        if (Input.GetKeyDown(KeyCode.Space) && _controller.isGrounded)
+            _velocity = _jumpForce;
+
+        if (!_controller.isGrounded)
+            _velocity += Physics.gravity.y * Time.deltaTime * 2;
+        else if (_velocity < -0.001f)
+            _velocity = -0.001f;
+
+        _controller.Move(transform.TransformDirection
+            ((Vector3.ClampMagnitude(new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")), 1) * _speed
+                 + Vector3.up * _velocity) * Time.deltaTime));
+
+        transform.Rotate(0, Input.GetAxis("Mouse X") * _sensitivity * Time.deltaTime, 0);
+    }
+
+    private void LateUpdate()
+    {
+        if (IsOwner)
+        {
+            _angle -= Input.GetAxis("Mouse Y") * _sensitivity * Time.deltaTime;
+            _angle = Mathf.Clamp(_angle, -90, 90);
+            _head.localRotation = Quaternion.Euler(0, _angle, 0);
+        }        
+>>>>>>> Stashed changes
     }
 }

@@ -728,6 +728,7 @@ GameObject:
   - component: {fileID: 8942703718416814950}
   - component: {fileID: -578157352996160895}
   - component: {fileID: -6595070678867015627}
+  - component: {fileID: -7812053852615100044}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -765,24 +766,25 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!95 &8942703718914963460
 Animator:
-  serializedVersion: 4
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8942703718922242950}
-  m_Enabled: 0
+  m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
   m_Controller: {fileID: 9100000, guid: 1de385df2ff713a41adfcbbb63b8af91, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorControllerStateOnDisable: 0
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!143 &8942703718416814969
 CharacterController:
   m_ObjectHideFlags: 0
@@ -824,7 +826,7 @@ MonoBehaviour:
     _weaponPrefab: {fileID: 4177640485239865528, guid: 4c48723047af7c843968ed4e7c55f678, type: 3}
   _walkSpeed: 4
   _runSpeed: 8
-  _sensitivity: 1000
+  _sensitivity: 600
   _pickDistance: 10
   _dropForce: 5
   _jumpForce: 5
@@ -874,6 +876,38 @@ MonoBehaviour:
   ScaleThreshold: 0
   InLocalSpace: 0
   Interpolate: 0
+--- !u!114 &-7812053852615100044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8942703718922242950}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10d41e5912f65a748993f3c571071063, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  TransitionStateInfoList:
+  - Layer: 2
+    OriginatingState: 2081823275
+    DestinationState: 1591318465
+    TransitionDuration: 0.1
+    TriggerNameHash: -960178723
+    TransitionIndex: 1
+  - Layer: 2
+    OriginatingState: 765711723
+    DestinationState: 719018615
+    TransitionDuration: 0.1
+    TriggerNameHash: -960178723
+    TransitionIndex: 2
+  - Layer: 2
+    OriginatingState: 1748754976
+    DestinationState: -499839140
+    TransitionDuration: 0.1
+    TriggerNameHash: -960178723
+    TransitionIndex: 1
+  m_Animator: {fileID: 8942703718914963460}
 --- !u!1 &8942703718922242976
 GameObject:
   m_ObjectHideFlags: 0
@@ -1088,8 +1122,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8942703718922242996}
-  m_LocalRotation: {x: -1.7636465e-13, y: 1, z: -7.2736614e-16, w: -2.2837224e-15}
-  m_LocalPosition: {x: 0.4403, y: 0, z: 5.39209e-17}
+  m_LocalRotation: {x: 7.00226e-18, y: 6.66134e-16, z: 1, w: 0}
+  m_LocalPosition: {x: 1.7494625, y: 0, z: -0.007643042}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1139,6 +1173,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8942703718922147788}
+  - component: {fileID: 2320301561876963132}
   m_Layer: 0
   m_Name: Head_jnt
   m_TagString: Untagged
@@ -1164,6 +1199,32 @@ Transform:
   m_Father: {fileID: 8942703718922178002}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2320301561876963132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8942703718922243004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0f022b5c57e972449b9d9fa02639085, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SyncPositionX: 0
+  SyncPositionY: 0
+  SyncPositionZ: 0
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 0
+  SyncScaleY: 0
+  SyncScaleZ: 0
+  PositionThreshold: 0
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0
+  InLocalSpace: 0
+  Interpolate: 0
 --- !u!1 &8942703718922243006
 GameObject:
   m_ObjectHideFlags: 0

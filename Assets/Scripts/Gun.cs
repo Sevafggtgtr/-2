@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using UnityEngine.Events;
 
 public enum  FireMode
 {
@@ -26,8 +27,12 @@ public enum GunType
 [RequireComponent(typeof(AudioSource))]
 public class Gun : Weapon
 {
+<<<<<<< Updated upstream
     public event System.Action Shot;
     public event System.Action AmmoChanged;
+=======
+    public event UnityAction AmmoChanged;
+>>>>>>> Stashed changes
 
     [SerializeField]
     private int _currentClipAmmo,
@@ -111,16 +116,23 @@ public class Gun : Weapon
         => _isScoping = value;
 
     public override void Action(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner)
-        => ActionServerRpc(origin, direction, owner);
+    {
+        if (_currentClipAmmo > 0 && !_isReloading && !_isShooting)
+        {
+            ActionServerRpc(origin, direction, owner);
+            _recoilVelocity += new Vector3(Random.Range(0, _recoilValue), Random.Range(-_recoilValue, _recoilValue) / 2);
+            _currentClipAmmo--;
+            _isShooting = true;
+            AmmoChanged.Invoke();
+        }
+    }
 
     [ServerRpc]
     public void ActionServerRpc(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner)
     {
+        
         if(owner.TryGet(out PlayerController ownerObject))
-        {
-            if (_currentClipAmmo == 0 || _isReloading || _isShooting)
-                return;
-
+        {            
             RaycastHit hit;
             if (Physics.Raycast(origin, direction + Random.insideUnitSphere / 100 * _spread, out hit, _shotDistance))
             {
@@ -141,6 +153,7 @@ public class Gun : Weapon
 
     [ClientRpc]
     private void ActionClientRpc()
+<<<<<<< Updated upstream
     {
         _recoilVelocity += new Vector3(Random.Range(0, _recoilValue), Random.Range(-_recoilValue, _recoilValue) / 2);
 
@@ -150,6 +163,10 @@ public class Gun : Weapon
 
         Shot?.Invoke();
         AmmoChanged.Invoke();
+=======
+    {    
+        _audioSource.PlayOneShot(_shotSound);       
+>>>>>>> Stashed changes
     }
 
     public override void Reload()
@@ -164,6 +181,9 @@ public class Gun : Weapon
    
     void Update()
     {
+        if (!IsOwner)
+            return;
+
         if (_isShooting)
         {
             _time += Time.deltaTime;
@@ -183,7 +203,7 @@ public class Gun : Weapon
                 _currentAmmo -= ammo;
                 _time = 0;
                 _isReloading = false;
-                AmmoChanged?.Invoke();
+                AmmoChanged.Invoke();
             }           
         }
       
