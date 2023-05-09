@@ -53,6 +53,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     private NetworkList<NetworkBehaviourReference> _networkWeapons = new NetworkList<NetworkBehaviourReference>();
     private List<Weapon> _weapons = new List<Weapon>();
 
+
     private PlayerState _playerState;
     public PlayerState PlayerState => _playerState;
 
@@ -66,11 +67,15 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     private float _angle,
                   _speed;
 
+    //private NetworkVariable<int> _health = new NetworkVariable<int>(100, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
     private int _health = 100;
 
     private int _weaponIndex;
 
     private CharacterController _controller;
+
+    private Animator _animator;
 
     private Weapon _weapon;
     public Weapon Weapon => _weapon;
@@ -103,33 +108,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         _handCameraStartPosition = _handCamera.transform.localPosition;
 
-        _networkWeapons.OnListChanged += (_) =>
-        {
-            _weapons = new List<Weapon>(_networkWeapons.Count);
-            for (int i = 0; i < _networkWeapons.Count; i++)
-            {
-                if (_networkWeapons[i].TryGet(out Weapon weapon))
-                {
-                    _weapons.Add(weapon);
-
-                    weapon.gameObject.layer = 3;
-                    for (int j = 0; j < weapon.transform.childCount; j++)
-                    {
-                        weapon.transform.GetChild(j).gameObject.layer = 3;
-                        for (int k = 0; k < weapon.transform.GetChild(j).childCount; k++)
-                            weapon.transform.GetChild(j).GetChild(k).gameObject.layer = 3;
-                    }
-
-                    weapon.transform.SetParent(_weaponPivot);
-                    weapon.transform.localPosition = new Vector3(0, 0, 0);
-                    weapon.gameObject.SetActive(false);
-                }
-            }
-
-            _weapon = _weapons[0];
-            WeaponChanged.Invoke();
-            _weapon.gameObject.SetActive(true);
-        };
+        _animator = GetComponent<Animator>();
 
         if (!IsOwner)
         {
@@ -139,6 +118,34 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         else
         {
+            _networkWeapons.OnListChanged += (_) =>
+            {
+                _weapons = new List<Weapon>(_networkWeapons.Count);
+                for (int i = 0; i < _networkWeapons.Count; i++)
+                {
+                    if (_networkWeapons[i].TryGet(out Weapon weapon))
+                    {
+                        _weapons.Add(weapon);
+
+                        weapon.gameObject.layer = 3;
+                        for (int j = 0; j < weapon.transform.childCount; j++)
+                        {
+                            weapon.transform.GetChild(j).gameObject.layer = 3;
+                            for (int k = 0; k < weapon.transform.GetChild(j).childCount; k++)
+                                weapon.transform.GetChild(j).GetChild(k).gameObject.layer = 3;
+                        }
+
+                        weapon.transform.SetParent(_weaponPivot);
+                        weapon.transform.localPosition = new Vector3(0, 0, 0);
+                        weapon.gameObject.SetActive(false);
+                    }
+                }
+
+                _weapon = _weapons[0];
+                WeaponChanged.Invoke();
+                _weapon.gameObject.SetActive(true);
+            };
+
             _healthBar = FindObjectOfType<Slider>();
 
             SpawnWeaponsServerRpc();
@@ -154,6 +161,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
             weapon.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
 
+            weapon.GetComponent<NetworkObject>().TrySetParent(transform);
             _networkWeapons.Add(weapon);
         }
     }
@@ -172,8 +180,19 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         _weapon.Rigidbody.isKinematic = false;
         _weapon.enabled = false;
         _weapons[_weaponIndex] = null;
-        //_weapon.Rigidbody.AddForce(_fpCamera.transform.forward * _dropForce, ForceMode.Impulse);
+        //_weapon.Rigidbody().AddForce(_fpCamera.transform.forward * _dropForce, ForceMode.Impulse);
+
+
     }
+    void RemoveWeapon()
+    {
+        _weapon.gameObject.SetActive(false);
+    }
+    void TakeWeapon()
+    {
+        _weapon.gameObject.SetActive(true);
+    }
+
     public void ChangeWeapon()
     {
         DropWeapon();
@@ -181,20 +200,20 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         for (int i = 0; i < _weaponSlots.Length; i++)
             if (_weapons[i])
             {
-                WeaponChange.Invoke();
+                WeaponChange?.Invoke();
                 _weapon = _weapons[i];
                 _weaponIndex = i;
-                WeaponChanged.Invoke();
+                WeaponChanged?.Invoke();
 
                 break;
             }
 
-        _weapon.gameObject.SetActive(true);
+        TakeWeapon();
     }
 
     protected void Die(string killer)
     {
-        //Died?.Invoke(killer);
+        _animator.SetBool("Death_b", true);
     }
 
     void Update()
@@ -202,13 +221,12 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         if (!IsOwner)
             return;
 
-        if ((Input.GetMouseButton(0) && _weapon.ActionMode == ActionMode.Auto)
-                    || (Input.GetMouseButtonDown(0) && _weapon.ActionMode == ActionMode.Single))
+        if ((Input.GetMouseButtonDown(0))
+                    || (Input.GetMouseButton(0)))
             _weapon.Action(_fpCamera.transform.position, _fpCamera.transform.forward, this);
 
         if (_weapon is Gun)
         {
-
             if (Input.GetMouseButton(1))
             {
 
@@ -232,13 +250,13 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             {
                 if (_weapons[(i * mouseScroll + _weaponIndex + _weaponSlots.Length) % _weaponSlots.Length])
                 {
-                    _weapon.gameObject.SetActive(false);
+                    RemoveWeapon();
 
                     _weaponIndex = (i * mouseScroll + _weaponIndex + _weaponSlots.Length) % _weaponSlots.Length;
                     WeaponChange.Invoke();
                     _weapon = _weapons[_weaponIndex];
 
-                    _weapon.gameObject.SetActive(true);
+                    TakeWeapon();
 
                     WeaponChanged.Invoke();
 
@@ -252,10 +270,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             ChangeWeapon();
         }
 
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            _weapon.Reload();
-        }
+        if (Input.GetKeyDown(KeyCode.R) && _weapon is Gun)
+            ((Gun)_weapon).Reload();
 
         RaycastHit hit;
         if (Physics.Raycast(_fpCamera.transform.position, _fpCamera.transform.forward, out hit, _pickDistance))
@@ -263,7 +279,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             var weapon = hit.transform.GetComponent<Gun>();
             if (weapon && Input.GetKeyDown(KeyCode.E))
             {
-                _weapon.gameObject.SetActive(false);
+                RemoveWeapon();
 
                 for (int i = 0; i < _weaponSlots.Length; i++)
                     if (_weaponSlots[i].SlotType == weapon.SlotType)
@@ -280,11 +296,11 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
                         break;
                     }
-                WeaponChange.Invoke();
+                WeaponChange?.Invoke();
 
                 _weapon = weapon;
 
-                WeaponChanged.Invoke();
+                WeaponChanged?.Invoke();
                 _weapon.gameObject.layer = 3;
                 for (int i = 0; i < _weapon.transform.childCount; i++)
                 {
@@ -293,8 +309,9 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                         _weapon.transform.GetChild(i).GetChild(j).gameObject.layer = 3;
                 }
 
-                weapon.Collider.enabled = false;
-                weapon.Rigidbody.isKinematic = true;
+
+                Destroy(_weapon.gameObject.GetComponent<Rigidbody>());
+                hit.collider.enabled = false;
                 _weapon.transform.SetParent(_weaponPivot);
 
                 _weapon.transform.localPosition = Vector3.zero;
@@ -321,10 +338,16 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                  + Vector3.up * _velocity) * Time.deltaTime));
 
         transform.Rotate(0, Input.GetAxis("Mouse X") * _sensitivity * Time.deltaTime, 0);
+    }
+
+
+    private void LateUpdate()
+    {
+        if (!IsOwner)
+            return;
 
         _angle -= Input.GetAxis("Mouse Y") * _sensitivity * Time.deltaTime;
         _angle = Mathf.Clamp(_angle, -90, 90);
-        _head.localEulerAngles = new Vector3(0, _angle, 0);
-
+        _head.localRotation = Quaternion.Euler(0, _angle, 0);
     }
 }

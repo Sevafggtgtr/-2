@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using UnityEngine.Events;
 
 public enum SlotType
 {
@@ -8,7 +9,6 @@ public enum SlotType
     Knife,
     Grenade
 }
-
 public enum GunType
 {
     Pistol,
@@ -20,7 +20,7 @@ public enum GunType
 [RequireComponent(typeof(AudioSource))]
 public class Gun : Weapon
 {
-    public event System.Action AmmoChanged;
+    public event UnityAction AmmoChanged;
 
     [SerializeField]
     private int _currentClipAmmo,
@@ -94,23 +94,33 @@ public class Gun : Weapon
     new void Start()
     {
         base.Start();
+        print(1 / Time.deltaTime);
         _spread = _spreadAngle;
     }
 
-    public override void Scope(bool value)
+    public void Scope(bool value)
         => _isScoping = value;
 
     public override void Action(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner)
-        => ActionServerRpc(origin, direction, owner);
+    {
+        if (_currentClipAmmo > 0 && !_isShooting && !_isReloading)
+        {
+            _recoilVelocity += new Vector3(Random.Range(0, _recoilValue), Random.Range(-_recoilValue, _recoilValue) / 2);
+
+            _currentClipAmmo--;
+            _isShooting = true;
+            _audioSource.PlayOneShot(_shotSound);
+
+            AmmoChanged.Invoke();
+            ActionServerRpc(origin, direction, owner);
+        }
+    }
 
     [ServerRpc]
     public void ActionServerRpc(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner)
     {
         if(owner.TryGet(out PlayerController ownerObject))
         {
-            if (_currentClipAmmo == 0 || _isReloading || _isShooting)
-                return;
-
             RaycastHit hit;
             if (Physics.Raycast(origin, direction + Random.insideUnitSphere / 100 * _spread, out hit, _shotDistance))
             {
@@ -131,28 +141,24 @@ public class Gun : Weapon
 
     [ClientRpc]
     private void ActionClientRpc()
-    {
-        _recoilVelocity += new Vector3(Random.Range(0, _recoilValue), Random.Range(-_recoilValue, _recoilValue) / 2);
-
-        _currentClipAmmo--;
-        _isShooting = true;
-        _audioSource.PlayOneShot(_shotSound);
-
-        AmmoChanged.Invoke();
+    {    
+        _audioSource.PlayOneShot(_shotSound);       
     }
 
-    public override void Reload()
+    public void Reload()
     {
         if (!_isReloading && !_isShooting && _currentClipAmmo < _maxClipAmmo && _currentAmmo > 0)
         {
             _isReloading = true;
             _audioSource.PlayOneShot(_reloadSound);
-        }
-        
+        }      
     }
    
     void Update()
     {
+        if (!IsOwner)
+            return;
+
         if (_isShooting)
         {
             _time += Time.deltaTime;

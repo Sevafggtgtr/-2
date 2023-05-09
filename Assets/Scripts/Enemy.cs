@@ -1,8 +1,8 @@
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 using UnityEngine.AI;
 using Unity.Netcode;
-using UnityEngine.Events;
 
 public class Enemy : NetworkBehaviour, IDamageableObject
 {

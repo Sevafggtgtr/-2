@@ -212,9 +212,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _damage: 20
+  _actionMode: 0
   _slotType: 0
   _distance: 0.1
-  _delay: 3
+  _delay: 1
 --- !u!114 &-6885915608241663733
 MonoBehaviour:
   m_ObjectHideFlags: 0

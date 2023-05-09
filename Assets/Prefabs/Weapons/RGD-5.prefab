@@ -394,6 +394,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _damage: 100
+  _actionMode: 1
   _slotType: 3
   _radius: 5
   _explodeTime: 3
