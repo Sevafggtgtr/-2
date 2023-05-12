@@ -16,13 +16,20 @@ public abstract class Weapon : NetworkBehaviour
     [SerializeField]
     protected ActionMode _actionMode;
     public ActionMode ActionMode => _actionMode;
+
     [SerializeField]
     protected SlotType _slotType;
     public SlotType SlotType => _slotType;
 
+    [SerializeField]
+    private string _name;
+    public string Name => _name;
+
     protected AudioSource _audioSource;
+
     protected Collider _collider;
     public Collider Collider => _collider;
+
     protected Rigidbody _rigidbody;
     public Rigidbody Rigidbody => _rigidbody;
 

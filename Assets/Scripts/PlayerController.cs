@@ -338,14 +338,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                  + Vector3.up * _velocity) * Time.deltaTime));
 
         transform.Rotate(0, Input.GetAxis("Mouse X") * _sensitivity * Time.deltaTime, 0);
-    }
-
-
-    private void LateUpdate()
-    {
-        if (!IsOwner)
-            return;
-
+           
         _angle -= Input.GetAxis("Mouse Y") * _sensitivity * Time.deltaTime;
         _angle = Mathf.Clamp(_angle, -90, 90);
         _head.localRotation = Quaternion.Euler(0, _angle, 0);

@@ -93,8 +93,7 @@ public class Gun : Weapon
 
     new void Start()
     {
-        base.Start();
-        print(1 / Time.deltaTime);
+        base.Start();       
         _spread = _spreadAngle;
     }
 

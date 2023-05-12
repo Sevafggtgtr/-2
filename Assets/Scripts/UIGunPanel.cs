@@ -28,7 +28,7 @@ public class UIGunPanel : MonoBehaviour
     {
         if (_player.Weapon is Gun)
             ((Gun)_player.Weapon).AmmoChanged += Change;
-        _gunNameText.text = _player.Weapon.name;
+        _gunNameText.text = _player.Weapon.Name;
         Change();
 
 
