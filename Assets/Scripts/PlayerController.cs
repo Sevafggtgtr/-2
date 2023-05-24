@@ -20,6 +20,9 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
     public event UnityAction Damaged;
 
+    private static PlayerController _singleton;
+    public static PlayerController Singleton => _singleton;
+
     [System.Serializable]
     private struct WeaponSlot
     {
@@ -63,11 +66,11 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     [SerializeField]
     private Camera _fpCamera,
                    _handCamera;
+    public Camera FpCamera => _fpCamera;
+    public Camera HandCamera => _handCamera;
 
     private float _angle,
                   _speed;
-
-    //private NetworkVariable<int> _health = new NetworkVariable<int>(100, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     private int _health = 100;
 
@@ -77,13 +80,15 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
     private Animator _animator;
 
+    private bool _isActive = true;
+
     private Weapon _weapon;
     public Weapon Weapon => _weapon;
 
     public string Name { get; set; }
 
     [ClientRpc]
-    public void DamegeClientRpc(int value, string killer)
+    public void DamageClientRpc(int value, string killer)
     {
         _health -= value;
         if (_healthBar)
@@ -96,6 +101,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             Die(killer);
         }
     }
+
+    
 
     private void Start()
     {
@@ -114,6 +121,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         {
             _fpCamera.gameObject.SetActive(false);
             _handCamera.gameObject.SetActive(false);
+
         }
 
         else
@@ -138,6 +146,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                         weapon.transform.SetParent(_weaponPivot);
                         weapon.transform.localPosition = new Vector3(0, 0, 0);
                         weapon.gameObject.SetActive(false);
+
+                        weapon.Rigidbody.isKinematic = true;
                     }
                 }
 
@@ -149,7 +159,12 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             _healthBar = FindObjectOfType<Slider>();
 
             SpawnWeaponsServerRpc();
+
+            _singleton = this;
         }
+
+        HUD.Singleton.PauseMenu.UnPaused += () => _isActive = true;
+
     }
 
     [ServerRpc]
@@ -214,11 +229,30 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     protected void Die(string killer)
     {
         _animator.SetBool("Death_b", true);
+
+        Died.Invoke(killer);
+
+        enabled = false;
     }
 
     void Update()
     {
-        if (!IsOwner)
+        if(!IsOwner)
+            return;
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            _isActive = !_isActive;
+        }
+
+        if (!_controller.isGrounded)
+            _velocity += Physics.gravity.y * Time.deltaTime * 2;
+        else if (_velocity < -0.001f)
+            _velocity = -0.001f;
+
+        _controller.Move(Vector3.up * _velocity * Time.deltaTime);
+
+        if (!_isActive)
             return;
 
         if ((Input.GetMouseButtonDown(0))
@@ -326,21 +360,15 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             _speed = _walkSpeed;
 
         if (Input.GetKeyDown(KeyCode.Space) && _controller.isGrounded)
-            _velocity = _jumpForce;
-
-        if (!_controller.isGrounded)
-            _velocity += Physics.gravity.y * Time.deltaTime * 2;
-        else if (_velocity < -0.001f)
-            _velocity = -0.001f;
+            _velocity = _jumpForce;        
 
         _controller.Move(transform.TransformDirection
-            ((Vector3.ClampMagnitude(new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")), 1) * _speed
-                 + Vector3.up * _velocity) * Time.deltaTime));
+            (Vector3.ClampMagnitude(new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")), 1) * _speed * Time.deltaTime));
 
         transform.Rotate(0, Input.GetAxis("Mouse X") * _sensitivity * Time.deltaTime, 0);
            
         _angle -= Input.GetAxis("Mouse Y") * _sensitivity * Time.deltaTime;
         _angle = Mathf.Clamp(_angle, -90, 90);
-        _head.localRotation = Quaternion.Euler(0, _angle, 0);
+        _head.localRotation = Quaternion.Euler(0, _angle, 0);        
     }
 }

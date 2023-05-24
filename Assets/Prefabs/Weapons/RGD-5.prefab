@@ -285,8 +285,8 @@ SphereCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.079211116
-  m_Center: {x: 0.00000011951147, y: 0.028037304, z: -0.0012676785}
+  m_Radius: 0.25
+  m_Center: {x: -0.00076796114, y: 0.027887419, z: -0.001267679}
 --- !u!82 &4177640485239865507
 AudioSource:
   m_ObjectHideFlags: 0
@@ -307,7 +307,7 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 1
-  MinDistance: 1
+  MinDistance: 1.088525
   MaxDistance: 500
   Pan2D: 0
   rolloffMode: 0

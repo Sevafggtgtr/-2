@@ -7,7 +7,7 @@ public interface IDamageableObject
 
     public string Name { get; set; }
 
-    public void DamegeClientRpc(int value, string source);
+    public void DamageClientRpc(int value, string source);
 
     protected void Die(string killer)
     {

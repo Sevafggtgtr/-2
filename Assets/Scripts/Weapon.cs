@@ -35,7 +35,7 @@ public abstract class Weapon : NetworkBehaviour
 
     public abstract void Action(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner);
 
-    protected void Start()
+    protected void Awake()
     {
         _audioSource = GetComponent<AudioSource>();
         _collider = GetComponent<Collider>();

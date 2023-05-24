@@ -1,33 +1,29 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
+using UnityEngine.Events;
 
-public class UIRespawnMain : MonoBehaviour
+public class UIRespawnMenu : MonoBehaviour
 {
+    public event UnityAction Disconnect;
+
+    public event UnityAction Respawn;
+
     [SerializeField]
     private Button _respawnButton,
                    _exitButton;
 
     void Start()
     {
-        _exitButton.onClick.AddListener(DisconnectRpc);
+        _exitButton.onClick.AddListener(() => Disconnect.Invoke());
 
-        _respawnButton.onClick.AddListener(RespawnRpc);       
-    }
+        _respawnButton.onClick.AddListener(() =>
+        {
+            Respawn.Invoke();
 
-    [ServerRpc]
-    private void DisconnectRpc()
-    {
-        NetworkManager.Singleton.DisconnectClient(NetworkManager.Singleton.LocalClientId);       
-    }
-
-    [ServerRpc]
-    private void RespawnRpc()
-    {
-        var player = Instantiate(NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject());
-
-        player.SpawnAsPlayerObject(NetworkManager.Singleton.LocalClientId);
-    }
+            gameObject.SetActive(false);
+        });
+    }    
 
     void Update()
     {

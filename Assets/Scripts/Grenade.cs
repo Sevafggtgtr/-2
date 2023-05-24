@@ -39,7 +39,7 @@ public class Grenade : Weapon
         foreach (Collider target in Physics.OverlapSphere(transform.position, _radius))
         {
             if (target.GetComponent<IDamageableObject>()!= null)
-                target.GetComponent<IDamageableObject>().DamegeClientRpc(_damage, _owner.Name);
+                target.GetComponent<IDamageableObject>().DamageClientRpc(_damage, _owner.Name);
         }
         _audioSource.Play();
 
@@ -52,7 +52,7 @@ public class Grenade : Weapon
 
     new void Start()
     {
-        base.Start();
+
     }
 
     void Update()

@@ -864,6 +864,7 @@ MonoBehaviour:
   _weaponPivot: {fileID: 8942703717899201455}
   _fpCamera: {fileID: 8942703717690975160}
   _handCamera: {fileID: 8942703717450818165}
+  _prefab: {fileID: 8942703718416814950}
 --- !u!114 &-578157352996160895
 MonoBehaviour:
   m_ObjectHideFlags: 0

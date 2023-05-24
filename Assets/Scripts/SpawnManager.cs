@@ -1,17 +1,42 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class SpawnManager : MonoBehaviour
+public class SpawnManager : NetworkBehaviour
 {
+    [SerializeField]
+    private PlayerController _playerPrefab;
+
     public GameObject[] _enemes;
     private int _index;
 
     void Start()
     {
         InvokeRepeating("Spawn", 2, 60f);
+
+        HUD.Singleton.RespawnMenu.Respawn += () =>
+        {
+            PlayerController.Singleton.FpCamera.gameObject.SetActive(false);
+            PlayerController.Singleton.HandCamera.gameObject.SetActive(false);
+
+            RespawnServerRpc();
+        };      
     }
 
+    [ServerRpc]
+    private void DisconnectServerRpc()
+    {
+        NetworkManager.Singleton.DisconnectClient(NetworkManager.Singleton.LocalClientId);
+    }
+
+    [ServerRpc]
+    private void RespawnServerRpc()
+    {
+        var player = Instantiate(_playerPrefab);
+
+        player.NetworkObject.SpawnAsPlayerObject(NetworkManager.Singleton.LocalClientId);
+    }
 
     void Spawn()
     {

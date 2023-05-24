@@ -32,7 +32,7 @@ public class Enemy : NetworkBehaviour, IDamageableObject
     public string Name { get; set; }
 
     [ClientRpc]
-    public void DamegeClientRpc(int value, string killer)
+    public void DamageClientRpc(int value, string killer)
     {
         _health -= value;
         _healthBar.value = _health;

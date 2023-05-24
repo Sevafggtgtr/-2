@@ -28,7 +28,7 @@ public class MeleeWeapon : Weapon
             if (Physics.SphereCast(origin, _distance / 2, direction, out hit))
             {
                 if (hit.transform.GetComponent<IDamageableObject>() != null)
-                    hit.transform.GetComponent<IDamageableObject>().DamegeClientRpc(_damage, ownerObject.Name);
+                    hit.transform.GetComponent<IDamageableObject>().DamageClientRpc(_damage, ownerObject.Name);
             }
             _isAction = true;
         }
@@ -36,7 +36,7 @@ public class MeleeWeapon : Weapon
     }
     new void Start()
     {
-        base.Start();
+
     }
 
     void Update()

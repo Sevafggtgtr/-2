@@ -36,7 +36,7 @@ public class UIGunPanel : MonoBehaviour
 
     void Awake()
     {
-        _player = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>();       
+        _player = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>();
         _player.WeaponChanged += ChangeGun;
         _player.WeaponChange += BeginChangeGun;
     }
