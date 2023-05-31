@@ -34,7 +34,7 @@ public class MeleeWeapon : Weapon
         }
         
     }
-    new void Start()
+    void Start()
     {
 
     }

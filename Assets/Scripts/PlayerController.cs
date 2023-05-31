@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
@@ -14,6 +15,8 @@ public enum PlayerState
 
 public class PlayerController : NetworkBehaviour, IDamageableObject
 {
+    public static event UnityAction Spawn;
+    public static event UnityAction Despawn;
     public event UnityAction WeaponChange;
     public event UnityAction WeaponChanged;
     public event UnityAction<string> Died;
@@ -51,8 +54,6 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     private float _velocity,
                   _cameraVelocity;
 
-    private Slider _healthBar;
-
     private NetworkList<NetworkBehaviourReference> _networkWeapons = new NetworkList<NetworkBehaviourReference>();
     private List<Weapon> _weapons = new List<Weapon>();
 
@@ -73,6 +74,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                   _speed;
 
     private int _health = 100;
+    public int Health => _health;
 
     private int _weaponIndex;
 
@@ -91,21 +93,19 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     public void DamageClientRpc(int value, string killer)
     {
         _health -= value;
-        if (_healthBar)
-        {
-            _healthBar.value = _health;
-            Damaged.Invoke();
-        }
+        
+        Damaged?.Invoke();
+        
         if (_health <= 0)
         {
             Die(killer);
         }
     }
 
-    
-
     private void Start()
     {
+        _singleton = this;
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
@@ -126,6 +126,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         else
         {
+            Spawn.Invoke();
+
             _networkWeapons.OnListChanged += (_) =>
             {
                 _weapons = new List<Weapon>(_networkWeapons.Count);
@@ -145,9 +147,11 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
                         weapon.transform.SetParent(_weaponPivot);
                         weapon.transform.localPosition = new Vector3(0, 0, 0);
+                        weapon.transform.localRotation = Quaternion.identity;
                         weapon.gameObject.SetActive(false);
 
                         weapon.Rigidbody.isKinematic = true;
+                        weapon.Collider.enabled = false;
                     }
                 }
 
@@ -155,16 +159,10 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                 WeaponChanged.Invoke();
                 _weapon.gameObject.SetActive(true);
             };
-
-            _healthBar = FindObjectOfType<Slider>();
-
-            SpawnWeaponsServerRpc();
-
-            _singleton = this;
+            SpawnWeaponsServerRpc();           
         }
 
-        HUD.Singleton.PauseMenu.UnPaused += () => _isActive = true;
-
+        HUD.Singleton.PauseMenu.UnPaused += () => _isActive = true;        
     }
 
     [ServerRpc]
@@ -195,9 +193,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         _weapon.Rigidbody.isKinematic = false;
         _weapon.enabled = false;
         _weapons[_weaponIndex] = null;
-        //_weapon.Rigidbody().AddForce(_fpCamera.transform.forward * _dropForce, ForceMode.Impulse);
-
-
+        _weapon.Rigidbody.AddForce(_fpCamera.transform.forward * _dropForce, ForceMode.Impulse);
     }
     void RemoveWeapon()
     {
@@ -226,13 +222,30 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         TakeWeapon();
     }
 
+    public override void OnNetworkDespawn()
+    {
+        //Despawn.Invoke();
+    }
+
+    [ServerRpc]
+    void KnifeDespawnServerRpc()
+               => _weapon.NetworkObject.Despawn();
+
     protected void Die(string killer)
     {
+        for(int i = 0; i < _weaponSlots.Length -1; i++)
+            ChangeWeapon();
+
+        KnifeDespawnServerRpc();
+
         _animator.SetBool("Death_b", true);
 
         Died.Invoke(killer);
 
+        _controller.enabled = false;
+
         enabled = false;
+
     }
 
     void Update()

@@ -28,34 +28,54 @@ public class HUD : MonoBehaviour
 
     void Start()
     {
-        NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>().Damaged += () => _vignettAnimation.Play();
-
-        NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>().Died += (killer) =>
-        {
-            Cursor.visible = !Cursor.visible;
-            Cursor.lockState = Cursor.visible ? CursorLockMode.None : CursorLockMode.Locked;
-
-            _panel = _respawnMenu.gameObject;
-
-            _respawnMenu.gameObject.SetActive(true);
-        };
-
-        _respawnMenu.Respawn += () => _panel = null;
-    }   
+        
+    }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape) && !_panel)
-        {          
+        if (Input.GetKeyDown(KeyCode.Escape) && (!_panel || _panel == _pauseMenu.gameObject))
+        {
+            
             Cursor.visible = !Cursor.visible;
             Cursor.lockState = Cursor.visible ?CursorLockMode.None : CursorLockMode.Locked;
 
             _pauseMenu.gameObject.SetActive(!_pauseMenu.gameObject.activeSelf);
+            
+            _panel = _pauseMenu.gameObject;
         }
     }
 
     private void Awake()
     {
+        PlayerController.Spawn += () =>
+        {
+            NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>().Damaged += () =>
+            {
+                _vignettAnimation.Play();
+
+                HealthBar.value = PlayerController.Singleton.Health;
+            };
+            NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>().Died += (killer) =>
+            {
+                Cursor.visible = !Cursor.visible;
+                Cursor.lockState = Cursor.visible ? CursorLockMode.None : CursorLockMode.Locked;
+
+                if (_panel != null)
+                    _panel.SetActive(false);
+
+                _panel = _respawnMenu.gameObject;
+
+                _respawnMenu.gameObject.SetActive(true);
+            };
+        };
+
+        _respawnMenu.Respawn += () =>
+        {
+            _panel = null;
+
+            _healthBar.value = 100;
+        };
+
         _singleton = this;
         gameObject.SetActive(false);
     }

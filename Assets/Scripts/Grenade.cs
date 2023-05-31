@@ -24,7 +24,7 @@ public class Grenade : Weapon
 
             GetComponentInParent<PlayerController>().ChangeWeapon();
 
-            GetComponent<Rigidbody>().AddForce(direction * _throwForce, ForceMode.Impulse);
+            Rigidbody.AddForce(direction * _throwForce, ForceMode.Impulse);
         }
                        
     }
@@ -46,11 +46,11 @@ public class Grenade : Weapon
         Invoke("Destroy", _audioSource.clip.length);
 
         GetComponent<MeshRenderer>().enabled = false;
-        GetComponent<Collider>().enabled = false;
+        Collider.enabled = false;
 
     }
 
-    new void Start()
+    void Start()
     {
 
     }

@@ -30,19 +30,15 @@ public class UIGunPanel : MonoBehaviour
             ((Gun)_player.Weapon).AmmoChanged += Change;
         _gunNameText.text = _player.Weapon.Name;
         Change();
-
-
     }
 
-    void Awake()
+    private void Awake()
     {
-        _player = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>();
-        _player.WeaponChanged += ChangeGun;
-        _player.WeaponChange += BeginChangeGun;
-    }
-    
-    void Update()
-    {
-        
+        PlayerController.Spawn += () =>
+        {
+            _player = PlayerController.Singleton;
+            _player.WeaponChanged += ChangeGun;
+            _player.WeaponChange += BeginChangeGun;
+        };       
     }
 }

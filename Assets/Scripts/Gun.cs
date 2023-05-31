@@ -91,7 +91,7 @@ public class Gun : Weapon
     [SerializeField]
     private GunType _gunType;
 
-    new void Start()
+    void Start()
     {       
         _spread = _spreadAngle;
     }

@@ -1579,6 +1579,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _vignettAnimation: {fileID: 848378532}
+  _healthBar: {fileID: 1255015274}
   _respawnMenu: {fileID: 1452997098}
   _pauseMenu: {fileID: 1202679875}
 --- !u!1 &517377807 stripped
@@ -2867,7 +2868,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cd4b72eee1bbb64d9a8c2a6231ce885, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _playerPrefab: {fileID: 0}
+  _playerPrefab: {fileID: 8942703718416814950, guid: 7b43de68408c839469a29b46146b3c15, type: 3}
   _enemes:
   - {fileID: 4745574797850241393, guid: 0f14569b911e53246b0f91ddce0a05c1, type: 3}
 --- !u!4 &897418150
@@ -4513,7 +4514,6 @@ GameObject:
   - component: {fileID: 1452997097}
   - component: {fileID: 1452997096}
   - component: {fileID: 1452997098}
-  - component: {fileID: 1452997099}
   m_Layer: 5
   m_Name: RespawnMenu
   m_TagString: Untagged
@@ -4595,25 +4595,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _respawnButton: {fileID: 55252837}
   _exitButton: {fileID: 853381521}
---- !u!114 &1452997099
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1452997094}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 104376908
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
 --- !u!1 &1483690081
 GameObject:
   m_ObjectHideFlags: 0
