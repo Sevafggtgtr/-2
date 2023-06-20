@@ -25,7 +25,7 @@ public class MeleeWeapon : Weapon
             _audioSource.Play();
 
             RaycastHit hit;
-            if (Physics.SphereCast(origin, _distance / 2, direction, out hit))
+            if (Physics.Raycast(origin, direction, out hit, _distance))
             {
                 if (hit.transform.GetComponent<IDamageableObject>() != null)
                     hit.transform.GetComponent<IDamageableObject>().DamageClientRpc(_damage, ownerObject.Name);

@@ -165,9 +165,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _damage: 20
   _actionMode: 0
-  _slotType: 0
+  _slotType: 2
   _name: Knife
-  _distance: 0.1
+  _distance: 2
   _delay: 1
 --- !u!114 &-6885915608241663733
 MonoBehaviour:

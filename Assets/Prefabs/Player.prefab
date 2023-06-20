@@ -856,15 +856,15 @@ MonoBehaviour:
     _weaponPrefab: {fileID: 4177640485239865528, guid: 4c48723047af7c843968ed4e7c55f678, type: 3}
   _walkSpeed: 4
   _runSpeed: 8
-  _sensitivity: 1000
+  _sensitivity: 750
   _pickDistance: 10
   _dropForce: 5
   _jumpForce: 5
   _head: {fileID: 8942703718922147788}
   _weaponPivot: {fileID: 8942703717899201455}
+  _weapons: []
   _fpCamera: {fileID: 8942703717690975160}
   _handCamera: {fileID: 8942703717450818165}
-  _prefab: {fileID: 8942703718416814950}
 --- !u!114 &-578157352996160895
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1233,7 +1233,7 @@ MonoBehaviour:
   UseQuaternionCompression: 0
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
-  Interpolate: 1
+  Interpolate: 0
   SlerpPosition: 0
 --- !u!1 &8942703718922243006
 GameObject:
