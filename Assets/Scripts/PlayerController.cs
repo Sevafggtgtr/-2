@@ -54,7 +54,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     private float _velocity,
                   _cameraVelocity;
 
-    private NetworkList<NetworkBehaviourReference> _networkWeapons = new NetworkList<NetworkBehaviourReference>(writePerm: NetworkVariableWritePermission.Owner);
+    private NetworkList<NetworkBehaviourReference> _networkWeapons = new NetworkList<NetworkBehaviourReference>();
     public List<Weapon> _weapons = new List<Weapon>();
 
 
@@ -107,20 +107,17 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         {
             _fpCamera.gameObject.SetActive(false);
             _handCamera.gameObject.SetActive(false);
-            _networkWeapon.OnValueChanged += (oldWeapon, newWeapon) =>
+            _networkWeapons.OnListChanged += (_) =>
             {
-                Weapon weapon;
-                if(oldWeapon.TryGet(out weapon))
-                    weapon.gameObject.SetActive(false);
-                if(newWeapon.TryGet(out weapon))
-                    weapon.gameObject.SetActive(true);
-            };
+                _networkWeapon.Value.TryGet(out Weapon currentWeapon);
 
-            for (int i = 0; i < _networkWeapons.Count; i++)
-            {
-                _networkWeapons[i].TryGet(out Weapon weapon);
-                weapon.gameObject.SetActive(false);
-            }
+                for (int i = 0; i < _networkWeapons.Count; i++)
+                {
+                    if (_networkWeapons[i].TryGet(out Weapon weapon) && weapon != currentWeapon)
+                        weapon.gameObject.SetActive(false);
+                        print('+');
+                }
+            };
         }
 
         else
@@ -191,7 +188,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             weapon.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
 
             weapon.GetComponent<NetworkObject>().TrySetParent(transform);
-            _networkWeapons.Add(weapon);
+            AddWeaponServerRpc(weapon);
         }
     }
 
@@ -208,19 +205,34 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         weapon.Collider.enabled = true;
         weapon.Rigidbody.isKinematic = false;
         weapon.enabled = false;
-        _weapons[(int)weapon.SlotType] = null;
         weapon.Rigidbody.AddForce(_fpCamera.transform.forward * _dropForce, ForceMode.Impulse);
 
         weapon.gameObject.SetActive(true);
-        _networkWeapons[(int)weapon.SlotType] = null;
+        RemoveWeaponServerRpc(weapon);
     }
-    void RemoveWeapon()
+
+    [ClientRpc]
+    void RemoveWeaponClientRpc()
     {
         _weapon.gameObject.SetActive(false);
     }
-    void TakeWeapon()
+
+    [ClientRpc]
+    void TakeWeaponClientRpc()
     {
         _weapon.gameObject.SetActive(true);
+    }
+
+    [ServerRpc]
+    void AddWeaponServerRpc(NetworkBehaviourReference weapon)
+    {
+        _networkWeapons.Add(weapon);
+    }
+
+    [ServerRpc]
+    private void RemoveWeaponServerRpc (NetworkBehaviourReference weapon)
+    {
+        _networkWeapons.Remove(weapon);
     }
 
     public void ChangeWeapon()
@@ -238,7 +250,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                 break;
             }
 
-        TakeWeapon();
+        TakeWeaponClientRpc();
     }
 
     public override void OnNetworkDespawn()
@@ -317,13 +329,13 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             {
                 if (_weapons[(i * mouseScroll + (int)_weapon.SlotType + _weaponSlots.Length) % _weaponSlots.Length])
                 {
-                    RemoveWeapon();
+                    RemoveWeaponClientRpc();
  
                     WeaponChange.Invoke();
                     _weapon = _weapons[(i * mouseScroll + (int)_weapon.SlotType + _weaponSlots.Length) % _weaponSlots.Length];
                     _networkWeapon.Value = _weapon;
 
-                    TakeWeapon();
+                    TakeWeaponClientRpc();
 
                     WeaponChanged.Invoke();
 
@@ -348,7 +360,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             {
                 if(weapon.SlotType <= _weapon.SlotType)
                 {
-                    RemoveWeapon();
+                    RemoveWeaponClientRpc();
 
                     WeaponChange?.Invoke();
 
@@ -370,7 +382,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                             DropWeapon(_weapons[i]);
                         }
 
-                        _networkWeapons[i] = weapon;
+                        AddWeaponServerRpc(weapon);
                         
                         break;
                     }
