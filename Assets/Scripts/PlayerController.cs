@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
 using Unity.Netcode;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -55,7 +57,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                   _cameraVelocity;
 
     private NetworkList<NetworkBehaviourReference> _networkWeapons = new NetworkList<NetworkBehaviourReference>();
-    public List<Weapon> _weapons = new List<Weapon>();
+    public Weapon[] _weapons;
 
 
     private PlayerState _playerState;
@@ -105,19 +107,37 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     {
         if (!IsOwner)
         {
-            _fpCamera.gameObject.SetActive(false);
-            _handCamera.gameObject.SetActive(false);
-            _networkWeapons.OnListChanged += (_) =>
-            {
-                _networkWeapon.Value.TryGet(out Weapon currentWeapon);
+            Weapon currentWeapon;
+            _networkWeapon.Value.TryGet(out currentWeapon);
 
+            void DisableWeapon()
+            {            
                 for (int i = 0; i < _networkWeapons.Count; i++)
                 {
                     if (_networkWeapons[i].TryGet(out Weapon weapon) && weapon != currentWeapon)
                         weapon.gameObject.SetActive(false);
-                        print('+');
+                    else
+                    {
+                        currentWeapon.gameObject.SetActive(true);
+                    }
                 }
+            }
+            _fpCamera.gameObject.SetActive(false);
+            _handCamera.gameObject.SetActive(false);          
+            if (_networkWeapons.Count != 0)
+                DisableWeapon();
+            else
+            _networkWeapons.OnListChanged += (_) =>
+            {
+                if (currentWeapon)
+                    DisableWeapon();
             };
+            _networkWeapon.OnValueChanged += (o, n) =>
+            {
+                _networkWeapon.Value.TryGet(out currentWeapon);
+                DisableWeapon();
+            };
+            
         }
 
         else
@@ -139,12 +159,12 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
             _networkWeapons.OnListChanged += (_) =>
             {
-                _weapons = new List<Weapon>(_networkWeapons.Count);
+                _weapons = new Weapon[4];
                 for (int i = 0; i < _networkWeapons.Count; i++)
                 {
                     if (_networkWeapons[i].TryGet(out Weapon weapon))
                     {
-                        _weapons.Add(weapon);
+                        _weapons[(int)weapon.SlotType] = weapon;
 
                         weapon.gameObject.layer = 3;
                         for (int j = 0; j < weapon.transform.childCount; j++)
@@ -171,6 +191,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                 }                
                 WeaponChanged.Invoke();
                 _weapon.gameObject.SetActive(true);
+                _weapon.enabled = true;
             };
             SpawnWeaponsServerRpc();
         }
@@ -211,21 +232,37 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         RemoveWeaponServerRpc(weapon);
     }
 
-    [ClientRpc]
-    void RemoveWeaponClientRpc()
+    [ServerRpc]
+    void DisableWeaponServerRpc()
     {
-        _weapon.gameObject.SetActive(false);
+        DisableWeaponClientRpc();
     }
 
     [ClientRpc]
-    void TakeWeaponClientRpc()
+    void DisableWeaponClientRpc()
     {
-        _weapon.gameObject.SetActive(true);
+        if (!IsOwner)
+        {
+            _networkWeapon.Value.TryGet(out _weapon);
+            _weapon.gameObject.SetActive(false);
+        }
+    }
+
+    void DisableWeapon()
+    {
+        _weapon.gameObject.SetActive(false);
+
+        DisableWeaponServerRpc();
+    }
+
+    void TakeWeapon()
+    {
+        _weapon.gameObject.SetActive(true);       
     }
 
     [ServerRpc]
     void AddWeaponServerRpc(NetworkBehaviourReference weapon)
-    {
+    {        
         _networkWeapons.Add(weapon);
     }
 
@@ -250,7 +287,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                 break;
             }
 
-        TakeWeaponClientRpc();
+        TakeWeapon();
     }
 
     public override void OnNetworkDespawn()
@@ -266,7 +303,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     {
         if (IsOwner)
         {
-            for (int i = 0; i < _weapons.Count - 1; i++)
+            for (int i = 0; i < _networkWeapons.Count - 1; i++)
                 ChangeWeapon();
 
             KnifeDespawnServerRpc();
@@ -329,13 +366,13 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             {
                 if (_weapons[(i * mouseScroll + (int)_weapon.SlotType + _weaponSlots.Length) % _weaponSlots.Length])
                 {
-                    RemoveWeaponClientRpc();
+                    DisableWeapon();
  
                     WeaponChange.Invoke();
                     _weapon = _weapons[(i * mouseScroll + (int)_weapon.SlotType + _weaponSlots.Length) % _weaponSlots.Length];
                     _networkWeapon.Value = _weapon;
 
-                    TakeWeaponClientRpc();
+                    TakeWeapon();
 
                     WeaponChanged.Invoke();
 
@@ -360,7 +397,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             {
                 if(weapon.SlotType <= _weapon.SlotType)
                 {
-                    RemoveWeaponClientRpc();
+                    DisableWeapon();
 
                     WeaponChange?.Invoke();
 
@@ -372,20 +409,14 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                 else
                 {
                     weapon.gameObject.SetActive(false);
+                }   
+                
+                if (_weapons[(int)weapon.SlotType])
+                {
+                    DropWeapon(_weapons[(int)weapon.SlotType]);
                 }
-                    
-                for (int i = 0; i < _weaponSlots.Length; i++)
-                    if (_weaponSlots[i].SlotType == weapon.SlotType)
-                    {
-                        if (_weapons[i])
-                        {
-                            DropWeapon(_weapons[i]);
-                        }
 
-                        AddWeaponServerRpc(weapon);
-                        
-                        break;
-                    }
+                AddWeaponServerRpc(weapon);
             }
         }
 
