@@ -9,10 +9,10 @@ public class UIKillfeedPanel : MonoBehaviour
     void Start()
     {
         //foreach (IDamageableObject target in FindObjectsOfType<IDamageableObject>())
-            //target.Died += (killer) => SpawnSlot(killer, target.Name);                  
+            //target.Died += (killer) => SpawnSlot(killer, target.Name);
     }
 
-    private void SpawnSlot(string killer, string target)
+    public void SpawnSlot(string killer, string target)
     {
         Instantiate(_slotPrefab, transform).Initialize(killer, target);
     }

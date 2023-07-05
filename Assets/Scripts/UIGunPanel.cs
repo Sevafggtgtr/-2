@@ -34,11 +34,14 @@ public class UIGunPanel : MonoBehaviour
 
     private void Awake()
     {
-        PlayerController.Spawn += () =>
+        PlayerController.Spawn += (player) =>
         {
-            _player = PlayerController.Singleton;
-            _player.WeaponChanged += ChangeGun;
-            _player.WeaponChange += BeginChangeGun;
+            if(player.IsOwner)
+            {
+                _player = PlayerController.Singleton;
+                _player.WeaponChanged += ChangeGun;
+                _player.WeaponChange += BeginChangeGun;
+            }
         };       
     }
 }

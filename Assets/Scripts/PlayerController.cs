@@ -17,7 +17,7 @@ public enum PlayerState
 
 public class PlayerController : NetworkBehaviour, IDamageableObject
 {
-    public static event UnityAction Spawn;
+    public static event UnityAction<PlayerController> Spawn;
     public static event UnityAction Despawn;
     public event UnityAction WeaponChange;
     public event UnityAction WeaponChanged;
@@ -105,6 +105,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
     private void Start()
     {
+        Spawn.Invoke(this);
+
         if (!IsOwner)
         {
             Weapon currentWeapon;
@@ -114,8 +116,9 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             {            
                 for (int i = 0; i < _networkWeapons.Count; i++)
                 {
-                    if (_networkWeapons[i].TryGet(out Weapon weapon) && weapon != currentWeapon)
-                        weapon.gameObject.SetActive(false);
+
+                    if (_networkWeapons[i].TryGet(out Weapon weapon) && weapon != currentWeapon) ;
+                    //weapon.gameObject.SetActive(false);
                     else
                     {
                         currentWeapon.gameObject.SetActive(true);
@@ -144,7 +147,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         {
             _singleton = this;
 
-            Spawn.Invoke();
+            
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -196,7 +199,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             SpawnWeaponsServerRpc();
         }
 
-        HUD.Singleton.PauseMenu.UnPaused += () => _isActive = true;        
+        HUD.Singleton.PauseMenu.UnPaused += () => _isActive = true;
+        
     }
 
     [ServerRpc]
@@ -227,6 +231,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         weapon.Rigidbody.isKinematic = false;
         weapon.enabled = false;
         weapon.Rigidbody.AddForce(_fpCamera.transform.forward * _dropForce, ForceMode.Impulse);
+        _weapons[(int)weapon.SlotType] = null;
 
         weapon.gameObject.SetActive(true);
         RemoveWeaponServerRpc(weapon);
@@ -264,12 +269,23 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     void AddWeaponServerRpc(NetworkBehaviourReference weapon)
     {        
         _networkWeapons.Add(weapon);
+        ChangeWeaponClientRpc(weapon, false);
+        weapon.TryGet(out _weapon);
+        _weapon.NetworkObject.ChangeOwnership(NetworkManager.Singleton.LocalClientId);
     }
 
     [ServerRpc]
     private void RemoveWeaponServerRpc (NetworkBehaviourReference weapon)
     {
         _networkWeapons.Remove(weapon);
+        ChangeWeaponClientRpc(weapon, true);
+    }
+
+    [ClientRpc]
+    private void ChangeWeaponClientRpc(NetworkBehaviourReference weapon, bool collider)
+    {
+        weapon.TryGet(out _weapon);
+        _weapon.Collider.enabled = collider;
     }
 
     public void ChangeWeapon()
@@ -308,10 +324,10 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
             KnifeDespawnServerRpc();
 
-            _animator.SetBool("Death_b", true);
-
-            Died.Invoke(killer);
-        }       
+            _animator.SetBool("Death_b", true);            
+        }
+        
+        Died.Invoke(killer);
 
         _controller.enabled = false;
 

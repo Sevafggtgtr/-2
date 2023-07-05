@@ -24,6 +24,9 @@ public class HUD : MonoBehaviour
     private UIPauseMenu _pauseMenu;
     public UIPauseMenu PauseMenu => _pauseMenu;
 
+    [SerializeField]
+    private UIKillfeedPanel _killfeed;
+
     private GameObject _panel;
 
     void Start()
@@ -47,25 +50,32 @@ public class HUD : MonoBehaviour
 
     private void Awake()
     {
-        PlayerController.Spawn += () =>
+        PlayerController.Spawn += (player) =>
         {
-            NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>().Damaged += () =>
+            if (player.IsOwner)
             {
-                _vignettAnimation.Play();
+                NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>().Damaged += () =>
+                {
+                    _vignettAnimation.Play();
 
-                HealthBar.value = PlayerController.Singleton.Health;
-            };
-            NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>().Died += (killer) =>
+                    HealthBar.value = PlayerController.Singleton.Health;
+                };
+                NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>().Died += (killer) =>
+                {
+                    Cursor.visible = !Cursor.visible;
+                    Cursor.lockState = Cursor.visible ? CursorLockMode.None : CursorLockMode.Locked;
+
+                    if (_panel != null)
+                        _panel.SetActive(false);
+
+                    _panel = _respawnMenu.gameObject;
+
+                    _respawnMenu.gameObject.SetActive(true);
+                };
+            }         
+            player.Died += (killer) =>
             {
-                Cursor.visible = !Cursor.visible;
-                Cursor.lockState = Cursor.visible ? CursorLockMode.None : CursorLockMode.Locked;
-
-                if (_panel != null)
-                    _panel.SetActive(false);
-
-                _panel = _respawnMenu.gameObject;
-
-                _respawnMenu.gameObject.SetActive(true);
+                _killfeed.SpawnSlot(killer, player.Name);
             };
         };
 
