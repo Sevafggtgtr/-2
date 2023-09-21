@@ -29,6 +29,10 @@ public class HUD : MonoBehaviour
 
     private GameObject _panel;
 
+    [SerializeField]
+    private UIChoiceTeamPanel _chooseTeamPanel;
+    public UIChoiceTeamPanel ChooseTeamPanel => _chooseTeamPanel;
+
     void Start()
     {
         

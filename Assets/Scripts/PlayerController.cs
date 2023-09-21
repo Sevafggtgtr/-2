@@ -1,3 +1,4 @@
+using Palmmedia.ReportGenerator.Core.Reporting.Builders;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
@@ -54,7 +55,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                       _weaponPivot;
 
     private float _velocity,
-                  _cameraVelocity;
+                  _cameraVelocity;    
 
     private NetworkList<NetworkBehaviourReference> _networkWeapons = new NetworkList<NetworkBehaviourReference>();
     public Weapon[] _weapons;
