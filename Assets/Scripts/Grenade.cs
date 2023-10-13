@@ -8,11 +8,12 @@ public class Grenade : Weapon
                   _explodeTime,
                   _throwForce;
 
-    private IDamageableObject _owner;
+    private NetworkBehaviourReference _owner;
 
     public override void Action(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner)
     {
-        GetComponentInParent<PlayerController>().ChangeWeapon();
+        owner.TryGet(out PlayerController player);
+        player.ChangeWeapon();
 
         ActionServerRpc(origin, direction, owner);
     }    
@@ -40,7 +41,7 @@ public class Grenade : Weapon
         foreach (Collider target in Physics.OverlapSphere(transform.position, _radius))
         {
             if (target.GetComponent<IDamageableObject>()!= null)
-                target.GetComponent<IDamageableObject>().DamageClientRpc(_damage, _owner.Name);
+                target.GetComponent<IDamageableObject>().DamageClientRpc(_damage, _owner);
         }
 
         Invoke("Destroy", _audioSource.clip.length);

@@ -28,7 +28,7 @@ public class MeleeWeapon : Weapon
             if (Physics.Raycast(origin, direction, out hit, _distance))
             {
                 if (hit.transform.GetComponent<IDamageableObject>() != null)
-                    hit.transform.GetComponent<IDamageableObject>().DamageClientRpc(_damage, ownerObject.Name);
+                    hit.transform.GetComponent<IDamageableObject>().DamageClientRpc(_damage, owner);
             }
             _isAction = true;
         }

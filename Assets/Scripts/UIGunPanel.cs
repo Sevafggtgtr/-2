@@ -38,7 +38,7 @@ public class UIGunPanel : MonoBehaviour
         {
             if(player.IsOwner)
             {
-                _player = PlayerController.Singleton;
+                _player = player;
                 _player.WeaponChanged += ChangeGun;
                 _player.WeaponChange += BeginChangeGun;
             }

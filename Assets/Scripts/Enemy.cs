@@ -6,7 +6,7 @@ using Unity.Netcode;
 
 public class Enemy : NetworkBehaviour, IDamageableObject
 {
-    public event UnityAction<string> Died;
+    public event UnityAction<Player> Died;
 
     private int _health = 100;
 
@@ -32,7 +32,7 @@ public class Enemy : NetworkBehaviour, IDamageableObject
     public string Name { get; set; }
 
     [ClientRpc]
-    public void DamageClientRpc(int value, string killer)
+    public void DamageClientRpc(int value, NetworkBehaviourReference killer)
     {
         _health -= value;
         _healthBar.value = _health;
@@ -41,11 +41,12 @@ public class Enemy : NetworkBehaviour, IDamageableObject
         {
             _alive = false;
             _agent.enabled = false;
-            Die(killer);
+            killer.TryGet(out Player player);
+            Die(player);
         }
     }
 
-    protected void Die(string killer)
+    protected void Die(Player killer)
     {
         //Died?.Invoke(killer);
     }

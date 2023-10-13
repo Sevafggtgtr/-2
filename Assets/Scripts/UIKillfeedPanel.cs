@@ -12,7 +12,7 @@ public class UIKillfeedPanel : MonoBehaviour
             //target.Died += (killer) => SpawnSlot(killer, target.Name);
     }
 
-    public void SpawnSlot(string killer, string target)
+    public void SpawnSlot(Player killer, Player target)
     {
         Instantiate(_slotPrefab, transform).Initialize(killer, target);
     }

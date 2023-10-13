@@ -58,13 +58,13 @@ public class HUD : MonoBehaviour
         {
             if (player.IsOwner)
             {
-                NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>().Damaged += () =>
+                player.Damaged += () =>
                 {
                     _vignettAnimation.Play();
 
                     HealthBar.value = PlayerController.Singleton.Health;
                 };
-                NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerController>().Died += (killer) =>
+                player.Died += (killer) =>
                 {
                     Cursor.visible = !Cursor.visible;
                     Cursor.lockState = Cursor.visible ? CursorLockMode.None : CursorLockMode.Locked;
@@ -79,7 +79,7 @@ public class HUD : MonoBehaviour
             }         
             player.Died += (killer) =>
             {
-                _killfeed.SpawnSlot(killer, player.Name);
+                _killfeed.SpawnSlot(killer, player.GetPlayerServerRpc());
             };
         };
 

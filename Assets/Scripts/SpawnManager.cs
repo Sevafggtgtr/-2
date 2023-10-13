@@ -32,7 +32,7 @@ public class SpawnManager : NetworkBehaviour
         NetworkManager.Singleton.DisconnectClient(NetworkManager.Singleton.LocalClientId);
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     private void RespawnServerRpc()
     {
         var player = Instantiate(_playerPrefab);

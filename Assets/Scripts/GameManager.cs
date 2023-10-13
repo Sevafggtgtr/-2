@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
@@ -6,6 +5,7 @@ using UnityEngine;
 
 public enum Teams
 {
+    Spectator,
     Terrorist,
     CounterTerrorist
 }
@@ -31,7 +31,7 @@ public struct TeamData
         _color = color;
         _team = team;
     }
-    
+
 }
 
 public class GameManager : NetworkBehaviour
@@ -49,30 +49,14 @@ public class GameManager : NetworkBehaviour
     private TeamData[] _teams;
     public TeamData[] Teams => _teams;
 
-    private NetworkList<int> _points = new NetworkList<int>();
-    public NetworkList<int> Points => _points;
-
+    private NetworkVariable<int>[] _points = new NetworkVariable<int>[2];
+    public NetworkVariable<int>[] Points => _points;
     private NetworkVariable<int> _time = new NetworkVariable<int>();
     public NetworkVariable<int> Time => _time;
 
     void Awake()
     {
-        _singleton = this;
-
-        if (IsHost)
-        {
-            Player.TeamChoosed += () =>
-            {
-                int[] team = new int[2];
-
-                foreach (var player in NetworkManager.ConnectedClients)
-                    team[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value]++;
-                if (team[0] * team[1] > 0)
-                {
-                    StartRoundServerRpc();
-                }
-            };
-        }
+        _singleton = this;       
     }
 
     private void Start()
@@ -81,6 +65,15 @@ public class GameManager : NetworkBehaviour
         {
             _time.Value--;
         };*/
+
+        NetworkManager.OnClientConnectedCallback += (ID) =>
+        {
+            if(IsHost)
+            NetworkManager.ConnectedClients[ID].PlayerObject.GetComponent<Player>().Team.OnValueChanged += (o, n) =>
+            {
+                StartRoundServerRpc();
+            };
+        };
     }
 
     [ServerRpc]
@@ -90,24 +83,45 @@ public class GameManager : NetworkBehaviour
 
         var spawnPoints = new List<Transform>[2];
 
-        for(int i = 0; i < 2; i++)
+        foreach (var player in FindObjectsOfType<PlayerController>())
+            player.NetworkObject.Despawn();
+
+        for (int i = 0; i < 2; i++)
             spawnPoints[i] = _map.GetTeamSpawnPoints()[i].SpawnPoints.ToList();
 
         foreach (var player in NetworkManager.ConnectedClients)
         {
             var player_ = Instantiate(_playerPrefab);
 
-            player_.NetworkObject.SpawnAsPlayerObject(player.Value.ClientId);
+            player_.Died += (killer) =>
+            {
+                int[] teams = new int[2];
 
-            spawnPoint = spawnPoints[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value][Random.Range(0, spawnPoints[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value].Count)];
+                foreach (var player in NetworkManager.ConnectedClients)
+                    teams[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1]++;
+                if (teams[0] * teams[1] > 0)
+                {
+                    _points[teams[0] == 0 ? 1 : 0].Value ++;
+                    if(Mathf.Max(teams) == 13)
+                    {
+                        foreach (var player in FindObjectsOfType<PlayerController>())
+                            Destroy(player);
+                    }
+                    StartRoundServerRpc();
+                }
+            };
+
+            player_.NetworkObject.SpawnWithOwnership(player.Value.ClientId);
+
+            spawnPoint = spawnPoints[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1][Random.Range(0, spawnPoints[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1].Count)];
             player_.transform.position = spawnPoint.position;
 
-            spawnPoints[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value].Remove(spawnPoint);
+            spawnPoints[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1].Remove(spawnPoint);
         }
     }
 
     void Update()
     {
-         
+
     }
 }

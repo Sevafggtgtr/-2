@@ -15,20 +15,32 @@ public class UIMainMenu : MonoBehaviour
                    _hostButton,
                    _clientButton;
 
+    private static UIMainMenu _singleton;
+    public static UIMainMenu Singleton => _singleton;
+
     [SerializeField]
     private GameObject _networkPanel;
 
     [SerializeField]
     private GameObject _mainCamera;
 
+    [SerializeField]
+    private InputField _nicknameInputField;
+    public string Nickname => _nicknameInputField.text;
+
+    private void Awake()
+    {
+        _singleton = this;
+    }
 
     void Start()
     {
         NetworkManager.Singleton.OnClientConnectedCallback += (ID) =>
         {
             HUD.Singleton.gameObject.SetActive(true);
+            GameManager.Singleton.gameObject.SetActive(true);
             _mainCamera.SetActive(false);
-            gameObject.SetActive(false);
+            gameObject.SetActive(false);            
         };
 
         _singleGameButton.onClick.AddListener(() =>
