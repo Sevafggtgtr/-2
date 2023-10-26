@@ -9,7 +9,7 @@ public class UIKillfeedSlot : MonoBehaviour
                  _targetText;
 
     public void Initialize(Player killer,Player target)
-    {
+    {        
         _killerText.text = killer.Nickname.Value.ToString();
         _targetText.text = target.Nickname.Value.ToString();
 

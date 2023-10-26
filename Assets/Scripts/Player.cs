@@ -39,8 +39,6 @@ public class Player : NetworkBehaviour
             };
 
             _nickname.Value = UIMainMenu.Singleton.Nickname;
-            print(_nickname.Value);
-            print(UIMainMenu.Singleton.Nickname);
 
             HUD.Singleton.ChooseTeamPanel.TeamChoosed += (team) =>
             {

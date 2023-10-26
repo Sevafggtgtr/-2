@@ -79,7 +79,7 @@ public class HUD : MonoBehaviour
             }         
             player.Died += (killer) =>
             {
-                _killfeed.SpawnSlot(killer, player.GetPlayerServerRpc());
+                _killfeed.SpawnSlot(killer, player.GetPlayer());
             };
         };
 
