@@ -8,6 +8,8 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using static UnityEngine.UI.GridLayoutGroup;
+
 public enum PlayerState
 {
     Idle,
@@ -21,7 +23,6 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 {
     public static event UnityAction<PlayerController> Spawn;
     public static event UnityAction Despawn;
-    public event UnityAction WeaponChange;
     public event UnityAction WeaponChanged;
     public event UnityAction<Player> Died;
     public event UnityAction Kill;
@@ -85,7 +86,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
     private Weapon _weapon;   
     public Weapon Weapon => _weapon;
-    private Weapon[] _weapons;
+    private Weapon[] _weapons = new Weapon[4];
+    public Weapon[] Weapons => _weapons;
     private NetworkVariable<NetworkBehaviourReference> _networkWeapon = new NetworkVariable<NetworkBehaviourReference>(writePerm : NetworkVariableWritePermission.Owner);
     private NetworkList<NetworkBehaviourReference> _networkWeapons = new NetworkList<NetworkBehaviourReference>(writePerm: NetworkVariableWritePermission.Owner);
     
@@ -163,27 +165,35 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     private void SpawnWeaponsClientRpc(NetworkBehaviourReference[] weapons)
     {
         if (!IsOwner)
-            return;        
+        {
+            Weapon weapon;
+
+            for (int i = 0; i < _weapons.Length; i++)
+            {
+                if (weapons[i].TryGet(out weapon))
+                {
+                    weapon.gameObject.SetActive(false);
+                    weapon.Collider.enabled = false;
+                }                                  
+            }
+            if(weapons[0].TryGet(out weapon))
+                weapon.gameObject.SetActive(true);
+
+            return;
+        }
 
         _weapons = new Weapon[4];
         for (int i = 0; i < weapons.Length; i++)
         {
-            if (_networkWeapons[i].TryGet(out Weapon weapon))
-            {
+            if (weapons[i].TryGet(out Weapon weapon))
+            {               
+                ChangeWeaponState(weapon, true);
                 weapon.transform.localPosition = new Vector3(0, 0, 0);
                 weapon.transform.localRotation = Quaternion.identity;
-                ChangeWeaponState(weapon, true);
             }
         }
 
-        if (!_weapon)
-        {
-            _weapon = _weapons[0];
-            _networkWeapon.Value = _weapon;
-        }
-        WeaponChanged.Invoke();
-        _weapon.gameObject.SetActive(true);
-        _weapon.enabled = true;
+        TakeWeapon(_weapons[0]);
 
     }
     #endregion    
@@ -214,9 +224,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     {              
         weapon.enabled = false;
         weapon.Rigidbody.AddForce(_fpCamera.transform.forward * _dropForce, ForceMode.Impulse);
-        
+
         ChangeWeaponState(weapon, false);
-        RemoveWeaponServerRpc(weapon);
     }
 
     #region Disable Weapon
@@ -244,12 +253,16 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     }
     #endregion   
 
-    private void TakeWeapon()
+    #region Take Weapon
+    private void TakeWeapon(Weapon weapon)
     {
-        _weapon.gameObject.SetActive(true);   
+        _weapon = weapon;
+        _networkWeapon.Value = _weapon;
+        _weapon.gameObject.SetActive(true);
+        WeaponChanged.Invoke();
         TakeWeaponServerRpc(_weapon);
     }
-    #region Take Weapon
+    
     [ServerRpc]
     private void TakeWeaponServerRpc(NetworkBehaviourReference weapon)
     {
@@ -263,48 +276,37 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             _weapon.gameObject.SetActive(true);
     }
     #endregion
-    [ServerRpc]
-    private void AddWeaponServerRpc(NetworkBehaviourReference weapon)
-    {               
-        ChangeWeaponClientRpc(weapon, false);
-        if(weapon.TryGet(out _weapon))
-            _weapon.NetworkObject.ChangeOwnership(NetworkManager.Singleton.LocalClientId);
-    }
-
-    [ServerRpc]
-    private void RemoveWeaponServerRpc (NetworkBehaviourReference weapon)
-    {
-        ChangeWeaponClientRpc(weapon, true);
-    }
+    
 
     #region Change Weapon
-    [ClientRpc]
-    private void ChangeWeaponClientRpc(NetworkBehaviourReference weapon, bool collider)
+    public void ChangeWeapon(Weapon weapon, bool dropWeapon)
     {
-        if(weapon.TryGet(out _weapon))
-        {
-            _weapon.Collider.enabled = collider;
-            _weapon.Rigidbody.isKinematic = collider;
-        }
+        if (dropWeapon)
+            DropWeapon(_weapon);
+        else
+            DisableWeapon();
 
+        TakeWeapon(weapon);
+
+        ChangeWeaponServerRpc(_weapon, weapon, dropWeapon);
     }
 
-    public void ChangeWeapon()
+    [ServerRpc]
+    private void ChangeWeaponServerRpc(NetworkBehaviourReference oldWeapon, NetworkBehaviourReference newWeapon, bool dropWeapon)
     {
-        DropWeapon(_weapon);
+        ChangeWeaponClientRpc(oldWeapon,newWeapon, dropWeapon);
+    }
 
-        for (int i = 0; i < _weaponSlots.Length; i++)
-            if (_weapons[i])
-            {
-                WeaponChange?.Invoke();
-                _weapon = _weapons[i];
-                _networkWeapon.Value = _weapon;
-                WeaponChanged?.Invoke();
-
-                break;
-            }
-
-        TakeWeapon();
+    [ClientRpc]
+    private void ChangeWeaponClientRpc(NetworkBehaviourReference oldWeapon, NetworkBehaviourReference newWeapon, bool dropWeapon)
+    {
+        if (oldWeapon.TryGet(out _weapon))
+            if (dropWeapon)
+                _weapon.Collider.enabled = true;
+            else
+                _weapon.gameObject.SetActive(false);      
+        if (newWeapon.TryGet(out _weapon))
+            _weapon.gameObject.SetActive(true);
     }
     #endregion
 
@@ -331,12 +333,15 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         }
     }
 
+    public Weapon GetWeapon()
+        => _weapons.First(weapon => weapon);
+
     protected void Die(Player killer)
     {
         if (IsOwner)
         {
             for (int i = 0; i < _networkWeapons.Count - 1; i++)
-                ChangeWeapon();
+                DropWeapon(_weapon);
 
             KnifeDespawnServerRpc();
 
@@ -394,19 +399,11 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         int mouseScroll = (int)(Input.GetAxis("Mouse ScrollWheel") * -10);
         if (mouseScroll != 0)
         {
-            for (int i = 1; i < _weaponSlots.Length; i++)
+            for (int i = 1; i < _weapons.Length; i++)
             {
                 if (_weapons[(i * mouseScroll + (int)_weapon.SlotType + _weaponSlots.Length) % _weaponSlots.Length])
                 {
-                    DisableWeapon();
- 
-                    WeaponChange.Invoke();
-                    _weapon = _weapons[(i * mouseScroll + (int)_weapon.SlotType + _weaponSlots.Length) % _weaponSlots.Length];
-                    _networkWeapon.Value = _weapon;
-
-                    TakeWeapon();
-
-                    WeaponChanged.Invoke();
+                    ChangeWeapon(_weapons[(i * mouseScroll + (int)_weapon.SlotType + _weaponSlots.Length) % _weaponSlots.Length],false);
 
                     break;
                 }
@@ -414,12 +411,20 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         }
 
         if (Input.GetKeyDown(KeyCode.G) && _weapon.SlotType != SlotType.Knife)
-        {
-            ChangeWeapon();
-        }
+            ChangeWeapon(GetWeapon(),true);
 
         if (Input.GetKeyDown(KeyCode.R) && _weapon is Gun)
             ((Gun)_weapon).Reload();
+
+        for(int i = 0;i < _weapons.Length;i++)
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+                if (_weapons[i])
+                {
+                    ChangeWeapon(_weapons[i],false);
+                }
+                                
+        }
 
         RaycastHit hit;
         if (Physics.Raycast(_fpCamera.transform.position, _fpCamera.transform.forward, out hit, _pickDistance))
@@ -429,25 +434,16 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             {
                 if(weapon.SlotType <= _weapon.SlotType)
                 {
-                    DisableWeapon();                   
-
-                    _weapon = weapon;
-                    _networkWeapon.Value = _weapon;
-
-                    WeaponChanged.Invoke();
+                    ChangeWeapon(weapon, _weapons[(int)weapon.SlotType]);
                 }
                 else
                 {
-                    weapon.gameObject.SetActive(false);
-                }   
-                
-                if (_weapons[(int)weapon.SlotType])
-                {
-                    DropWeapon(_weapons[(int)weapon.SlotType]);
-                }
-
-                ChangeWeaponState(weapon,true);
-                AddWeaponServerRpc(weapon);
+                    if (_weapons[(int)weapon.SlotType])
+                    {
+                        DropWeapon(_weapons[(int)weapon.SlotType]);                      
+                    }
+                    ChangeWeaponState(weapon, true);
+                }                  
             }
         }
 

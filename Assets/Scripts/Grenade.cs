@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using System.Linq;
 
 public class Grenade : Weapon
 {
@@ -10,10 +11,9 @@ public class Grenade : Weapon
 
     private NetworkBehaviourReference _owner;
 
-    public override void Action(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner)
-    {
-        owner.TryGet(out PlayerController player);
-        player.ChangeWeapon();
+    public override void Action(Vector3 origin, Vector3 direction, PlayerController owner)
+    {        
+        owner.ChangeWeapon(owner.GetWeapon(), true);
 
         ActionServerRpc(origin, direction, owner);
     }    

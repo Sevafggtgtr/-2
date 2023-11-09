@@ -11,7 +11,7 @@ public class MeleeWeapon : Weapon
 
     private bool _isAction;
 
-    public override void Action(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner)
+    public override void Action(Vector3 origin, Vector3 direction, PlayerController owner)
        => ActionServerRpc(origin, direction, owner);
 
     [ServerRpc]

@@ -39,8 +39,7 @@ public class UIGunPanel : MonoBehaviour
             if(player.IsOwner)
             {
                 _player = player;
-                _player.WeaponChanged += ChangeGun;
-                _player.WeaponChange += BeginChangeGun;
+                _player.WeaponChanged += ChangeGun;                
             }
         };       
     }

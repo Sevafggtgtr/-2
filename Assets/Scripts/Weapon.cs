@@ -33,7 +33,7 @@ public abstract class Weapon : NetworkBehaviour
     protected Rigidbody _rigidbody;
     public Rigidbody Rigidbody => _rigidbody;
 
-    public abstract void Action(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner);
+    public abstract void Action(Vector3 origin, Vector3 direction, PlayerController owner);
 
     protected void Awake()
     {
