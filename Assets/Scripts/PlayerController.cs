@@ -186,10 +186,9 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         for (int i = 0; i < weapons.Length; i++)
         {
             if (weapons[i].TryGet(out Weapon weapon))
-            {               
+            {
                 ChangeWeaponState(weapon, true);
-                weapon.transform.localPosition = new Vector3(0, 0, 0);
-                weapon.transform.localRotation = Quaternion.identity;
+                weapon.gameObject.SetActive(false);
             }
         }
 
@@ -210,45 +209,68 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         ChangeLayer(weapon.gameObject);
 
         weapon.Collider.enabled = !state;
-        weapon.Rigidbody.isKinematic = state;
-        weapon.gameObject.SetActive(!state);
+        weapon.Rigidbody.isKinematic = state;       
         weapon.transform.SetParent(state ? _weaponPivot : null);
+        weapon.enabled = state;
         _weapons[(int)weapon.SlotType] = state ? weapon : null;
-        if(state)
-        _networkWeapons.Add(weapon);
+        if (state)
+        {
+            _networkWeapons.Add(weapon);
+            weapon.transform.localPosition = new Vector3(0, 0, 0);
+            weapon.transform.localRotation = Quaternion.identity;
+        }
         else
-        _networkWeapons.Remove(weapon);
+        {
+            _networkWeapons.Remove(weapon);
+        }       
     }
 
     private void DropWeapon(Weapon weapon)
-    {              
-        weapon.enabled = false;
+    {                    
         weapon.Rigidbody.AddForce(_fpCamera.transform.forward * _dropForce, ForceMode.Impulse);
 
         ChangeWeaponState(weapon, false);
-    }
-
-    #region Disable Weapon
-    private void DisableWeapon()
-    {
-        _weapon.gameObject.SetActive(false);
-
-        DisableWeaponServerRpc();
+        weapon.gameObject.SetActive(true);
+        DropWeaponServerRpc(weapon);
     }
 
     [ServerRpc]
-    private void DisableWeaponServerRpc()
+    private void DropWeaponServerRpc(NetworkBehaviourReference weapon)
     {
-        DisableWeaponClientRpc();
+        DropWeaponClientRpc(weapon);
+
+        if (weapon.TryGet(out Weapon weaponObject))
+            weaponObject.NetworkObject.RemoveOwnership();
     }
 
     [ClientRpc]
-    private void DisableWeaponClientRpc()
+    private void DropWeaponClientRpc(NetworkBehaviourReference weapon)
+    {
+        if (weapon.TryGet(out Weapon weaponObject))
+            weaponObject.Collider.enabled = true;
+    }
+
+    #region Disable Weapon
+    private void DisableWeapon(Weapon weapon)
+    {
+        weapon.gameObject.SetActive(false);
+
+        DisableWeaponServerRpc(weapon);
+    }
+
+    [ServerRpc]
+    private void DisableWeaponServerRpc(NetworkBehaviourReference weapon)
+    {
+        DisableWeaponClientRpc(weapon);
+    }
+
+    [ClientRpc]
+    private void DisableWeaponClientRpc(NetworkBehaviourReference weapon)
     {
         if (!IsOwner)
         {
-            if(_networkWeapon.Value.TryGet(out _weapon))
-                _weapon.gameObject.SetActive(false);
+            if(weapon.TryGet(out Weapon weaponObject))
+                weaponObject.gameObject.SetActive(false);
         }
     }
     #endregion   
@@ -267,13 +289,15 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     private void TakeWeaponServerRpc(NetworkBehaviourReference weapon)
     {
         TakeWeaponClientRpc(weapon);
+        if (weapon.TryGet(out Weapon weaponObject))
+            weaponObject.NetworkObject.ChangeOwnership(OwnerClientId);
     }
 
     [ClientRpc]
     private void TakeWeaponClientRpc(NetworkBehaviourReference weapon)
     {
-       if(weapon.TryGet(out _weapon))
-            _weapon.gameObject.SetActive(true);
+       if (weapon.TryGet(out Weapon weaponObject))
+            weaponObject.gameObject.SetActive(true);
     }
     #endregion
     
@@ -284,7 +308,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         if (dropWeapon)
             DropWeapon(_weapon);
         else
-            DisableWeapon();
+            DisableWeapon(_weapon);
 
         TakeWeapon(weapon);
 
@@ -300,13 +324,13 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     [ClientRpc]
     private void ChangeWeaponClientRpc(NetworkBehaviourReference oldWeapon, NetworkBehaviourReference newWeapon, bool dropWeapon)
     {
-        if (oldWeapon.TryGet(out _weapon))
+        if (oldWeapon.TryGet(out Weapon oldWeaponObject))
             if (dropWeapon)
-                _weapon.Collider.enabled = true;
+                oldWeaponObject.Collider.enabled = true;
             else
-                _weapon.gameObject.SetActive(false);      
-        if (newWeapon.TryGet(out _weapon))
-            _weapon.gameObject.SetActive(true);
+                oldWeaponObject.gameObject.SetActive(false);
+        if (newWeapon.TryGet(out Weapon newWeaponObject))
+            newWeaponObject.gameObject.SetActive(true);
     }
     #endregion
 
@@ -411,8 +435,10 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         }
 
         if (Input.GetKeyDown(KeyCode.G) && _weapon.SlotType != SlotType.Knife)
-            ChangeWeapon(GetWeapon(),true);
-
+        {
+            ChangeWeapon(_weapons.First(weapon => weapon && weapon != _weapon), true);       
+        }
+            
         if (Input.GetKeyDown(KeyCode.R) && _weapon is Gun)
             ((Gun)_weapon).Reload();
 
@@ -440,10 +466,12 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                 {
                     if (_weapons[(int)weapon.SlotType])
                     {
-                        DropWeapon(_weapons[(int)weapon.SlotType]);                      
+                        DropWeapon(_weapons[(int)weapon.SlotType]);                        
                     }
-                    ChangeWeaponState(weapon, true);
-                }                  
+                    weapon.gameObject.SetActive(false);
+                } 
+                ChangeWeaponState(weapon, true);
+                
             }
         }
 
