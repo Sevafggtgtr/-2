@@ -22,9 +22,10 @@ public class Player : NetworkBehaviour
     private NetworkVariable<FixedString32Bytes> _nickname = new NetworkVariable<FixedString32Bytes>(writePerm: NetworkVariableWritePermission.Owner);
     public NetworkVariable<FixedString32Bytes> Nickname => _nickname;
 
+    public NetworkVariable<NetworkBehaviourReference> Controller = new NetworkVariable<NetworkBehaviourReference>(writePerm: NetworkVariableWritePermission.Owner);
+
     void Start()
     {
-
         if (IsOwner)
         {
             PlayerController.Spawn += (player) =>
@@ -35,6 +36,7 @@ public class Player : NetworkBehaviour
                         _deaths.Value++;
                     player.Kill += () =>
                         _kills.Value++;
+                    Controller.Value = player;
                 }
             };
 

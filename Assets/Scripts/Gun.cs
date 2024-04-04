@@ -9,13 +9,6 @@ public enum SlotType
     Knife,
     Grenade
 }
-public enum GunType
-{
-    Pistol,
-    SMG,
-    Assault_Rifle,
-    MG
-}
 
 [RequireComponent(typeof(AudioSource))]
 public class Gun : Weapon
@@ -36,29 +29,7 @@ public class Gun : Weapon
 
     [SerializeField]
     private float _reloadTime,
-                  _shotDistance,
-                  _spreadAngle,
-                  _scopeValue,
-                  _scopeSpeed,
-                  _spreadScopeValue,
-                  _recoilValue,
-                  _recoilDecrease;
-
-    public float ScopeValue => _scopeValue;
-    public float ScopeSpeed => _scopeSpeed;
-    public float SpreadScopeValue => _spreadScopeValue;
-
-    [System.Serializable]
-    private struct Spread
-    {   [SerializeField]
-        private PlayerState _playerState;
-        public PlayerState PlayerState => _playerState;
-        [SerializeField]
-        private float _value;
-        public float Value => _value;
-    }
-    [SerializeField]
-    private Spread[] _spreads;
+                  _shotDistance;                                                   
 
     [SerializeField]
     private Transform _hitPrefab,
@@ -67,16 +38,7 @@ public class Gun : Weapon
 
     public Transform Sight => _sight;
 
-    private float _time,
-                  _spread,
-                  _recoil;
-
-    public float GetSpread() => _spread;
-
-    public void SetSpread(float spread)
-       => _spread = spread;
-
-    private Vector3 _recoilVelocity;
+    private float _time;
 
     private bool _isShooting,
                  _isReloading,
@@ -88,30 +50,24 @@ public class Gun : Weapon
     private AudioClip _shotSound,
                       _reloadSound;
 
-    [SerializeField]
-    private GunType _gunType;
-
-    void Start()
-    {       
-        _spread = _spreadAngle;
-    }
-
     public void Scope(bool value)
         => _isScoping = value;
 
-    public override void Action(Vector3 origin, Vector3 direction, PlayerController owner)
+    public override bool Action(Vector3 origin, Vector3 direction, PlayerController owner)
     {
         if (_currentClipAmmo > 0 && !_isShooting && !_isReloading)
         {
-            _recoilVelocity += new Vector3(Random.Range(0, _recoilValue), Random.Range(-_recoilValue, _recoilValue) / 2);
-
             _currentClipAmmo--;
             _isShooting = true;
             _audioSource.PlayOneShot(_shotSound);
 
             AmmoChanged.Invoke();
             ActionServerRpc(origin, direction, owner);
+
+            return true;
         }
+        else
+            return false;
     }
 
     [ServerRpc]
@@ -120,7 +76,7 @@ public class Gun : Weapon
         if(owner.TryGet(out PlayerController ownerObject))
         {
             RaycastHit hit;
-            if (Physics.Raycast(origin, direction + Random.insideUnitSphere / 100 * _spread, out hit, _shotDistance))
+            if (Physics.Raycast(origin, direction + Random.insideUnitSphere / 100, out hit, _shotDistance))
             {
                 if (hit.transform.GetComponent<IDamageableObject>() != null)
                     hit.transform.GetComponent<IDamageableObject>().DamageClientRpc(_damage, owner);
@@ -179,8 +135,5 @@ public class Gun : Weapon
                 AmmoChanged?.Invoke();
             }           
         }
-      
-        transform.localEulerAngles = _recoilVelocity;
-        _recoilVelocity = Vector3.Lerp(_recoilVelocity, Vector3.zero, _recoilDecrease * Time.deltaTime);
     }
 }

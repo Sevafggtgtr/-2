@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Events;
+using System.Collections;
 
 public enum Teams
 {
@@ -36,6 +38,9 @@ public struct TeamData
 
 public class GameManager : NetworkBehaviour
 {
+    public event UnityAction RoundEnded;
+    public event UnityAction<int> RoundStarted;
+
     private static GameManager _singleton;
     public static GameManager Singleton => _singleton;
 
@@ -49,10 +54,12 @@ public class GameManager : NetworkBehaviour
     private TeamData[] _teams;
     public TeamData[] Teams => _teams;
 
-    private NetworkVariable<int>[] _points = new NetworkVariable<int>[2];
+    private NetworkVariable<int>[] _points = new NetworkVariable<int>[2] {new NetworkVariable<int>(),new NetworkVariable<int>()};
     public NetworkVariable<int>[] Points => _points;
-    private NetworkVariable<int> _time = new NetworkVariable<int>();
-    public NetworkVariable<int> Time => _time;
+    private int _time;
+    public int Time => _time;
+
+    private Coroutine _timerCoroutine;
 
     void Awake()
     {
@@ -61,18 +68,28 @@ public class GameManager : NetworkBehaviour
 
     private void Start()
     {
-        /*NetworkManager.NetworkTickSystem.Tick += () =>
+        NetworkManager.OnServerStarted += () =>
         {
-            _time.Value--;
-        };*/
+            NetworkManager.NetworkTickSystem.Tick += () =>
+            {
+                //_time.Value--;
+            };
+        };
 
         NetworkManager.OnClientConnectedCallback += (ID) =>
         {
-            if(IsHost)
-            NetworkManager.ConnectedClients[ID].PlayerObject.GetComponent<Player>().Team.OnValueChanged += (o, n) =>
-            {
-                StartRoundServerRpc();
-            };
+            if (IsHost)
+                NetworkManager.ConnectedClients[ID].PlayerObject.GetComponent<Player>().Team.OnValueChanged += (o, n) =>
+                {
+                    _timerCoroutine = StartCoroutine(Timer());
+                    StartRoundServerRpc();
+                };
+        };
+
+        NetworkManager.OnClientStarted += () =>
+        {           
+            if(!IsHost)
+                _timerCoroutine = StartCoroutine(Timer());            
         };
     }
 
@@ -98,15 +115,17 @@ public class GameManager : NetworkBehaviour
                 int[] teams = new int[2];
 
                 foreach (var player in NetworkManager.ConnectedClients)
-                    teams[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1]++;
-                if (teams[0] * teams[1] > 0)
-                {
+                    if(player.Value.PlayerObject.GetComponent<Player>().Controller.Value.TryGet(out PlayerController controller))
+                        if(controller.Health > 0)
+                            teams[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1]++;
+                if (teams[0] * teams[1] == 0)
+                {                   
                     _points[teams[0] == 0 ? 1 : 0].Value ++;
                     if(Mathf.Max(teams) == 13)
                     {
                         foreach (var player in FindObjectsOfType<PlayerController>())
                             Destroy(player);
-                    }
+                    }                    
                     StartRoundServerRpc();
                 }
             };
@@ -114,10 +133,37 @@ public class GameManager : NetworkBehaviour
             player_.NetworkObject.SpawnWithOwnership(player.Value.ClientId);
 
             spawnPoint = spawnPoints[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1][Random.Range(0, spawnPoints[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1].Count)];
-            player_.transform.position = spawnPoint.position;
-
+            player_.SpawnPlayersClientRpc(player.Value.ClientId, spawnPoint.position); ;
+            
             spawnPoints[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1].Remove(spawnPoint);
         }
+        StartRoundClientRpc();
+    }
+     
+    [ClientRpc]
+    private void StartRoundClientRpc()
+    {
+        _time = 90;        
+
+        //RoundStarted.Invoke(90);
+    }
+
+    IEnumerator Timer()
+    {
+        while(true)
+        {
+            if(_time > 0)
+            {
+                yield return new WaitForSeconds(1);
+
+                _time--;
+
+                
+            }     
+            else
+               if (IsHost)
+                 StartRoundServerRpc();
+        }     
     }
 
     void Update()

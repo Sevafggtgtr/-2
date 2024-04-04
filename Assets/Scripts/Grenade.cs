@@ -11,11 +11,13 @@ public class Grenade : Weapon
 
     private NetworkBehaviourReference _owner;
 
-    public override void Action(Vector3 origin, Vector3 direction, PlayerController owner)
+    public override bool Action(Vector3 origin, Vector3 direction, PlayerController owner)
     {        
         owner.ChangeWeapon(owner.GetWeapon(), true);
 
         ActionServerRpc(origin, direction, owner);
+
+        return true;
     }    
 
     [ServerRpc]

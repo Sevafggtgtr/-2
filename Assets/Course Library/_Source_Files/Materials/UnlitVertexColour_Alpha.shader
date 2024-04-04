@@ -1,4 +1,4 @@
-Shader "Simple/Unlit Vertex Color_Alpha" 
+Shader "EscPodGames/Unlit Vertex Color_Alpha" 
 {
 
 Properties {

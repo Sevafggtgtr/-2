@@ -20,7 +20,7 @@ public class SpawnManager : NetworkBehaviour
             PlayerController.Singleton.FpCamera.gameObject.SetActive(false);
             PlayerController.Singleton.HandCamera.gameObject.SetActive(false);
 
-            Destroy(PlayerController.Singleton);
+            //Destroy(PlayerController.Singleton);
 
             RespawnServerRpc();
         };      

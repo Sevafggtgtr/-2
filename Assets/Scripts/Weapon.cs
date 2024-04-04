@@ -7,6 +7,22 @@ public enum ActionMode
     Single
 }
 
+public enum WeaponType
+{
+    HandGun,
+    Auto,
+    Auto_0,
+    Shotgun,
+    Rifle,
+    Rifle_0,
+    SMG,
+    RPG,
+    MiniGun,
+    Grenade,
+    Bow,
+    Knife
+}
+
 [RequireComponent(typeof(AudioSource), typeof(Rigidbody))]
 public abstract class Weapon : NetworkBehaviour
 {
@@ -22,6 +38,38 @@ public abstract class Weapon : NetworkBehaviour
     public SlotType SlotType => _slotType;
 
     [SerializeField]
+    private WeaponType _weaponType;
+    public WeaponType WeaponType => _weaponType;
+
+    [SerializeField]
+    private float _recoilValue,
+                  _recoilDecrease,
+                  _firstShotMultiplier;
+    public float RecoilValue => _recoilValue;
+    public float RecoilDecrease => _recoilDecrease;
+    public float FirstShotMultiplier => _firstShotMultiplier;
+
+    [SerializeField]
+    private float _spreadValue,
+                  _spreadDecrease;
+    public float SpreadValue => _spreadValue;
+    public float SpreadDecrease => _spreadDecrease;
+
+    [SerializeField]
+    private float _scopeValue,
+                  _scopeSpeed,
+                  _scopeRecoilMultiplier,
+                  _scopeSpreadMultiplier;
+    public float ScopeValue => _scopeValue;
+    public float ScopeSpeed => _scopeSpeed;
+    public float ScopeRecoilMultiplier => _scopeRecoilMultiplier;
+    public float ScopeSpreadMultiplier => _scopeSpreadMultiplier;
+
+    [SerializeField]
+    private float _ownerSpeedMultiplier;
+    public float OwnerSpeedMultiplier => _ownerSpeedMultiplier;
+
+    [SerializeField]
     private string _name;
     public string Name => _name;
 
@@ -33,7 +81,7 @@ public abstract class Weapon : NetworkBehaviour
     protected Rigidbody _rigidbody;
     public Rigidbody Rigidbody => _rigidbody;
 
-    public abstract void Action(Vector3 origin, Vector3 direction, PlayerController owner);
+    public abstract bool Action(Vector3 origin, Vector3 direction, PlayerController owner);
 
     protected void Awake()
     {
