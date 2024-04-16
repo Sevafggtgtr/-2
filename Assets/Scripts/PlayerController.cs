@@ -112,9 +112,10 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
     [SerializeField]
     private Transform _head,
-                      _hand,
-                      _weaponPivot,
-                      _cameraPivot;
+                      _hand;                     
+
+    [SerializeField]
+    private GameObject _arms;
 
     private bool _scope;
     [SerializeField]
@@ -122,8 +123,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
     private float _velocity;
 
-    private Vector3 _handCameraStartPosition,
-                    _weaponPivotStartPosition;
+    private Vector3 _handCameraStartPosition;
     public Vector3 HandCameraStartPosition => _handCameraStartPosition;
 
     [SerializeField]
@@ -168,6 +168,13 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
           }
     }
 
+    void ChangeLayer(GameObject parent, bool state)
+    {
+        parent.layer = (state) ? 3 : 0;
+        for (int i = 0; i < parent.transform.childCount; i++)
+            ChangeLayer(parent.transform.GetChild(i).gameObject, state);
+    }
+
     private void Start()
     {
         Spawn.Invoke(this);
@@ -200,7 +207,6 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             Cursor.visible = false;          
 
             _handCameraStartPosition = _handCamera.transform.localPosition;
-            _weaponPivotStartPosition = _weaponPivot.transform.localPosition;
             
             SpawnWeaponsServerRpc();
 
@@ -209,6 +215,9 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             transform.position = _spawnPointPosition;
 
             _model.gameObject.SetActive(false);
+            
+            ChangeLayer(_arms, true);
+            
         }
 
         HUD.Singleton.PauseMenu.UnPaused += () => _isActive = true;
@@ -256,15 +265,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     private void ChangeWeaponState(Weapon weapon, bool state)
     {       
         if(IsOwner)
-        {
-            void ChangeLayer(GameObject parent)
-            {
-                parent.layer = (state) ? 3 : 0;
-                for (int i = 0; i < parent.transform.childCount; i++)
-                    ChangeLayer(parent.transform.GetChild(i).gameObject);
-            }
-
-            ChangeLayer(weapon.gameObject);
+        {           
+            ChangeLayer(weapon.gameObject, state);
 
             if (state)            
                 _networkWeapons.Add(weapon);           
@@ -275,7 +277,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         weapon.Collider.enabled = !state;
         weapon.Rigidbody.isKinematic = state;
-        weapon.transform.SetParent(state ? (IsOwner ? _weaponPivot : _hand) : null);
+        weapon.transform.SetParent(state ? _hand : null);
         weapon.enabled = state;
         _weapons[(int)weapon.SlotType] = state ? weapon : null;
 
@@ -442,9 +444,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     {
         float maxRecoil = _recoil;
 
-        float time = 0;
-
-        _angle -= _recoil * _cameraWeaponRecoilAngleUnit;
+        float time = 0;        
 
         while (_recoil != 0)
         {          
@@ -454,9 +454,9 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
             time += _weapon.RecoilDecrease / maxRecoil * Time.deltaTime;
 
-            _weaponPivot.transform.localRotation = Quaternion.Euler(_recoil * -_cameraWeaponRecoilAngleUnit, 0, 0);
+            _arms.transform.localRotation = Quaternion.Euler(_recoil * -_cameraWeaponRecoilAngleUnit, 0, 0);
 
-            _weaponPivot.transform.localPosition = _weaponPivotStartPosition -  new Vector3(0, 0, Mathf.Clamp(_recoil * _weaponPivotRecoilOffsetUnit, 0, _weaponPivotMaxRecoilOffset));
+            _arms.transform.localPosition = new Vector3(0, 0, Mathf.Clamp(_recoil * _weaponPivotRecoilOffsetUnit, 0, _weaponPivotMaxRecoilOffset));
 
             yield return null;
         }       
@@ -507,14 +507,18 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         {           
             _animator.SetBool("Shoot_b", true);
 
-            _recoil += _weapon.RecoilValue * (Input.GetMouseButtonDown(0) ? _weapon.FirstShotMultiplier : 1) * GetPlayerStateSettings().WeaponRecoilMultiplier * (_scope ? _weapon.ScopeRecoilMultiplier : 1);
+            var recoil = _weapon.RecoilValue * (Input.GetMouseButtonDown(0) ? _weapon.FirstShotMultiplier : 1) * GetPlayerStateSettings().WeaponRecoilMultiplier * (_scope ? _weapon.ScopeRecoilMultiplier : 1);
             
+            _angle -= recoil * _cameraWeaponRecoilAngleUnit;
+
+            _recoil += recoil;
+
             if(_recoilCoroutine != null)
             StopCoroutine(_recoilCoroutine);
 
             _recoilCoroutine = StartCoroutine(Recoil());
 
-            _spread += _weapon.SpreadValue * (Input.GetMouseButtonDown(0) ? _weapon.FirstShotMultiplier : 1) * GetPlayerStateSettings().WeaponSpreadMultiplier * (_scope ? _weapon.ScopeSpreadMultiplier : 1);
+            _spread += _weapon.SpreadValue * (Input.GetMouseButtonDown(0) && PlayerState == PlayerState.Idle && PlayerState == PlayerState.CrouchIdle  ? 0 : 1) * GetPlayerStateSettings().WeaponSpreadMultiplier * (_scope ? _weapon.ScopeSpreadMultiplier : 1);
 
             if (_spreadCoroutine != null)
                 StopCoroutine(_spreadCoroutine);
@@ -665,8 +669,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
            
         _angle -= Input.GetAxis("Mouse Y") * _sensitivity * Time.deltaTime;
         _angle = Mathf.Clamp(_angle, -90, 90);
-        _cameraPivot.localRotation = Quaternion.Euler(_angle, 0, 0);
-        _head.localRotation = Quaternion.Euler(0, _angle, 0);
+        _fpCamera.transform.localRotation = Quaternion.Euler(_angle, 0, 0);
+        _head.localRotation = _arms.transform.localRotation = Quaternion.Euler(0, _angle, 0);
 
         _fpCamera.transform.localPosition = Mathf.Sin(_time / _cameraMovePeriod * GetPlayerStateSettings(_playerState).CameraMoveRate * 360 * Mathf.Deg2Rad) * _cameraMoveOffset;
         _time += Time.deltaTime;

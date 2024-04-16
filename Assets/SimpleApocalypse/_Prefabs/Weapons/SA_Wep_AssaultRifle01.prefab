@@ -417,8 +417,8 @@ MonoBehaviour:
   _recoilValue: 1
   _recoilDecrease: 6
   _firstShotMultiplier: 3
-  _spreadValue: 4
-  _spreadDecrease: 9
+  _spreadValue: 0.5
+  _spreadDecrease: 3
   _scopeValue: 1.5
   _scopeSpeed: 20
   _scopeRecoilMultiplier: 0.5
