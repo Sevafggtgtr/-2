@@ -91,6 +91,5 @@ public class HUD : MonoBehaviour
         };
 
         _singleton = this;
-        gameObject.SetActive(false);
     }
 }

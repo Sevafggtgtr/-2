@@ -13,7 +13,7 @@ public class Grenade : Weapon
 
     public override bool Action(Vector3 origin, Vector3 direction, PlayerController owner)
     {        
-        owner.ChangeWeapon(owner.GetWeapon(), true);
+        owner.ChangeWeapon(this, true);
 
         ActionServerRpc(origin, direction, owner);
 

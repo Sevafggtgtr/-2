@@ -21,15 +21,13 @@ public class UIScoreTeamPanel : MonoBehaviour
             {
                 _teamScoreTexts[index].text = newPoints.ToString();
             };
-        }           
-        SetTime();
+        }
+
+        GameManager.Singleton.Time.OnValueChanged += (oldTime, newTime) =>
+        {
+            _timeText.text = (GameManager.Singleton.Time.Value / 60).ToString() + ":" + (GameManager.Singleton.Time.Value % 60).ToString();
+        };        
     }       
-    
-    private void SetTime()
-    {
-        _timeText.text = (GameManager.Singleton.Time / 60).ToString() + ":" + (GameManager.Singleton.Time % 60).ToString();
-        Invoke("SetTime",1);
-    }
 
     void Update()
     {

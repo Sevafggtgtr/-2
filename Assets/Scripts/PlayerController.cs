@@ -90,7 +90,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     private AnimationCurve _weaponAnimationCurve;
 
     private float _recoil,
-                  _spread;
+                  _spread,
+                  _handCameraRecoilAngle;
     
 
     private Coroutine _recoilCoroutine,
@@ -108,14 +109,9 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     private float _sensitivity,
                   _pickDistance,
                   _dropForce,
-                  _jumpForce;
+                  _jumpForce;                     
 
-    [SerializeField]
-    private Transform _head,
-                      _hand;                     
-
-    [SerializeField]
-    private GameObject _arms;
+    private Transform _arms;
 
     private bool _scope;
     [SerializeField]
@@ -132,15 +128,15 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     public Camera FpCamera => _fpCamera;
     public Camera HandCamera => _handCamera;
 
-    private float _angle;                 
+    private float _angle;
+    public float Angle => _angle;
 
     private int _health = 100;
     public int Health => _health;
 
     private CharacterController _controller;
 
-    [SerializeField]
-    private SkinnedMeshRenderer _model;
+    private PlayerAnimator _model;
 
     private Animator _animator;
 
@@ -179,9 +175,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     {
         Spawn.Invoke(this);
 
-        _controller = GetComponent<CharacterController>();
-
-        _animator = GetComponent<Animator>();
+        _controller = GetComponent<CharacterController>();        
 
         if (!IsOwner)
         {
@@ -204,30 +198,29 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             _singleton = this;          
 
             Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;          
-
-            _handCameraStartPosition = _handCamera.transform.localPosition;
+            Cursor.visible = false;                  
             
-            SpawnWeaponsServerRpc();
+            SpawnWeaponsServerRpc();          
 
-            _animator.SetInteger("WeaponType_int", (int)((Gun)_weapon).WeaponType + 1);
-
-            transform.position = _spawnPointPosition;
-
-            _model.gameObject.SetActive(false);
-            
-            ChangeLayer(_arms, true);
-            
+            transform.position = _spawnPointPosition;            
         }
 
         HUD.Singleton.PauseMenu.UnPaused += () => _isActive = true;
-        _controller.enabled = true;
+        _controller.enabled = true;        
     }
 
     #region Spawn Weapon
     [ServerRpc]
     private void SpawnWeaponsServerRpc()
     {
+        print(Player.Singleton.Team.Value);
+
+        _model = Instantiate(Map.Singleton.Data.SkinPackDatas.First(team => team.Team == Player.Singleton.Team.Value).GetRandomSkin(), transform);
+        
+        _model.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
+
+        _model.GetComponent<NetworkObject>().TrySetParent(transform);
+
         var weapons = new Weapon[4];
 
         for (int i = 0; i < _weaponSlots.Length; i++)
@@ -240,12 +233,25 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             //AddWeaponServerRpc(weapon);//
         }
 
-        SpawnWeaponsClientRpc(weapons.Select(weapon => (NetworkBehaviourReference)weapon).ToArray());
+        SpawnWeaponsClientRpc((NetworkBehaviourReference)_model, weapons.Select(weapon => (NetworkBehaviourReference)weapon).ToArray());
     }
 
     [ClientRpc]
-    private void SpawnWeaponsClientRpc(NetworkBehaviourReference[] weapons)
+    private void SpawnWeaponsClientRpc(NetworkBehaviourReference model, NetworkBehaviourReference[] weapons)
     {
+        if(model.TryGet(out PlayerAnimator modelObject))
+            _model = modelObject;
+
+        _model.Initialize();
+
+        _animator = _model.Animator;
+
+        _arms = _model.transform.Find("mesh_Arms");
+
+        _handCamera.transform.SetParent(_arms, true);
+
+        _handCameraStartPosition = _handCamera.transform.localPosition;        
+
         _weapons = new Weapon[4];
         for (int i = 0; i < weapons.Length; i++)
         {
@@ -255,8 +261,21 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                 weapon.gameObject.SetActive(false);
             }
         }
-        if(IsOwner)
+        if (IsOwner)
+        {
+            ChangeLayer(_arms.gameObject, true);
+
+            foreach(Transform child in _model.transform)
+            {
+                if(child.name.Contains("mesh_") && !child.name.Contains("Arms"))
+                {
+                    child.gameObject.SetActive(false);
+                }
+            }
+
             TakeWeapon(_weapons[0]);
+        }
+            
         else
             _weapons[0].gameObject.SetActive(true);
     }
@@ -277,12 +296,12 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         weapon.Collider.enabled = !state;
         weapon.Rigidbody.isKinematic = state;
-        weapon.transform.SetParent(state ? _hand : null);
+        weapon.transform.SetParent(state ? _model.Hand : null);
         weapon.enabled = state;
         _weapons[(int)weapon.SlotType] = state ? weapon : null;
 
         if (state)                  
-            weapon.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            weapon.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(0, 90, 90));
     }
 
     private void DropWeapon(Weapon weapon)
@@ -403,6 +422,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     [ServerRpc]
     private void KnifeDespawnServerRpc()
                => _weapon.NetworkObject.Despawn();
+    #region Controller
 
     [ClientRpc]
     public void DamageClientRpc(int value, NetworkBehaviourReference killer)
@@ -417,10 +437,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             Die(player.GetPlayer());
         }
     }
-
-    public Weapon GetWeapon()
-        => _weapons.First(weapon => weapon);
-
+    
     protected void Die(Player killer)
     {
         if (IsOwner)
@@ -439,7 +456,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         enabled = false;
     }
-
+    #endregion
     private IEnumerator Recoil()
     {
         float maxRecoil = _recoil;
@@ -454,9 +471,9 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
             time += _weapon.RecoilDecrease / maxRecoil * Time.deltaTime;
 
-            _arms.transform.localRotation = Quaternion.Euler(_recoil * -_cameraWeaponRecoilAngleUnit, 0, 0);
+            _handCamera.transform.localRotation = Quaternion.Euler(_recoil * _cameraWeaponRecoilAngleUnit, 0, 0);
 
-            _arms.transform.localPosition = new Vector3(0, 0, Mathf.Clamp(_recoil * _weaponPivotRecoilOffsetUnit, 0, _weaponPivotMaxRecoilOffset));
+            //_handCamera.transform.localPosition = new Vector3(0, 0, Mathf.Clamp(_recoil * _weaponPivotRecoilOffsetUnit, 0, _weaponPivotMaxRecoilOffset));
 
             yield return null;
         }       
@@ -535,7 +552,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         {
             if (Input.GetMouseButton(1) && PlayerState != PlayerState.Run)
             {
-                _handCamera.transform.position += (((Gun)_weapon).Sight.position - _handCamera.transform.position) * Time.deltaTime * ((Gun)_weapon).ScopeSpeed;
+                _handCamera.transform.position = (((Gun)_weapon).Sight.position - _handCamera.transform.position) * Time.deltaTime * ((Gun)_weapon).ScopeSpeed;
                 _fpCamera.fieldOfView = Mathf.Lerp(_fpCamera.fieldOfView, 60 / ((Gun)_weapon).ScopeValue, Time.deltaTime * ((Gun)_weapon).ScopeSpeed);
 
                 _scope = true;
@@ -669,10 +686,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
            
         _angle -= Input.GetAxis("Mouse Y") * _sensitivity * Time.deltaTime;
         _angle = Mathf.Clamp(_angle, -90, 90);
-        _fpCamera.transform.localRotation = Quaternion.Euler(_angle, 0, 0);
-        _head.localRotation = _arms.transform.localRotation = Quaternion.Euler(0, _angle, 0);
-
-        _fpCamera.transform.localPosition = Mathf.Sin(_time / _cameraMovePeriod * GetPlayerStateSettings(_playerState).CameraMoveRate * 360 * Mathf.Deg2Rad) * _cameraMoveOffset;
+        _arms.transform.localRotation = _fpCamera.transform.localRotation = Quaternion.Euler(_angle, 0, 0);
+        _fpCamera.transform.position += Mathf.Sin(_time / _cameraMovePeriod * GetPlayerStateSettings(_playerState).CameraMoveRate * 360 * Mathf.Deg2Rad) * _cameraMoveOffset;
         _time += Time.deltaTime;
         #endregion
     }

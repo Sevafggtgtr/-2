@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ea67bed27d90d745b323253120f6fa2, type: 3}
+  m_Name: Skin Punk Pack
+  m_EditorClassIdentifier: 
+  _team: 1
+  _skins:
+  - {fileID: 5705109384525517150, guid: 808cecf5faced0e4cb9d175818675493, type: 3}
+  - {fileID: 4838884336170202029, guid: f0ed0bf7ba4f46d459ac0b421ee7ca74, type: 3}
+  - {fileID: 2182215502387374988, guid: 38913a0cd30e1a54da3f663f4cf5b2ab, type: 3}

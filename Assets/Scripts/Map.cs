@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class Map : MonoBehaviour
 {
+    private static Map _singleton;
+    public static Map Singleton => _singleton;
+
     [System.Serializable]
     public struct TeamSpawnPoints
     {
@@ -17,12 +20,16 @@ public class Map : MonoBehaviour
     }
 
     [SerializeField]
-    private TeamSpawnPoints[] _teamSpawnPoints;
-    public TeamSpawnPoints[] GetTeamSpawnPoints() => _teamSpawnPoints;
+    private MapData _data;
+    public MapData Data => _data;
 
-    void Start()
+    [SerializeField]
+    private TeamSpawnPoints[] _teamSpawnPoints;
+    public TeamSpawnPoints[] GetTeamSpawnPoints() => _teamSpawnPoints;    
+
+    void Awake()
     {
-        
+        _singleton = this;
     }
 
     void Update()

@@ -8,8 +8,10 @@ using UnityEngine.Events;
 
 public class Player : NetworkBehaviour
 {
-    public static event UnityAction TeamChoosed;
     public event UnityAction Disconnected;
+
+    private static Player _singleton;
+    public static Player Singleton => _singleton;
 
     public NetworkVariable<Teams> Team = new NetworkVariable<Teams>(Teams.Terrorist,NetworkVariableReadPermission.Everyone,NetworkVariableWritePermission.Owner);
 
@@ -23,6 +25,11 @@ public class Player : NetworkBehaviour
     public NetworkVariable<FixedString32Bytes> Nickname => _nickname;
 
     public NetworkVariable<NetworkBehaviourReference> Controller = new NetworkVariable<NetworkBehaviourReference>(writePerm: NetworkVariableWritePermission.Owner);
+
+    private void Awake()
+    {
+        _singleton = this;
+    }
 
     void Start()
     {
@@ -41,19 +48,17 @@ public class Player : NetworkBehaviour
             };
 
             _nickname.Value = UIMainMenu.Singleton.Nickname;
-
-            HUD.Singleton.ChooseTeamPanel.TeamChoosed += (team) =>
-            {
-                Team.Value = team;
-
-                TeamChoosed?.Invoke();
-            };
         }
     }
 
     public override void OnDestroy()
     {
         Disconnected.Invoke();
+    }
+
+    public void ChangeTeam(Teams team)
+    {
+        Team.Value = team;
     }
 
     void Update()

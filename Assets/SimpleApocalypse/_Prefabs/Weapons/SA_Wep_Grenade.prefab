@@ -281,7 +281,7 @@ MonoBehaviour:
   _scopeSpeed: 0
   _scopeRecoilMultiplier: 0
   _scopeSpreadMultiplier: 0
-  _ownerSpeedMultiplier: 0
+  _ownerSpeedMultiplier: 0.9
   _name: Grenade
   _radius: 5
   _explodeTime: 3

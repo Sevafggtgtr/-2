@@ -27,13 +27,9 @@ public struct TeamData
     private Teams _team;
     public Teams Team => _team;
 
-    public TeamData(string name, Color color, Teams team)
-    {
-        _name = name;
-        _color = color;
-        _team = team;
-    }
-
+    [SerializeField]
+    private Texture[] _playerSkins;
+    public Texture[] PlayerSkins => _playerSkins;
 }
 
 public class GameManager : NetworkBehaviour
@@ -48,22 +44,28 @@ public class GameManager : NetworkBehaviour
     private PlayerController _playerPrefab;
 
     [SerializeField]
-    private Map _map;
+    private MapData[] _maps;
+    public MapData[] Maps => _maps;
 
     [SerializeField]
     private TeamData[] _teams;
     public TeamData[] Teams => _teams;
 
+    public TeamData GetTeamData(Teams team)
+        => _teams.First(team_ => team_.Team == team);
+
     private NetworkVariable<int>[] _points = new NetworkVariable<int>[2] {new NetworkVariable<int>(),new NetworkVariable<int>()};
     public NetworkVariable<int>[] Points => _points;
-    private int _time;
-    public int Time => _time;
+    private NetworkVariable<int> _time = new NetworkVariable<int>();
+    public NetworkVariable<int> Time => _time;
 
     private Coroutine _timerCoroutine;
 
     void Awake()
     {
-        _singleton = this;       
+        _singleton = this;    
+        
+        DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
@@ -88,8 +90,7 @@ public class GameManager : NetworkBehaviour
 
         NetworkManager.OnClientStarted += () =>
         {           
-            if(!IsHost)
-                _timerCoroutine = StartCoroutine(Timer());            
+                        
         };
     }
 
@@ -104,7 +105,7 @@ public class GameManager : NetworkBehaviour
             player.NetworkObject.Despawn();
 
         for (int i = 0; i < 2; i++)
-            spawnPoints[i] = _map.GetTeamSpawnPoints()[i].SpawnPoints.ToList();
+            spawnPoints[i] = Map.Singleton.GetTeamSpawnPoints()[i].SpawnPoints.ToList();
 
         foreach (var player in NetworkManager.ConnectedClients)
         {
@@ -137,31 +138,31 @@ public class GameManager : NetworkBehaviour
             
             spawnPoints[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1].Remove(spawnPoint);
         }
+        _time.Value = 90;
+
         StartRoundClientRpc();
     }
      
     [ClientRpc]
     private void StartRoundClientRpc()
     {
-        _time = 90;        
-
         //RoundStarted.Invoke(90);
     }
+
 
     IEnumerator Timer()
     {
         while(true)
         {
-            if(_time > 0)
+            if(_time.Value > 0)
             {
                 yield return new WaitForSeconds(1);
 
-                _time--;
+                _time.Value--;
 
                 
             }     
-            else
-               if (IsHost)
+            else             
                  StartRoundServerRpc();
         }     
     }

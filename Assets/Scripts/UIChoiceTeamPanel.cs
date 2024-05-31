@@ -18,13 +18,13 @@ public class UIChoiceTeamPanel : MonoBehaviour
     {
         _terroristTeamButton.onClick.AddListener(() =>
         {
-            TeamChoosed.Invoke(Teams.Terrorist);
+            Player.Singleton.ChangeTeam(Teams.Terrorist);
             gameObject.SetActive(false);
         });
 
         _counterTerroristTeamButton.onClick.AddListener(() =>
         {
-            TeamChoosed.Invoke(Teams.CounterTerrorist);
+            Player.Singleton.ChangeTeam(Teams.CounterTerrorist);
             gameObject.SetActive(false);
         });
     }

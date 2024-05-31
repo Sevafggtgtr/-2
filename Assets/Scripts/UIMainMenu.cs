@@ -8,9 +8,7 @@ using Unity.Netcode;
 public class UIMainMenu : MonoBehaviour
 {
     [SerializeField]
-    private Button _singleGameButton,
-                   _networkGameButton,
-                   _settingsButton,
+    private Button _settingsButton,
                    _exitButton,
                    _hostButton,
                    _clientButton;
@@ -19,7 +17,8 @@ public class UIMainMenu : MonoBehaviour
     public static UIMainMenu Singleton => _singleton;
 
     [SerializeField]
-    private GameObject _networkPanel;
+    private GameObject _hostPanel,
+                       _clientPanel;
 
     [SerializeField]
     private GameObject _mainCamera;
@@ -35,28 +34,12 @@ public class UIMainMenu : MonoBehaviour
 
     void Start()
     {
-        NetworkManager.Singleton.OnClientConnectedCallback += (ID) =>
+        _hostButton.onClick.AddListener(() =>
         {
-            HUD.Singleton.gameObject.SetActive(true);
-            GameManager.Singleton.gameObject.SetActive(true);
-            _mainCamera.SetActive(false);
-            gameObject.SetActive(false);            
-        };
-
-        _singleGameButton.onClick.AddListener(() =>
-        {
-            NetworkManager.Singleton.StartHost();
-        });
-        _networkGameButton.onClick.AddListener(() => _networkPanel.SetActive(true));
+            _hostPanel.SetActive(true);
+        });        
+        _clientButton.onClick.AddListener(() => _clientPanel.SetActive(true));
         _exitButton.onClick.AddListener(Application.Quit);
-        _hostButton.onClick.AddListener(() => 
-        {
-            NetworkManager.Singleton.StartHost();
-        });
-        _clientButton.onClick.AddListener(() => 
-        {
-            NetworkManager.Singleton.StartClient();
-        });
     }
 
     void Update()
