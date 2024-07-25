@@ -17,7 +17,7 @@ public class UIServerCreationPanel : MonoBehaviour
     [SerializeField]
     private Button _startGameButton;
 
-    private MapData _map;
+    private UIMapSelectionButton _mapSelectionButton;   
 
     void Start()
     {
@@ -27,14 +27,21 @@ public class UIServerCreationPanel : MonoBehaviour
 
             mapSelectionButton.Initialize(map);
 
-            mapSelectionButton.GetComponent<Button>().onClick.AddListener(() => _map =  map);
+            mapSelectionButton.OnClick += () => 
+            {
+                _mapSelectionButton?.Select(false);
+
+                _mapSelectionButton = mapSelectionButton;
+
+                mapSelectionButton.Select(true);
+            };
         }
 
         _startGameButton.onClick.AddListener(() =>
         {
             NetworkManager.Singleton.StartHost();
 
-            NetworkManager.Singleton.SceneManager.LoadScene(_map.Scene.name,LoadSceneMode.Single);
+            NetworkManager.Singleton.SceneManager.LoadScene(_mapSelectionButton.Map.Scene.name,LoadSceneMode.Single);
         });
     }
 

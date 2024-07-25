@@ -8,6 +8,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -2456278175509556751, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.92
+      objectReference: {fileID: 0}
+    - target: {fileID: -2456278175509556751, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0
+      objectReference: {fileID: 0}
     - target: {fileID: 100084, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_Name
       value: Punk_1
@@ -104,16 +112,20 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9500000, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: afec2cc25e3439e4bb1b43e7c09f6503, type: 2}
     - target: {fileID: 13700030, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
+      propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: cba661a44d31ac342b6e3f75f0701f9e, type: 2}
     - target: {fileID: 13700044, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
+      propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: cba661a44d31ac342b6e3f75f0701f9e, type: 2}
     - target: {fileID: 4936133004089741856, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
+      propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: cba661a44d31ac342b6e3f75f0701f9e, type: 2}
     m_RemovedComponents: []
@@ -145,6 +157,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GlobalObjectIdHash: 893705810
+  InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0

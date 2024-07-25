@@ -15,11 +15,6 @@ public class HUD : MonoBehaviour
     private Slider _healthBar;
     public Slider HealthBar => _healthBar;
 
-
-    [SerializeField]
-    private UIRespawnMenu _respawnMenu;
-    public UIRespawnMenu RespawnMenu => _respawnMenu;
-
     [SerializeField]
     private UIPauseMenu _pauseMenu;
     public UIPauseMenu PauseMenu => _pauseMenu;
@@ -71,23 +66,12 @@ public class HUD : MonoBehaviour
 
                     if (_panel != null)
                         _panel.SetActive(false);
-
-                    _panel = _respawnMenu.gameObject;
-
-                    _respawnMenu.gameObject.SetActive(true);
                 };
             }         
             player.Died += (killer) =>
             {
                 _killfeed.SpawnSlot(killer, player.GetPlayer());
             };
-        };
-
-        _respawnMenu.Respawn += () =>
-        {
-            _panel = null;
-
-            _healthBar.value = 100;
         };
 
         _singleton = this;

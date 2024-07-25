@@ -13,17 +13,7 @@ public class SpawnManager : NetworkBehaviour
 
     void Start()
     {
-        InvokeRepeating("Spawn", 2, 60f);
-
-        HUD.Singleton.RespawnMenu.Respawn += () =>
-        {
-            PlayerController.Singleton.FpCamera.gameObject.SetActive(false);
-            PlayerController.Singleton.HandCamera.gameObject.SetActive(false);
-
-            //Destroy(PlayerController.Singleton);
-
-            RespawnServerRpc();
-        };      
+        InvokeRepeating("Spawn", 2, 60f);    
     }
 
     [ServerRpc]

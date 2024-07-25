@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UIMapSelectionButton : MonoBehaviour
+public class UIMapSelectionButton : UISelectebleButton
 {
     private MapData _map;
     public MapData Map => _map;
@@ -11,16 +11,16 @@ public class UIMapSelectionButton : MonoBehaviour
     [SerializeField]
     private Image _image;
 
-    void Start()
-    {
-        
-    }
+    [SerializeField]
+    private Text _nameText;
 
     public void Initialize(MapData map)
     {
         _map = map;
 
         _image.sprite = _map.Icon;
+
+        _nameText.text = _map.Name;
     }
 
     void Update()

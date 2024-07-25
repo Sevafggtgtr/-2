@@ -11,10 +11,14 @@ public class MapData : ScriptableObject
     public Object Scene => _scene;
 
     [SerializeField]
+    private string _name;
+    public string Name => _name;
+
+    [SerializeField]
     private Sprite _icon;
     public Sprite Icon => _icon;
 
     [SerializeField]
     private SkinPackData[] _skinPackDatas;
-    public SkinPackData[] SkinPackDatas => _skinPackDatas;
+    public SkinPackData[] SkinPackDatas => _skinPackDatas;   
 }

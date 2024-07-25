@@ -1,10 +1,13 @@
 using System.Collections;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Unity.Burst.CompilerServices;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Experimental.AI;
 
 public enum PlayerState
 {
@@ -16,8 +19,15 @@ public enum PlayerState
     CrouchWalk
 }
 
+[RequireComponent(typeof(NetworkAudioSource))]
 public class PlayerController : NetworkBehaviour, IDamageableObject
 {
+    public enum Action
+    {
+        Move,
+        Land
+    }
+
     public static event UnityAction<PlayerController> Spawn;
     public static event UnityAction Despawn;
     public event UnityAction WeaponChanged;
@@ -102,6 +112,37 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     private float _cameraMovePeriod;
 
     [SerializeField]
+    private SurfaceSound[] _surfaceSounds;
+
+    [SerializeField]
+    private AudioClip _jumpSound,
+                      _crouchSound;
+
+    [System.Serializable]
+    private struct SurfaceSound
+    {
+        [SerializeField]
+        private SurfaceType _surfaceType;
+        public SurfaceType SurfaceType => _surfaceType;
+
+        [SerializeField]
+        private Action _actionType;
+        public Action ActionType => _actionType;
+
+        [SerializeField]
+        private AudioClip _sound;
+        public AudioClip Sound => _sound;       
+    }
+
+    [SerializeField]
+    private float _walkSoundDuration;
+
+    [SerializeField]
+    private NetworkAudioSource _moveNetworkAudioSource;
+
+    private Coroutine _moveSound;
+
+    [SerializeField]
     private Vector3 _cameraMoveOffset,
                     _cameraRotateOffset;
 
@@ -140,6 +181,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
     private Animator _animator;
 
+    private NetworkAudioSource _networkAudioSource;
+
     private bool _isActive = true;
     
     public string Name { get; set; }
@@ -175,7 +218,9 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     {
         Spawn.Invoke(this);
 
-        _controller = GetComponent<CharacterController>();        
+        _controller = GetComponent<CharacterController>(); 
+        
+        _networkAudioSource = GetComponent<NetworkAudioSource>();
 
         if (!IsOwner)
         {
@@ -200,7 +245,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;                  
             
-            SpawnWeaponsServerRpc();          
+            InitializeServerRpc();          
 
             transform.position = _spawnPointPosition;            
         }
@@ -209,12 +254,23 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         _controller.enabled = true;        
     }
 
-    #region Spawn Weapon
-    [ServerRpc]
-    private void SpawnWeaponsServerRpc()
+    private void ChangeModelState(bool value)
     {
-        print(Player.Singleton.Team.Value);
+        ChangeLayer(_arms.gameObject, !value);
 
+        foreach (Transform child in _model.transform)
+        {
+            if (child.name.Contains("mesh_") && !child.name.Contains("Arms"))
+            {
+                child.gameObject.SetActive(value);
+            }
+        }
+    }
+
+    #region Initialize
+    [ServerRpc]
+    private void InitializeServerRpc()
+    {
         _model = Instantiate(Map.Singleton.Data.SkinPackDatas.First(team => team.Team == Player.Singleton.Team.Value).GetRandomSkin(), transform);
         
         _model.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
@@ -233,11 +289,11 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             //AddWeaponServerRpc(weapon);//
         }
 
-        SpawnWeaponsClientRpc((NetworkBehaviourReference)_model, weapons.Select(weapon => (NetworkBehaviourReference)weapon).ToArray());
+        InitializeClientRpc((NetworkBehaviourReference)_model, weapons.Select(weapon => (NetworkBehaviourReference)weapon).ToArray());
     }
 
     [ClientRpc]
-    private void SpawnWeaponsClientRpc(NetworkBehaviourReference model, NetworkBehaviourReference[] weapons)
+    private void InitializeClientRpc(NetworkBehaviourReference model, NetworkBehaviourReference[] weapons)
     {
         if(model.TryGet(out PlayerAnimator modelObject))
             _model = modelObject;
@@ -263,15 +319,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         }
         if (IsOwner)
         {
-            ChangeLayer(_arms.gameObject, true);
-
-            foreach(Transform child in _model.transform)
-            {
-                if(child.name.Contains("mesh_") && !child.name.Contains("Arms"))
-                {
-                    child.gameObject.SetActive(false);
-                }
-            }
+            ChangeModelState(false);
 
             TakeWeapon(_weapons[0]);
         }
@@ -447,7 +495,9 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
             KnifeDespawnServerRpc();
 
-            _animator.SetBool("Death_b", true);            
+            _animator.SetBool("Death_b", true);   
+            
+            ChangeModelState(true);
         }
         
         Died.Invoke(killer);
@@ -492,6 +542,35 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             time += _weapon.SpreadDecrease / maxSpread * Time.deltaTime;
 
             yield return null;
+        }
+    }
+
+    private IEnumerator MoveSound()
+    {
+        float time = 0;
+
+        PlaySurfaceSound(Action.Move);
+
+        while (time < _walkSoundDuration * GetPlayerStateSettings(PlayerState.Walk).Speed / GetPlayerStateSettings().Speed)
+        {
+            time += Time.deltaTime;
+
+            yield return null;
+        }       
+        _moveSound = null;
+    }
+
+    private void PlaySurfaceSound(Action action)
+    {
+
+        if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, _pickDistance))
+        {
+            var surface = hit.transform.GetComponent<Surface>();
+
+            if (surface != null)
+            {
+                _networkAudioSource.PlayAudio(_surfaceSounds.First(surfaceSound => surfaceSound.SurfaceType == surface.SurfaceType && action == surfaceSound.ActionType).Sound);
+            }
         }
     }
 
@@ -644,6 +723,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         {
             _animator.SetBool("Crouch_b", true);
             _playerState = PlayerState.CrouchIdle;
+            _networkAudioSource.PlayAudio(_crouchSound);
         }
 
         if (Input.GetKeyUp(KeyCode.LeftControl))
@@ -656,13 +736,21 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         {
             _velocity = _jumpForce;
             _animator.SetTrigger("Jump_trig");
+            _networkAudioSource.PlayAudio(_jumpSound);
         }
 
         if (_playerState == PlayerState.Jump && _controller.isGrounded)
+        {
             _playerState = PlayerState.Idle;
 
+            PlaySurfaceSound(Action.Land);
+        }
+            
         if (new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")).magnitude > 0)
-        {           
+        {
+            if(_moveSound == null)
+                _moveSound = StartCoroutine(MoveSound());
+
             if (Input.GetKey(KeyCode.LeftShift) && (_playerState == PlayerState.Walk || _playerState == PlayerState.Idle))
             {
                 _playerState = PlayerState.Run;
@@ -687,7 +775,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         _angle -= Input.GetAxis("Mouse Y") * _sensitivity * Time.deltaTime;
         _angle = Mathf.Clamp(_angle, -90, 90);
         _arms.transform.localRotation = _fpCamera.transform.localRotation = Quaternion.Euler(_angle, 0, 0);
-        _fpCamera.transform.position += Mathf.Sin(_time / _cameraMovePeriod * GetPlayerStateSettings(_playerState).CameraMoveRate * 360 * Mathf.Deg2Rad) * _cameraMoveOffset;
+        _fpCamera.transform.localPosition = Mathf.Sin(_time / _cameraMovePeriod * GetPlayerStateSettings(_playerState).CameraMoveRate * 360 * Mathf.Deg2Rad) * _cameraMoveOffset;
         _time += Time.deltaTime;
         #endregion
     }

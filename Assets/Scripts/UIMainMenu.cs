@@ -23,6 +23,8 @@ public class UIMainMenu : MonoBehaviour
     [SerializeField]
     private GameObject _mainCamera;
 
+    private AudioSource _audioSource;
+
     [SerializeField]
     private InputField _nicknameInputField;
     public string Nickname => _nicknameInputField.text;
@@ -40,10 +42,12 @@ public class UIMainMenu : MonoBehaviour
         });        
         _clientButton.onClick.AddListener(() => _clientPanel.SetActive(true));
         _exitButton.onClick.AddListener(Application.Quit);
+
+        _audioSource = GetComponent<AudioSource>();
     }
 
-    void Update()
+    public void PlaySound()
     {
-        
+        _audioSource.Play();
     }
 }
