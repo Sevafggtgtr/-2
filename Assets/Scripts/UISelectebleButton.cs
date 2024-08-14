@@ -9,7 +9,7 @@ public class UISelectebleButton : UIButton
 
     public void Select(bool value)
     {
-        _button.image.color = value ? _selectionColor : Color.white;
+        Button.image.color = value ? _selectionColor : Color.white;
     }
 
 }

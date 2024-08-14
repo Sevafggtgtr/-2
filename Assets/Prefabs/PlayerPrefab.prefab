@@ -405,7 +405,7 @@ MonoBehaviour:
     _sound: {fileID: 8300000, guid: 46291cd11f46a50458c4cbf510cf10cf, type: 3}
   - _surfaceType: 2
     _actionType: 0
-    _sound: {fileID: 8300000, guid: fa1f7cee3de574e4c9e166ce0d09559e, type: 3}
+    _sound: {fileID: 8300000, guid: f840226c20bd8b546a30c4f742206839, type: 3}
   - _surfaceType: 0
     _actionType: 1
     _sound: {fileID: 8300000, guid: 0007efd0106e3c54180219dec4ef2e59, type: 3}

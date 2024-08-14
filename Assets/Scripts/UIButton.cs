@@ -8,12 +8,13 @@ public class UIButton : MonoBehaviour
 {
     public event UnityAction OnClick;
 
-    protected Button _button;
+    public Button Button { get; private set; }
+
     void Start()
     {
-        _button = GetComponent<Button>(); 
+        Button = GetComponent<Button>(); 
 
-        _button.onClick.AddListener(OnClick);
+        Button.onClick.AddListener(OnClick);
     }
 
     void Update()

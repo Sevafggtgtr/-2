@@ -6,10 +6,11 @@ using UnityEngine.UI;
 public class HUD : MonoBehaviour
 {
     private static HUD _singleton;
-    public static HUD Singleton => _singleton;  
+    public static HUD Singleton => _singleton;
 
     [SerializeField]
-    private Animation _vignettAnimation;
+    private Animation _vignetteAnimation,
+                      _blindnessAnimation;
 
     [SerializeField]
     private Slider _healthBar;
@@ -28,11 +29,6 @@ public class HUD : MonoBehaviour
     private UIChoiceTeamPanel _chooseTeamPanel;
     public UIChoiceTeamPanel ChooseTeamPanel => _chooseTeamPanel;
 
-    void Start()
-    {
-        
-    }
-
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape) && (!_panel || _panel == _pauseMenu.gameObject))
@@ -47,15 +43,22 @@ public class HUD : MonoBehaviour
         }
     }
 
+    public void Blindness()
+    {
+        _blindnessAnimation.Play();
+    }
+
     private void Awake()
     {
         PlayerController.Spawn += (player) =>
         {
             if (player.IsOwner)
             {
+                HealthBar.value = 100;
+
                 player.Damaged += () =>
                 {
-                    _vignettAnimation.Play();
+                    _vignetteAnimation.Play();
 
                     HealthBar.value = PlayerController.Singleton.Health;
                 };

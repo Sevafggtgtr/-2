@@ -1,15 +1,16 @@
 using UnityEngine;
 using Unity.Netcode;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 
-public class Grenade : Weapon
+public abstract class Grenade : Weapon
 {
     [SerializeField]
-    private float _radius,
-                  _explodeTime,
+    private float _activateTime,
                   _throwForce;
 
-    private NetworkBehaviourReference _owner;
+    protected NetworkBehaviourReference _owner;
 
     public override bool Action(Vector3 origin, Vector3 direction, PlayerController owner)
     {        
@@ -27,36 +28,11 @@ public class Grenade : Weapon
         {
             _owner = ownerObject;
 
-            Invoke("Explode", _explodeTime);
+            StartCoroutine(Extensions.Timer(_activateTime, Activate));
 
             Rigidbody.AddForce(direction * _throwForce, ForceMode.Impulse);
         }
     }
 
-    private void Destroy()
-    {
-        NetworkObject.Despawn();
-    }
-    
-    private void Explode()
-    {
-        foreach (Collider target in Physics.OverlapSphere(transform.position, _radius))
-        {
-            if (target.GetComponent<IDamageableObject>()!= null)
-                target.GetComponent<IDamageableObject>().DamageClientRpc(_damage, _owner);
-        }
-
-        Invoke("Destroy", _audioSource.clip.length);
-        
-        ExplodeClientRpc();
-    }
-
-    [ClientRpc]
-    private void ExplodeClientRpc()
-    {
-        _audioSource.Play();
-
-        GetComponent<MeshRenderer>().enabled = false;
-        Collider.enabled = false;
-    }
+    protected abstract void Activate();       
 }

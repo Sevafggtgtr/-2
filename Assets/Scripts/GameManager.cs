@@ -48,8 +48,15 @@ public class GameManager : NetworkBehaviour
     public MapData[] Maps => _maps;
 
     [SerializeField]
+    private Transform _entities;
+
+    [SerializeField]
     private TeamData[] _teams;
     public TeamData[] Teams => _teams;
+
+    [SerializeField]
+    private WeaponData _weaponData;
+    public WeaponData WeaponData => _weaponData;
 
     public TeamData GetTeamData(Teams team)
         => _teams.First(team_ => team_.Team == team);
@@ -82,8 +89,7 @@ public class GameManager : NetworkBehaviour
         {
             if (IsHost)
                 NetworkManager.ConnectedClients[ID].PlayerObject.GetComponent<Player>().Team.OnValueChanged += (o, n) =>
-                {
-                    _timerCoroutine = StartCoroutine(Timer());
+                {                   
                     StartRoundServerRpc();
                 };
         };
@@ -101,9 +107,16 @@ public class GameManager : NetworkBehaviour
 
         var spawnPoints = new List<Transform>[2];
 
-        foreach (var player in FindObjectsOfType<PlayerController>())
-            player.NetworkObject.Despawn();
+        foreach (var networkObject in FindObjectsOfType<NetworkObject>())
+        {
+            if(!networkObject.IsPlayerObject && !networkObject.IsSceneObject.Value)
+            {
+                print(networkObject.name);
 
+                networkObject.Despawn();
+            }                
+        }
+            
         for (int i = 0; i < 2; i++)
             spawnPoints[i] = Map.Singleton.GetTeamSpawnPoints()[i].SpawnPoints.ToList();
 
@@ -140,6 +153,8 @@ public class GameManager : NetworkBehaviour
         }
         _time.Value = 90;
 
+        _timerCoroutine = StartCoroutine(Timer());
+
         StartRoundClientRpc();
     }
      
@@ -149,22 +164,21 @@ public class GameManager : NetworkBehaviour
         //RoundStarted.Invoke(90);
     }
 
+    /*[Rpc(SendTo.Server)]
+    public T SpawnEntityServerRpc<T>(T entityPrefab) where T : Object
+    {
+        return Instantiate(entityPrefab,_entities);
+    }*/
 
     IEnumerator Timer()
-    {
-        while(true)
+    {       
+        while(_time.Value > 0)
         {
-            if(_time.Value > 0)
-            {
-                yield return new WaitForSeconds(1);
+            yield return new WaitForSeconds(1);
 
-                _time.Value--;
-
-                
-            }     
-            else             
-                 StartRoundServerRpc();
-        }     
+            _time.Value--;                
+        }                
+        StartRoundServerRpc();            
     }
 
     void Update()

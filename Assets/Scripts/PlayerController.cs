@@ -498,6 +498,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             _animator.SetBool("Death_b", true);   
             
             ChangeModelState(true);
+
+            _model.enabled = false;
         }
         
         Died.Invoke(killer);

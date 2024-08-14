@@ -73,7 +73,15 @@ public abstract class Weapon : NetworkBehaviour
     private string _name;
     public string Name => _name;
 
+    [SerializeField]
+    private Sprite _icon;
+    public Sprite Icon => _icon;
+
     protected AudioSource _audioSource;
+
+    [SerializeField]
+    private int _price;
+    public int Price => _price;
 
     protected Collider _collider;
     public Collider Collider => _collider;

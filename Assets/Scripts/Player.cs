@@ -26,6 +26,9 @@ public class Player : NetworkBehaviour
 
     public NetworkVariable<NetworkBehaviourReference> Controller = new NetworkVariable<NetworkBehaviourReference>(writePerm: NetworkVariableWritePermission.Owner);
 
+    private NetworkVariable<int> _balance = new NetworkVariable<int>();
+    public NetworkVariable<int> Balance => _balance;
+
     private void Awake()
     {
         _singleton = this;
