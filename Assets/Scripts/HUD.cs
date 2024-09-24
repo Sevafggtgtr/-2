@@ -3,14 +3,16 @@ using Unity.Netcode;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-public class HUD : MonoBehaviour
+public class HUD : UIManager
 {
     private static HUD _singleton;
     public static HUD Singleton => _singleton;
 
     [SerializeField]
-    private Animation _vignetteAnimation,
-                      _blindnessAnimation;
+    private Animation _vignetteAnimation;
+
+    [SerializeField]
+    private UIBlindness _blindness;
 
     [SerializeField]
     private Slider _healthBar;
@@ -23,29 +25,45 @@ public class HUD : MonoBehaviour
     [SerializeField]
     private UIKillfeedPanel _killfeed;
 
-    private GameObject _panel;
+    [SerializeField]
+    private UIWeaponStore _weaponStore;    
 
     [SerializeField]
     private UIChoiceTeamPanel _chooseTeamPanel;
     public UIChoiceTeamPanel ChooseTeamPanel => _chooseTeamPanel;
 
-    void Update()
+    new void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape) && (!_panel || _panel == _pauseMenu.gameObject))
-        {
-            
-            Cursor.visible = !Cursor.visible;
-            Cursor.lockState = Cursor.visible ?CursorLockMode.None : CursorLockMode.Locked;
-
-            _pauseMenu.gameObject.SetActive(!_pauseMenu.gameObject.activeSelf);
-            
-            _panel = _pauseMenu.gameObject;
-        }
+        if(_panel)
+            base.Update();
+        else if (Input.GetKeyDown(KeyCode.Escape))
+            OpenPanel(_pauseMenu);
+        
+        if (Input.GetKeyDown(KeyCode.B))
+            OpenPanel(_weaponStore);                    
     }
 
-    public void Blindness()
+    public void Blindness(float time)
     {
-        _blindnessAnimation.Play();
+        _blindness.Activate(time);
+    }
+
+    private void OpenPanel(UIPanel panel)
+    {
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
+        base.OpenPanel(panel);
+
+        PlayerController.Singleton.IsActive = false;
+    }
+
+    private void ClosePanel()
+    {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
+        PlayerController.Singleton.IsActive = true;
     }
 
     private void Awake()
@@ -64,11 +82,7 @@ public class HUD : MonoBehaviour
                 };
                 player.Died += (killer) =>
                 {
-                    Cursor.visible = !Cursor.visible;
-                    Cursor.lockState = Cursor.visible ? CursorLockMode.None : CursorLockMode.Locked;
 
-                    if (_panel != null)
-                        _panel.SetActive(false);
                 };
             }         
             player.Died += (killer) =>
@@ -76,6 +90,8 @@ public class HUD : MonoBehaviour
                 _killfeed.SpawnSlot(killer, player.GetPlayer());
             };
         };
+
+        Closed += ClosePanel; 
 
         _singleton = this;
     }

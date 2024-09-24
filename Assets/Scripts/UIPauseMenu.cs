@@ -5,10 +5,8 @@ using UnityEngine.UI;
 using Unity.Netcode;
 using UnityEngine.Events;
 
-public class UIPauseMenu : MonoBehaviour
+public class UIPauseMenu : UIPanel
 {
-    public event UnityAction UnPaused;
-
     [SerializeField]
     private Button _exitButton,
                    _settingsButton,
@@ -29,8 +27,6 @@ public class UIPauseMenu : MonoBehaviour
 
     private void Continue()
     {
-        UnPaused.Invoke();
-
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 

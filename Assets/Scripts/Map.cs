@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Map : MonoBehaviour
@@ -25,7 +26,7 @@ public class Map : MonoBehaviour
 
     [SerializeField]
     private TeamSpawnPoints[] _teamSpawnPoints;
-    public TeamSpawnPoints[] GetTeamSpawnPoints() => _teamSpawnPoints;    
+    public TeamSpawnPoints GetTeamSpawnPoints(Teams team) => _teamSpawnPoints.First(teamSpawnPoints => team == teamSpawnPoints.Team);    
 
     void Awake()
     {

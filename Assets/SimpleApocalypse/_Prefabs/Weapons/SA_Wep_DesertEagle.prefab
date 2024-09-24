@@ -599,6 +599,8 @@ MonoBehaviour:
   _scopeSpreadMultiplier: 0.5
   _ownerSpeedMultiplier: 0.7
   _name: Colt
+  _icon: {fileID: 0}
+  _price: 200
   _currentClipAmmo: 7
   _maxClipAmmo: 7
   _currentAmmo: 50

@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class HEGrenade : Grenade
 {
+    [Header("HEGrenade")]
     [SerializeField]
     private float _radius;
 

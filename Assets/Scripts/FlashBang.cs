@@ -5,6 +5,10 @@ using UnityEngine;
 
 public class FlashBang : Grenade
 {
+    [Header("FlashBang")]
+    [SerializeField]
+    private float _duration;
+
     protected override void Activate()
     {
         ActivateClientRpc();
@@ -18,6 +22,6 @@ public class FlashBang : Grenade
         GetComponent<MeshRenderer>().enabled = false;
         Collider.enabled = false;
 
-        HUD.Singleton.Blindness();
+        HUD.Singleton.Blindness(_duration);
     }
 }

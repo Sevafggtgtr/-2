@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 public abstract class Grenade : Weapon
 {
+    [Header("Grenade")]
     [SerializeField]
     private float _activateTime,
                   _throwForce;

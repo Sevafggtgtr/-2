@@ -404,7 +404,6 @@ RectTransform:
   - {fileID: 297580154}
   - {fileID: 2047003721}
   - {fileID: 1855383559}
-  - {fileID: 1886627943}
   m_Father: {fileID: 328415657}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -466,7 +465,7 @@ MonoBehaviour:
   _exitButton: {fileID: 1751999726}
   _hostButton: {fileID: 1483690083}
   _clientButton: {fileID: 1625008804}
-  _hostPanel: {fileID: 2047003720}
+  _hostPanel: {fileID: 2047003724}
   _clientPanel: {fileID: 1855383558}
   _mainCamera: {fileID: 0}
   _nicknameInputField: {fileID: 1274190122}
@@ -1475,6 +1474,7 @@ MonoBehaviour:
   _playerPrefab: {fileID: 3207188583313776390, guid: 0b7529b4120c288428e5bd0bfb1f61dc, type: 3}
   _maps:
   - {fileID: 11400000, guid: a2f392e8b91d59d4a85f2854d691fc44, type: 2}
+  _gameMode: {fileID: 11400000, guid: 7ddd3861ed4fae841ac97fe3e87bbabf, type: 2}
   _entities: {fileID: 0}
   _teams:
   - _name: Terrorist
@@ -1485,7 +1485,8 @@ MonoBehaviour:
     _color: {r: 0.20742849, g: 0.51316005, b: 0.7169812, a: 1}
     _team: 2
     _playerSkins: []
-  _weaponData: {fileID: 0}
+  _weaponData: {fileID: 11400000, guid: 517f1879b09265a4db066dffba7ba067, type: 2}
+  _economy: {fileID: 11400000, guid: cb6e0936099818c40a53b77f727a05f9, type: 2}
 --- !u!4 &1019236736
 Transform:
   m_ObjectHideFlags: 0
@@ -1716,7 +1717,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 50, y: 50}
+  m_SizeDelta: {x: 170, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1245953399
 MonoBehaviour:
@@ -1739,8 +1740,8 @@ MonoBehaviour:
   m_Spacing: 15
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
+  m_ChildControlWidth: 1
+  m_ChildControlHeight: 1
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
@@ -3386,7 +3387,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1855383559
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3401,6 +3402,7 @@ RectTransform:
   m_Children:
   - {fileID: 1358245841}
   - {fileID: 1375729425}
+  - {fileID: 1886627943}
   m_Father: {fileID: 293306734}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3478,7 +3480,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 362492202}
-  m_Father: {fileID: 293306734}
+  m_Father: {fileID: 1855383559}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}

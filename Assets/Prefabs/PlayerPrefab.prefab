@@ -367,7 +367,7 @@ MonoBehaviour:
   - _slotType: 2
     _weaponPrefab: {fileID: -381579712737935657, guid: 70eeb767210f66848b47b34936d82892, type: 3}
   - _slotType: 3
-    _weaponPrefab: {fileID: -7831480294714045542, guid: 2e939735c3106744498641b91530a8ee, type: 3}
+    _weaponPrefab: {fileID: 4551219972592169930, guid: 2e939735c3106744498641b91530a8ee, type: 3}
   _cameraWeaponRecoilAngleUnit: 1
   _weaponPivotMaxRecoilOffset: 0.3
   _weaponPivotRecoilOffsetUnit: 0.05

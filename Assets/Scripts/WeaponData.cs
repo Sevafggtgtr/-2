@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [CreateAssetMenu]
@@ -19,5 +20,8 @@ public class WeaponData : ScriptableObject
 
     [SerializeField]
     private TeamWeaponData[] _teamWeaponDatas;
-    public TeamWeaponData[] TeamWeaponDatas => _teamWeaponDatas;   
+    public TeamWeaponData[] TeamWeaponDatas => _teamWeaponDatas;
+
+    public TeamWeaponData GetTeamWeaponData(Teams team)
+        => TeamWeaponDatas.First(teamWeaponData => teamWeaponData.Team == team);
 }

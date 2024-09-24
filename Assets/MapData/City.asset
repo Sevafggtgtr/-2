@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: City
   m_EditorClassIdentifier: 
   _scene: {fileID: 102900000, guid: dc8c9f3efd746429fa6f9482dc779492, type: 3}
-  _icon: {fileID: 0}
+  _name: City
+  _icon: {fileID: 21300000, guid: 22e69e1e965e03040b57b0d00c469182, type: 3}
   _skinPackDatas:
   - {fileID: 11400000, guid: 38b8113121cfccc4a8439e205955aa6a, type: 2}
   - {fileID: 11400000, guid: 2280918f7923c4746bd3ec657716dffd, type: 2}

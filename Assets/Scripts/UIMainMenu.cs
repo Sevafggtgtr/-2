@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using Unity.Netcode;
 
 
-public class UIMainMenu : MonoBehaviour
+public class UIMainMenu : UIManager
 {
     [SerializeField]
     private Button _settingsButton,
@@ -17,8 +17,8 @@ public class UIMainMenu : MonoBehaviour
     public static UIMainMenu Singleton => _singleton;
 
     [SerializeField]
-    private GameObject _hostPanel,
-                       _clientPanel;
+    private UIPanel _hostPanel,
+                    _clientPanel;
 
     [SerializeField]
     private GameObject _mainCamera;
@@ -38,9 +38,9 @@ public class UIMainMenu : MonoBehaviour
     {
         _hostButton.onClick.AddListener(() =>
         {
-            _hostPanel.SetActive(true);
+            OpenPanel(_hostPanel);
         });        
-        _clientButton.onClick.AddListener(() => _clientPanel.SetActive(true));
+        _clientButton.onClick.AddListener(() => OpenPanel(_clientPanel));
         _exitButton.onClick.AddListener(Application.Quit);
 
         _audioSource = GetComponent<AudioSource>();

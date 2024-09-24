@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-public class UIServerCreationPanel : MonoBehaviour
+public class UIServerCreationPanel : UIPanel
 {
     [SerializeField]
     private UIMapSelectionButton _mapSelectionButtonPrefab;
