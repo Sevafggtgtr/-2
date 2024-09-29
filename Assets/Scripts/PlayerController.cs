@@ -286,6 +286,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         _arms = _model.transform.Find("mesh_Arms");
 
+        ChangeModelState(false);
+
         _handCamera.transform.SetParent(_arms, true);
 
         _handCameraStartPosition = _handCamera.transform.localPosition;        
@@ -487,7 +489,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         {
             if (killer.TryGet(out PlayerController player))
             {
-                player.Player.Balance.Value += GameManager.Singleton.Economy.KillAward;
+                player.Player.Balance.Value += GameManager.Singleton.GameMode.KillAward;
 
                 Die(player.GetPlayer());
             }
@@ -592,11 +594,6 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         _fpCamera.transform.localPosition = Mathf.Sin(_time / _cameraMovePeriod * GetPlayerStateSettings(_playerState).CameraMoveRate * 360 * Mathf.Deg2Rad) * _cameraMoveOffset;
         _time += Time.deltaTime;
-
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            IsActive = !IsActive;
-        }
 
         if (!_controller.isGrounded)
             _velocity += Physics.gravity.y * Time.deltaTime * 2;

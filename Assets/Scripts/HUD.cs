@@ -2,6 +2,7 @@ using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using UnityEngine.AI;
 
 public class HUD : UIManager
 {
@@ -26,7 +27,10 @@ public class HUD : UIManager
     private UIKillfeedPanel _killfeed;
 
     [SerializeField]
-    private UIWeaponStore _weaponStore;    
+    private UIWeaponStore _weaponStore;
+
+    [SerializeField]
+    private Text _balanceText;
 
     [SerializeField]
     private UIChoiceTeamPanel _chooseTeamPanel;
@@ -66,7 +70,7 @@ public class HUD : UIManager
         PlayerController.Singleton.IsActive = true;
     }
 
-    private void Awake()
+    private void Start()
     {
         PlayerController.Spawn += (player) =>
         {
@@ -84,15 +88,24 @@ public class HUD : UIManager
                 {
 
                 };
-            }         
+            }
             player.Died += (killer) =>
             {
                 _killfeed.SpawnSlot(killer, player.GetPlayer());
             };
         };
 
-        Closed += ClosePanel; 
+        Player.Singleton.Balance.OnValueChanged += (pv, nv) =>
+        {
 
+            _balanceText.text = "$" + nv.ToString();
+        };
+
+        Closed += ClosePanel;
+    }
+
+    private void Awake()
+    {       
         _singleton = this;
     }
 }

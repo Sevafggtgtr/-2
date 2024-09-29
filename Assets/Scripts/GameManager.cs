@@ -1,12 +1,8 @@
-using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
-using System.Collections;
-using System.Runtime.CompilerServices;
-using UnityEngine.UIElements;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 public enum Teams
 {
@@ -68,14 +64,10 @@ public class GameManager : NetworkBehaviour
     private WeaponData _weaponData;
     public WeaponData WeaponData => _weaponData;
 
-    [SerializeField]
-    private Economy _economy;
-    public Economy Economy => _economy;   
-
     public TeamData GetTeamData(Teams team)
         => _teams.First(team_ => team_.Team == team);
 
-    private NetworkVariable<int>[] _points = new NetworkVariable<int>[2] {new NetworkVariable<int>(),new NetworkVariable<int>()};
+    private NetworkVariable<int>[] _points = new NetworkVariable<int>[2] { new NetworkVariable<int>(), new NetworkVariable<int>() };
     public NetworkVariable<int>[] Points => _points;
     private NetworkVariable<int> _time = new NetworkVariable<int>();
     public NetworkVariable<int> Time => _time;
@@ -84,8 +76,8 @@ public class GameManager : NetworkBehaviour
 
     void Awake()
     {
-        _singleton = this;    
-        
+        _singleton = this;
+
         DontDestroyOnLoad(gameObject);
     }
 
@@ -97,8 +89,8 @@ public class GameManager : NetworkBehaviour
         };
 
         NetworkManager.OnClientStarted += () =>
-        {           
-                        
+        {
+
         };
     }
 
@@ -106,24 +98,26 @@ public class GameManager : NetworkBehaviour
     {
         ClearMap();
 
+        _isPlayersActive.Value = true;
+
         void OnClientConnectedCallback(ulong ID)
         {
-            if (IsHost)
-            {
-                var player = NetworkManager.ConnectedClients[ID].PlayerObject.GetComponent<Player>();
+            var player = NetworkManager.ConnectedClients[ID].PlayerObject.GetComponent<Player>();
 
-                void OnDiedCallback(PlayerController playerObject)
+            player.Balance.Value = GameMode.MaxBalance;           
+
+            player.Team.OnValueChanged += (o, n) =>
+            {
+                void OnDiedCallback(PlayerController playerController)
                 {
-                    playerObject.NetworkObject.Despawn();
-                    SpawnPlayer(player, OnDiedCallback);
+                    playerController.NetworkObject.Despawn();
+                    playerController = SpawnPlayer(player);
+                    playerController.Died += (killer) => OnDiedCallback(playerController);
                 }
 
-                player.Team.OnValueChanged += (o, n) =>
-                {
-                    SpawnPlayer(player, OnDiedCallback);
-                };
-            }
-                
+                var playerController = SpawnPlayer(player);
+                playerController.Died += (killer) => OnDiedCallback(playerController);
+            };
         };
 
         _timerCoroutine = StartCoroutine(Timer(GameMode.WarmupTime, () =>
@@ -151,12 +145,17 @@ public class GameManager : NetworkBehaviour
 
     [ServerRpc]
     private void StartRoundServerRpc()
-    {        
+    {
+        _isPlayersActive.Value = false;
+
         _timerCoroutine = StartCoroutine(Timer(GameMode.BuyTime, FinishBuyTime));
 
-        foreach (var player in NetworkManager.ConnectedClients)
+        foreach (var client in NetworkManager.ConnectedClients)
         {
-            SpawnPlayer(player.Value.PlayerObject.GetComponent<Player>(), (playerObject) =>
+            var player = client.Value.PlayerObject.GetComponent<Player>();
+
+            var playerController = SpawnPlayer(player);
+            playerController.Died += (killer) =>
             {
                 int[] teams = new int[2];
 
@@ -166,7 +165,9 @@ public class GameManager : NetworkBehaviour
                             teams[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1]++;
                 if (teams[0] * teams[1] == 0)
                 {
-                    _points[teams[0] == 0 ? 1 : 0].Value++;
+                    foreach (var player in NetworkManager.ConnectedClients)
+
+                        _points[teams[0] == 0 ? 1 : 0].Value++;
                     if (Mathf.Max(teams) == _gameMode.RoundCount / 2 + 1)
                     {
                         foreach (var player in FindObjectsOfType<PlayerController>())
@@ -174,33 +175,31 @@ public class GameManager : NetworkBehaviour
                     }
                     StartRoundServerRpc();
                 }
-            });
+            };
         }
 
         StartRoundClientRpc();
 
         ClearMap();
     }
-    
-    private void SpawnPlayer(Player player, UnityAction<PlayerController> diedCallback)
-    {       
-         var player_ = Instantiate(_playerPrefab);
 
-         player_.Died += (killer) =>
-         {
-             diedCallback.Invoke(player_);
-         };
+    private PlayerController SpawnPlayer(Player player)
+    {
+        var playerController = Instantiate(_playerPrefab);
 
-         player_.NetworkObject.SpawnWithOwnership(player.OwnerClientId);
+        playerController.NetworkObject.SpawnWithOwnership(player.OwnerClientId);
 
         var spawnPoints = Map.Singleton.GetTeamSpawnPoints(player.Team.Value).SpawnPoints.Where(spawnPoint => !Physics.OverlapSphere(spawnPoint.position, 1).Any(collider => collider.GetComponent<PlayerController>())).ToArray();
-         player_.SpawnPlayersClientRpc(spawnPoints[Random.Range(0, spawnPoints.Length)].position);
-        
+        playerController.SpawnPlayersClientRpc(spawnPoints[Random.Range(0, spawnPoints.Length)].position);
+
+        return playerController;
     }
 
     public void FinishBuyTime()
     {
         _timerCoroutine = StartCoroutine(Timer(GameMode.RoundTime, FinishRoundTime));
+
+        _isPlayersActive.Value = true;
     }
 
     public void FinishRoundTime()
@@ -220,7 +219,7 @@ public class GameManager : NetworkBehaviour
         return Instantiate(entityPrefab,_entities);
     }*/
 
-    IEnumerator Timer(int time,UnityAction callback)
+    IEnumerator Timer(int time, UnityAction callback)
     {
         _time.Value = time;
 
@@ -228,8 +227,8 @@ public class GameManager : NetworkBehaviour
         {
             yield return new WaitForSeconds(1);
 
-            _time.Value--;                
-        }                
+            _time.Value--;
+        }
         callback.Invoke();
     }
 
