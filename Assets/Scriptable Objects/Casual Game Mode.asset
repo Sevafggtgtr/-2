@@ -20,3 +20,7 @@ MonoBehaviour:
   _buyTime: 10
   _roundEndTime: 10
   _startBalance: 1000
+  _maxBalance: 8000
+  _killAward: 100
+  _winAward: 2000
+  _lossAward: 1000

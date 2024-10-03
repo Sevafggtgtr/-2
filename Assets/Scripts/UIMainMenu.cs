@@ -39,8 +39,9 @@ public class UIMainMenu : UIManager
         _hostButton.onClick.AddListener(() =>
         {
             OpenPanel(_hostPanel);
-        });        
-        _clientButton.onClick.AddListener(() => OpenPanel(_clientPanel));
+        });
+        //_clientButton.onClick.AddListener(() => OpenPanel(_clientPanel));
+        _clientButton.onClick.AddListener(() => NetworkManager.Singleton.StartClient());
         _exitButton.onClick.AddListener(Application.Quit);
 
         _audioSource = GetComponent<AudioSource>();

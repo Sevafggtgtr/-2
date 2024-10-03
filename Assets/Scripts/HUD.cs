@@ -33,6 +33,9 @@ public class HUD : UIManager
     private Text _balanceText;
 
     [SerializeField]
+    private GameObject _playerControllerPanel;
+
+    [SerializeField]
     private UIChoiceTeamPanel _chooseTeamPanel;
     public UIChoiceTeamPanel ChooseTeamPanel => _chooseTeamPanel;
 
@@ -72,10 +75,14 @@ public class HUD : UIManager
 
     private void Start()
     {
+        _playerControllerPanel.SetActive(false);
+
         PlayerController.Spawn += (player) =>
         {
             if (player.IsOwner)
             {
+                _playerControllerPanel.SetActive(true);
+
                 HealthBar.value = 100;
 
                 player.Damaged += () =>
@@ -86,7 +93,7 @@ public class HUD : UIManager
                 };
                 player.Died += (killer) =>
                 {
-
+                    _playerControllerPanel.SetActive(false);
                 };
             }
             player.Died += (killer) =>

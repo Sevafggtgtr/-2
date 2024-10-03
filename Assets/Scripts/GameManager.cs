@@ -103,9 +103,7 @@ public class GameManager : NetworkBehaviour
         void OnClientConnectedCallback(ulong ID)
         {
             var player = NetworkManager.ConnectedClients[ID].PlayerObject.GetComponent<Player>();
-
-            player.Balance.Value = GameMode.MaxBalance;           
-
+          
             player.Team.OnValueChanged += (o, n) =>
             {
                 void OnDiedCallback(PlayerController playerController)
@@ -114,6 +112,8 @@ public class GameManager : NetworkBehaviour
                     playerController = SpawnPlayer(player);
                     playerController.Died += (killer) => OnDiedCallback(playerController);
                 }
+
+                player.Balance.Value = GameMode.MaxBalance;
 
                 var playerController = SpawnPlayer(player);
                 playerController.Died += (killer) => OnDiedCallback(playerController);
@@ -146,6 +146,8 @@ public class GameManager : NetworkBehaviour
     [ServerRpc]
     private void StartRoundServerRpc()
     {
+        ClearMap();
+
         _isPlayersActive.Value = false;
 
         _timerCoroutine = StartCoroutine(Timer(GameMode.BuyTime, FinishBuyTime));
@@ -166,6 +168,9 @@ public class GameManager : NetworkBehaviour
                 if (teams[0] * teams[1] == 0)
                 {
                     foreach (var player in NetworkManager.ConnectedClients)
+                    {
+                        player.Value.PlayerObject.GetComponent<Player>().Balance.Value += teams[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1] == 0 ? GameMode.LossAward : GameMode.WinAward;
+                    }
 
                         _points[teams[0] == 0 ? 1 : 0].Value++;
                     if (Mathf.Max(teams) == _gameMode.RoundCount / 2 + 1)
@@ -178,9 +183,7 @@ public class GameManager : NetworkBehaviour
             };
         }
 
-        StartRoundClientRpc();
-
-        ClearMap();
+        StartRoundClientRpc();        
     }
 
     private PlayerController SpawnPlayer(Player player)
@@ -205,6 +208,11 @@ public class GameManager : NetworkBehaviour
     public void FinishRoundTime()
     {
         _timerCoroutine = StartCoroutine(Timer(GameMode.RoundEndTime, StartRoundServerRpc));
+
+        /*foreach (var player in NetworkManager.ConnectedClients)
+        {
+            player.Value.PlayerObject.GetComponent<Player>().Balance.Value += ;
+        }*/
     }
 
     [ClientRpc]
