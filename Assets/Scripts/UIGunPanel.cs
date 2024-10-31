@@ -4,7 +4,7 @@ using Unity.Netcode;
 
 public class UIGunPanel : MonoBehaviour
 {
-    private PlayerController _player;
+    private PlayerController _playerController;
 
     [SerializeField]
     private Text _gunNameText,
@@ -12,35 +12,35 @@ public class UIGunPanel : MonoBehaviour
 
     void Change()
     {
-        if (_player.Weapon is Gun)
-            _ammoText.text = ((Gun)_player.Weapon).CurrentClipAmmo.ToString() + '/' + ((Gun)_player.Weapon).MaxClipAmmo.ToString() + '|' + ((Gun)_player.Weapon).CurrentAmmo.ToString();
+        if (_playerController.Weapon is Gun)
+            _ammoText.text = ((Gun)_playerController.Weapon).CurrentClipAmmo.ToString() + '/' + ((Gun)_playerController.Weapon).MaxClipAmmo.ToString() + '|' + ((Gun)_playerController.Weapon).CurrentAmmo.ToString();
         else
             _ammoText.text = "";
     }
 
     void BeginChangeGun()
     {
-        if (_player.Weapon is Gun)
-            ((Gun)_player.Weapon).AmmoChanged -= Change;
+        if (_playerController.Weapon is Gun)
+            ((Gun)_playerController.Weapon).AmmoChanged -= Change;
     }
 
     void ChangeGun()
     {
-        if (_player.Weapon is Gun)
-            ((Gun)_player.Weapon).AmmoChanged += Change;
-        _gunNameText.text = _player.Weapon.Name;
+        if (_playerController.Weapon is Gun)
+            ((Gun)_playerController.Weapon).AmmoChanged += Change;
+        _gunNameText.text = _playerController.Weapon.Name;
         Change();
     }
 
-    private void Awake()
+    public void SetPlayer(PlayerController playerController)
+    {               
+        _playerController = playerController;
+        _playerController.WeaponChanged += ChangeGun;                                      
+    }
+
+    public void RemovePlayer(PlayerController playerController)
     {
-        PlayerController.Spawn += (player) =>
-        {
-            if(player.IsOwner)
-            {
-                _player = player;
-                _player.WeaponChanged += ChangeGun;                
-            }
-        };       
+        _playerController = playerController;
+        _playerController.WeaponChanged -= ChangeGun;
     }
 }

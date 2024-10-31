@@ -14,7 +14,7 @@ public class HEGrenade : Grenade
         foreach (Collider target in Physics.OverlapSphere(transform.position, _radius))
         {
             if (target.GetComponent<IDamageableObject>() != null)
-                target.GetComponent<IDamageableObject>().DamageClientRpc(_damage, _owner);
+                target.GetComponent<IDamageableObject>().DamageClientRpc(_damage, _owner, Code);
         }
 
         ActivateClientRpc();

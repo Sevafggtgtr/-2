@@ -15,6 +15,8 @@ GameObject:
   - component: {fileID: 2395569318072236145}
   - component: {fileID: 759887676910102528}
   - component: {fileID: 2630382682520841082}
+  - component: {fileID: 2568300076627552360}
+  - component: {fileID: -4449814364375742578}
   m_Layer: 0
   m_Name: SA_Wep_FlashBang
   m_TagString: Untagged
@@ -62,6 +64,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -136,9 +141,10 @@ MonoBehaviour:
   _ownerSpeedMultiplier: 0
   _name: FlashBang
   _icon: {fileID: 0}
-  _price: 0
-  _activateTime: 0
-  _throwForce: 0
+  _price: 100
+  _activateTime: 4
+  _throwForce: 1
+  _duration: 3
 --- !u!82 &759887676910102528
 AudioSource:
   m_ObjectHideFlags: 0
@@ -150,6 +156,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 4293cb43abe085d4ea42e8c175f41249, type: 3}
+  m_Resource: {fileID: 8300000, guid: 4293cb43abe085d4ea42e8c175f41249, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -262,3 +269,57 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!136 &2568300076627552360
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 188556}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 2
+  m_Radius: 0.09863174
+  m_Height: 0.3781837
+  m_Direction: 1
+  m_Center: {x: -0.002173543, y: -0.020687446, z: 0}
+--- !u!114 &-4449814364375742578
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 188556}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  UseUnreliableDeltas: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  UseQuaternionSynchronization: 0
+  UseQuaternionCompression: 0
+  UseHalfFloatPrecision: 0
+  InLocalSpace: 0
+  Interpolate: 1
+  SlerpPosition: 0

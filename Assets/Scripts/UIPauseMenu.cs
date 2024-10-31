@@ -14,15 +14,9 @@ public class UIPauseMenu : UIPanel
 
     void Start()
     {
-        _exitButton.onClick.AddListener(DisconnectRpc);
+        _exitButton.onClick.AddListener(ServerManager.Instance.Disconnect);
 
         _continueButton.onClick.AddListener(Continue);
-    }
-
-    [ServerRpc]
-    private void DisconnectRpc()
-    {
-        NetworkManager.Singleton.DisconnectClient(NetworkManager.Singleton.LocalClientId);
     }
 
     private void Continue()

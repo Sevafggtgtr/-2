@@ -110,13 +110,13 @@ public class GameManager : NetworkBehaviour
                 {
                     playerController.NetworkObject.Despawn();
                     playerController = SpawnPlayer(player);
-                    playerController.Died += (killer) => OnDiedCallback(playerController);
+                    playerController.Died += (killer,causeCode) => OnDiedCallback(playerController);
                 }
 
                 player.Balance.Value = GameMode.MaxBalance;
 
                 var playerController = SpawnPlayer(player);
-                playerController.Died += (killer) => OnDiedCallback(playerController);
+                playerController.Died += (killer, causeCode) => OnDiedCallback(playerController);
             };
         };
 
@@ -157,7 +157,7 @@ public class GameManager : NetworkBehaviour
             var player = client.Value.PlayerObject.GetComponent<Player>();
 
             var playerController = SpawnPlayer(player);
-            playerController.Died += (killer) =>
+            playerController.Died += (killer, causeCode) =>
             {
                 int[] teams = new int[2];
 

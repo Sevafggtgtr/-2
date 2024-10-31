@@ -7,11 +7,14 @@ public class UIKillfeedSlot : MonoBehaviour
     [SerializeField]
     private Text _killerText,
                  _targetText;
+    [SerializeField]
+    private Image _causeImage;
 
-    public void Initialize(Player killer,Player target)
+    public void Initialize(Player killer,Player target,string causeCode)
     {        
         _killerText.text = killer.Nickname.Value.ToString();
         _targetText.text = target.Nickname.Value.ToString();
+        _causeImage.sprite = Resources.Load<Sprite>(causeCode);
 
         _killerText.color = GameManager.Singleton.Teams.First(team => team.Team == killer.Team.Value).Color;
         _targetText.color = GameManager.Singleton.Teams.First(team => team.Team == target.Team.Value).Color;

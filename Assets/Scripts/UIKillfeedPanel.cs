@@ -1,21 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
+using static UnityEngine.GraphicsBuffer;
 
 public class UIKillfeedPanel : MonoBehaviour
 {
     [SerializeField]
     private UIKillfeedSlot _slotPrefab;
-
     void Start()
-    {
-        //foreach (IDamageableObject target in FindObjectsOfType<IDamageableObject>())
-            //target.Died += (killer) => SpawnSlot(killer, target.Name);
+    {        
+        PlayerController.Spawn += playerController => playerController.Died += (killer,causeCode) => Instantiate(_slotPrefab, transform).Initialize(killer, playerController.Player, causeCode);
     }
-
-    public void SpawnSlot(Player killer, Player target)
-    {
-        Instantiate(_slotPrefab, transform).Initialize(killer, target);
-    }
-
-
 }

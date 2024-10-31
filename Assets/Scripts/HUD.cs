@@ -1,8 +1,5 @@
 using UnityEngine;
-using Unity.Netcode;
-using UnityEngine.Events;
 using UnityEngine.UI;
-using UnityEngine.AI;
 
 public class HUD : UIManager
 {
@@ -39,15 +36,21 @@ public class HUD : UIManager
     private UIChoiceTeamPanel _chooseTeamPanel;
     public UIChoiceTeamPanel ChooseTeamPanel => _chooseTeamPanel;
 
+    [SerializeField]
+    private UIGunPanel _gunPanel;
+    public UIGunPanel GunPanel => _gunPanel;
+
+    private Player _player;
+
     new void Update()
     {
-        if(_panel)
+        if (_panel)
             base.Update();
         else if (Input.GetKeyDown(KeyCode.Escape))
             OpenPanel(_pauseMenu);
-        
+
         if (Input.GetKeyDown(KeyCode.B))
-            OpenPanel(_weaponStore);                    
+            OpenPanel(_weaponStore);
     }
 
     public void Blindness(float time)
@@ -73,46 +76,81 @@ public class HUD : UIManager
         PlayerController.Singleton.IsActive = true;
     }
 
+    void OnPlayerControllerDamaged()
+    {
+        _vignetteAnimation.Play();
+
+        HealthBar.value = PlayerController.Singleton.Health.Value;
+    }
+
+    void OnPlayerControllerDied()
+    {
+
+    }
+
+    void OnPlayerBalanceOnValueChanged()
+    {
+        _balanceText.text = "$" + _player.Balance.Value.ToString();
+    }
+
+    public void SetPlayer(Player player)
+    {
+        if (player.Controller.Value.TryGet(out PlayerController playerController))
+        {
+            HealthBar.value = playerController.Health.Value;
+
+            _gunPanel.SetPlayer(playerController);
+
+            playerController.Damaged += () =>
+            {
+                OnPlayerControllerDamaged();
+            };
+            playerController.Died += (killer, causeCode) =>
+            {
+                OnPlayerControllerDied();
+            };
+        }
+
+        _balanceText.text = "$" + player.Balance.Value.ToString();
+
+        player.Balance.OnValueChanged += (pv, nv) =>
+        {
+            OnPlayerBalanceOnValueChanged();
+        };
+    }
+
+    public void RemovePlayer(Player player)
+    {
+        if (player.Controller.Value.TryGet(out PlayerController playerController))
+        {
+            _gunPanel.RemovePlayer(playerController);
+
+            playerController.Damaged -= () =>
+            {
+                OnPlayerControllerDamaged();
+            };
+            playerController.Died -= (killer, causeCode) =>
+            {
+                OnPlayerControllerDied();
+            };
+        }
+
+        player.Balance.OnValueChanged -= (pv, nv) =>
+        {
+            OnPlayerBalanceOnValueChanged();
+        };
+    }
+
+
     private void Start()
     {
         _playerControllerPanel.SetActive(false);
-
-        PlayerController.Spawn += (player) =>
-        {
-            if (player.IsOwner)
-            {
-                _playerControllerPanel.SetActive(true);
-
-                HealthBar.value = 100;
-
-                player.Damaged += () =>
-                {
-                    _vignetteAnimation.Play();
-
-                    HealthBar.value = PlayerController.Singleton.Health;
-                };
-                player.Died += (killer) =>
-                {
-                    _playerControllerPanel.SetActive(false);
-                };
-            }
-            player.Died += (killer) =>
-            {
-                _killfeed.SpawnSlot(killer, player.GetPlayer());
-            };
-        };
-
-        Player.Singleton.Balance.OnValueChanged += (pv, nv) =>
-        {
-
-            _balanceText.text = "$" + nv.ToString();
-        };
 
         Closed += ClosePanel;
     }
 
     private void Awake()
-    {       
+    {
         _singleton = this;
     }
 }

@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 
 public enum ActionMode
 {
@@ -70,8 +71,10 @@ public abstract class Weapon : NetworkBehaviour
     public float OwnerSpeedMultiplier => _ownerSpeedMultiplier;
 
     [SerializeField]
-    private string _name;
+    private string _name,
+                   _code;
     public string Name => _name;
+    public string Code => _code;
 
     [SerializeField]
     private Sprite _icon;
@@ -89,6 +92,9 @@ public abstract class Weapon : NetworkBehaviour
     protected Rigidbody _rigidbody;
     public Rigidbody Rigidbody => _rigidbody;
 
+    protected NetworkTransform _networkTransform;
+    public NetworkTransform NetworkTransform => _networkTransform;
+
     public abstract bool Action(Vector3 origin, Vector3 direction, PlayerController owner);
 
     protected void Awake()
@@ -96,5 +102,6 @@ public abstract class Weapon : NetworkBehaviour
         _audioSource = GetComponent<AudioSource>();
         _collider = GetComponent<Collider>();
         _rigidbody = GetComponent<Rigidbody>();
+        _networkTransform = GetComponent<NetworkTransform>();
     }
 }

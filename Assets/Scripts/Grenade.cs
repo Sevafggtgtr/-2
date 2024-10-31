@@ -15,7 +15,7 @@ public abstract class Grenade : Weapon
 
     public override bool Action(Vector3 origin, Vector3 direction, PlayerController owner)
     {        
-        owner.ChangeWeapon(this, true);
+        owner.ChangeWeapon(owner.Weapons.Min(weapon => weapon), true);
 
         ActionServerRpc(origin, direction, owner);
 

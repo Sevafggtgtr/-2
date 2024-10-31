@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.AI;
 using Unity.Netcode;
 
-public class Enemy : NetworkBehaviour, IDamageableObject
+public class Enemy : NetworkBehaviour//, IDamageableObject
 {
     public event UnityAction<Player> Died;
 

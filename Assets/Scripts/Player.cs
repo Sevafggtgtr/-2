@@ -42,7 +42,7 @@ public class Player : NetworkBehaviour
             {
                 if (player.IsOwner)
                 {
-                    player.Died += (killer) =>                    
+                    player.Died += (killer, causeCode) =>                    
                         _deaths.Value++;
                     player.Kill += () =>
                         _kills.Value++;

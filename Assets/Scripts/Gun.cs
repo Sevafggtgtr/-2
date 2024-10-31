@@ -7,7 +7,9 @@ public enum SlotType
     Primary,
     Secondary,
     Knife,
-    Grenade
+    HEGrenade,
+    FlashBang,
+    SmokeGranade
 }
 
 [RequireComponent(typeof(AudioSource))]
@@ -79,7 +81,7 @@ public class Gun : Weapon
             if (Physics.Raycast(origin, direction + Random.insideUnitSphere / 100, out hit, _shotDistance))
             {
                 if (hit.transform.GetComponent<IDamageableObject>() != null)
-                    hit.transform.GetComponent<IDamageableObject>().DamageClientRpc(_damage, owner);
+                    hit.transform.GetComponent<IDamageableObject>().DamageClientRpc(_damage, owner, Code);
                 else
                 {
                     var bulletHit = Instantiate(_hitPrefab);

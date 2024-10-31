@@ -14,9 +14,9 @@ GameObject:
   - component: {fileID: 2110259378160150245}
   - component: {fileID: 1910238844457251571}
   - component: {fileID: 4551219972592169930}
-  - component: {fileID: 3670475116853165799}
   - component: {fileID: 1222710236390171192}
   - component: {fileID: -5597473563872879503}
+  - component: {fileID: 5212604560999184125}
   m_Layer: 0
   m_Name: SA_Wep_Grenade
   m_TagString: Untagged
@@ -65,6 +65,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -150,8 +153,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76eec6ec4f81e244ba24acf12dee521a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _damage: 80
-  _actionMode: 0
+  _damage: 100
+  _actionMode: 1
   _slotType: 3
   _weaponType: 9
   _recoilValue: 0
@@ -166,31 +169,10 @@ MonoBehaviour:
   _ownerSpeedMultiplier: 0
   _name: Grenade
   _icon: {fileID: 0}
-  _price: 0
-  _activateTime: 0
-  _throwForce: 0
-  _radius: 0
---- !u!135 &3670475116853165799
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 186104}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 3
-  m_Radius: 0.11327673
-  m_Center: {x: -0.00076794624, y: 0.023963518, z: -0.0012676641}
+  _price: 300
+  _activateTime: 5
+  _throwForce: 1
+  _radius: 6
 --- !u!82 &1222710236390171192
 AudioSource:
   m_ObjectHideFlags: 0
@@ -202,6 +184,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 660a6d549e4bc8a42a3b44a2d386e682, type: 3}
+  m_Resource: {fileID: 8300000, guid: 660a6d549e4bc8a42a3b44a2d386e682, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -318,6 +301,29 @@ MonoBehaviour:
   InLocalSpace: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!136 &5212604560999184125
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 186104}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 2
+  m_Radius: 0.09863174
+  m_Height: 0.3781837
+  m_Direction: 1
+  m_Center: {x: -0.002173543, y: -0.020687446, z: 0}
 --- !u!1001 &7117062093091346671
 PrefabInstance:
   m_ObjectHideFlags: 0
