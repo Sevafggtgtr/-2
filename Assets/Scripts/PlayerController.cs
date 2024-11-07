@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Linq;
 using System.Net.Http.Headers;
@@ -26,7 +27,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
     public static event UnityAction<PlayerController> Spawn;
     public static event UnityAction Despawn;
-    public event UnityAction WeaponChanged;
+    public event UnityAction WeaponChanged = delegate { };
     public event UnityAction<Player, string> Died;
     public event UnityAction Kill;
     public event UnityAction Damaged;
@@ -68,8 +69,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     [Header("Weapons")]
     private Weapon _weapon;
     public Weapon Weapon => _weapon;
-    [SerializeField]
-    private Weapon[] _weapons;
+    private Weapon[] _weapons = new Weapon[Enum.GetNames(typeof(SlotType)).Length];
     public Weapon[] Weapons => _weapons;
     [System.Serializable]
     public struct WeaponSlot
@@ -267,7 +267,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     {
         foreach(Weapon weapon in _weapons)
         {
-            ChangeLayer(weapon.gameObject, layer);
+            if(weapon)
+                ChangeLayer(weapon.gameObject, layer);
         }
 
         ChangeLayer(_arms.gameObject, layer);
@@ -592,9 +593,12 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             _model.enabled = false;
         }
 
-        Spectator.Instance.Spectate();
-
         Died.Invoke(killer, causeCode);
+
+        var spectatedPlayer = GameManager.Singleton.Players.FirstOrDefault(player => player.Team.Value == Player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled);
+
+        if (spectatedPlayer)
+            Spectator.Instance.Spectate(spectatedPlayer);
 
         _controller.enabled = false;
 

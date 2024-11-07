@@ -85,7 +85,7 @@ public class HUD : UIManager
 
     void OnPlayerControllerDied()
     {
-
+        _playerControllerPanel.SetActive(false);
     }
 
     void OnPlayerBalanceOnValueChanged()
@@ -95,6 +95,8 @@ public class HUD : UIManager
 
     public void SetPlayer(Player player)
     {
+        _playerControllerPanel.SetActive(true);
+
         if (player.Controller.Value.TryGet(out PlayerController playerController))
         {
             HealthBar.value = playerController.Health.Value;

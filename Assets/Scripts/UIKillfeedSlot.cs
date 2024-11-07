@@ -14,7 +14,7 @@ public class UIKillfeedSlot : MonoBehaviour
     {        
         _killerText.text = killer.Nickname.Value.ToString();
         _targetText.text = target.Nickname.Value.ToString();
-        _causeImage.sprite = Resources.Load<Sprite>(causeCode);
+        //_causeImage.sprite = Resources.Load<Sprite>(causeCode);
 
         _killerText.color = GameManager.Singleton.Teams.First(team => team.Team == killer.Team.Value).Color;
         _targetText.color = GameManager.Singleton.Teams.First(team => team.Team == target.Team.Value).Color;

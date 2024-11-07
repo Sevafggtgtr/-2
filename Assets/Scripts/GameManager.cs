@@ -1,4 +1,6 @@
+using NUnit.Framework;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
@@ -53,6 +55,8 @@ public class GameManager : NetworkBehaviour
     [SerializeField]
     private Transform _entities;
 
+    public List<Player> Players { get; private set; }
+
     private NetworkVariable<bool> _isPlayersActive = new NetworkVariable<bool>();
     public NetworkVariable<bool> IsPlayersActive => _isPlayersActive;
 
@@ -83,6 +87,8 @@ public class GameManager : NetworkBehaviour
 
     private void Start()
     {
+        Players = new List<Player>();
+
         NetworkManager.OnServerStarted += () =>
         {
             StartWarmUp();
@@ -91,6 +97,16 @@ public class GameManager : NetworkBehaviour
         NetworkManager.OnClientStarted += () =>
         {
 
+        };
+
+        NetworkManager.OnClientConnectedCallback += (id) =>
+        {
+            Players.Add(NetworkManager.ConnectedClients[id].PlayerObject.GetComponent<Player>());
+        };
+
+        NetworkManager.OnClientDisconnectCallback += (id) =>
+        {
+            Players.Remove(NetworkManager.ConnectedClients[id].PlayerObject.GetComponent<Player>());
         };
     }
 
@@ -128,6 +144,8 @@ public class GameManager : NetworkBehaviour
         }));
 
         NetworkManager.OnClientConnectedCallback += OnClientConnectedCallback;
+
+        StartRoundClientRpc();
     }
 
     private void ClearMap()
@@ -163,7 +181,7 @@ public class GameManager : NetworkBehaviour
 
                 foreach (var player in NetworkManager.ConnectedClients)
                     if (player.Value.PlayerObject.GetComponent<Player>().Controller.Value.TryGet(out PlayerController controller))
-                        if (controller.Health > 0)
+                        if (controller.Health.Value > 0)
                             teams[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1]++;
                 if (teams[0] * teams[1] == 0)
                 {
@@ -183,7 +201,7 @@ public class GameManager : NetworkBehaviour
             };
         }
 
-        StartRoundClientRpc();        
+        StartRoundClientRpc();
     }
 
     private PlayerController SpawnPlayer(Player player)
@@ -218,6 +236,8 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void StartRoundClientRpc()
     {
+        Spectator.Instance.Spectate(Player.Singleton);
+
         //RoundStarted.Invoke(90);
     }
 

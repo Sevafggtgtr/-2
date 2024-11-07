@@ -35,7 +35,8 @@ public class UIGunPanel : MonoBehaviour
     public void SetPlayer(PlayerController playerController)
     {               
         _playerController = playerController;
-        _playerController.WeaponChanged += ChangeGun;                                      
+        _playerController.WeaponChanged += ChangeGun;
+        ChangeGun();
     }
 
     public void RemovePlayer(PlayerController playerController)
