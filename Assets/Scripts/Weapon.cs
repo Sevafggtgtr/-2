@@ -95,7 +95,7 @@ public abstract class Weapon : NetworkBehaviour
     protected NetworkTransform _networkTransform;
     public NetworkTransform NetworkTransform => _networkTransform;
 
-    public abstract bool Action(Vector3 origin, Vector3 direction, PlayerController owner);
+    public abstract bool Action(Vector3 origin, Vector3 direction, Player owner);
 
     protected void Awake()
     {

@@ -21,7 +21,7 @@ public class UIServerCreationPanel : UIPanel
 
     void Start()
     {
-        foreach(var map in GameManager.Singleton.Maps)
+        foreach(var map in GameManager.Instance.Maps)
         {
             var mapSelectionButton = Instantiate(_mapSelectionButtonPrefab, _mapLayoutGroup.transform);
 

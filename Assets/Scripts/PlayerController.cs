@@ -17,14 +17,8 @@ public enum PlayerState
 }
 
 [RequireComponent(typeof(NetworkAudioSource))]
-public class PlayerController : NetworkBehaviour, IDamageableObject
+public class PlayerController : Singleton<PlayerController>, IDamageableObject
 {
-    public enum Action
-    {
-        Move,
-        Land
-    }
-
     public static event UnityAction<PlayerController> Spawn;
     public static event UnityAction Despawn;
     public event UnityAction WeaponChanged = delegate { };
@@ -32,37 +26,11 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     public event UnityAction Kill;
     public event UnityAction Damaged;
 
-    private static PlayerController _singleton;
-    public static PlayerController Singleton => _singleton;
+    [SerializeField]
+    private PlayerControllerData _data;
 
     [Header("States")]
-
-    [SerializeField]
-    private PlayerStateSettings[] _playerStatesSettings;
-
-    [System.Serializable]
-    private struct PlayerStateSettings
-    {
-        [SerializeField]
-        private PlayerState _playerState;
-        public PlayerState PlayerState => _playerState;
-        [SerializeField]
-        private float _speed;
-        public float Speed => _speed;
-        [SerializeField]
-        private float _cameraMoveRate;
-        public float CameraMoveRate => _cameraMoveRate;
-        [SerializeField]
-        private float _weaponSpreadMultiplier;
-        public float WeaponSpreadMultiplier => _weaponSpreadMultiplier;
-        [SerializeField]
-        private float _weaponRecoilMultiplier;
-        public float WeaponRecoilMultiplier => _weaponRecoilMultiplier;
-    }
-
-    private PlayerStateSettings GetPlayerStateSettings() => _playerStatesSettings.First(x => x.PlayerState == PlayerState);
-    private PlayerStateSettings GetPlayerStateSettings(PlayerState state) => _playerStatesSettings.First(x => x.PlayerState == state);
-
+    
     private PlayerState _playerState;
     public PlayerState PlayerState => _playerState;
 
@@ -70,100 +38,28 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     private Weapon _weapon;
     public Weapon Weapon => _weapon;
     private Weapon[] _weapons = new Weapon[Enum.GetNames(typeof(SlotType)).Length];
-    public Weapon[] Weapons => _weapons;
-    [System.Serializable]
-    public struct WeaponSlot
-    {
-        [SerializeField]
-        private SlotType _slotType;
-        public SlotType SlotType => _slotType;
-        [SerializeField]
-        private int _weaponCount;
-        public int WeaponCount => _weaponCount;
-        private Weapon[] _weapons;
-        public Weapon[] Weapons => _weapons;
-
-        public void Initialize()
-        {
-            _weapons = new Weapon[_weaponCount];
-        }
-    }
-
-    /*public WeaponSlot GetWeaponSlot(SlotType type)
-        => _weaponSlots.First(weaponSlot => weaponSlot.SlotType == type);*/
+    public Weapon[] Weapons => _weapons;    
 
     private NetworkVariable<NetworkBehaviourReference> _networkWeapon = new NetworkVariable<NetworkBehaviourReference>(writePerm: NetworkVariableWritePermission.Owner);
     private NetworkList<NetworkBehaviourReference> _networkWeapons = new NetworkList<NetworkBehaviourReference>(writePerm: NetworkVariableWritePermission.Owner);
-
-    [SerializeField]
-    private float _cameraWeaponRecoilAngleUnit,
-                  _weaponPivotMaxRecoilOffset,
-                  _weaponPivotRecoilOffsetUnit;
-
-    [SerializeField]
-    private AnimationCurve _weaponAnimationCurve;
 
     private float _recoil,
                   _spread,
                   _handCameraRecoilAngle;
 
-
     private Coroutine _recoilCoroutine,
                       _spreadCoroutine;
 
     [Header("Move")]
-    [SerializeField]
-    private float _cameraMovePeriod;
-
-    [SerializeField]
-    private SurfaceSound[] _surfaceSounds;
-
-    [SerializeField]
-    private AudioClip _jumpSound,
-                      _crouchSound;
-
-    [System.Serializable]
-    private struct SurfaceSound
-    {
-        [SerializeField]
-        private SurfaceType _surfaceType;
-        public SurfaceType SurfaceType => _surfaceType;
-
-        [SerializeField]
-        private Action _actionType;
-        public Action ActionType => _actionType;
-
-        [SerializeField]
-        private AudioClip _sound;
-        public AudioClip Sound => _sound;
-    }
-
-    [SerializeField]
-    private float _walkSoundDuration;
-
-    [SerializeField]
+    
     private NetworkAudioSource _moveNetworkAudioSource;
 
     private Coroutine _moveSound;
 
-    [SerializeField]
-    private Vector3 _cameraMoveOffset,
-                    _cameraRotateOffset;
-
-    [SerializeField]
-    private float _sensitivity,
-                  _pickDistance,
-                  _dropForce,
-                  _jumpForce;
-
     private Transform _arms;
 
-    [SerializeField]
-    private AnimationCurve _velocityDamageCurve;
-
-    private bool _scope;
-    [SerializeField]
-    private float _scopeSpeedMultiplier;
+    private bool _isScoping,
+                 _canChangeWeapon;
 
     private float _velocity;
 
@@ -239,6 +135,8 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         _networkAudioSource = GetComponent<NetworkAudioSource>();
 
+        _player = GameManager.Instance.Players.First(player => player.OwnerClientId == OwnerClientId);
+
         if (!IsOwner)
         {
             Weapon weapon;
@@ -249,15 +147,15 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         }
 
         else
-        {
-            _singleton = this;
-
+        {   
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
 
             InitializeServerRpc();
 
             transform.position = _spawnPointPosition;
+
+            Spectator.Instance.Spectate(Player.Instance);
         }
 
         _controller.enabled = true;
@@ -290,7 +188,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     [ServerRpc]
     private void InitializeServerRpc()
     {
-        _model = Instantiate(Map.Singleton.Data.SkinPackDatas.First(team => team.Team == Player.Singleton.Team.Value).GetRandomSkin(), transform);
+        _model = Instantiate(Map.Singleton.Data.SkinPackDatas.First(team => team.Team == Player.Instance.Team.Value).GetRandomSkin(), transform);
 
         _model.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
 
@@ -298,7 +196,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         InitializeClientRpc((NetworkBehaviourReference)_model);
 
-        var weapons = GameManager.Singleton.GameMode.DefaultWeaponIndices;
+        var weapons = GameManager.Instance.GameMode.DefaultWeaponIndices;
 
         for (int i = 0; i < weapons.Length; i++)
             AddWeaponServerRpc(weapons[i]);
@@ -349,7 +247,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     [Rpc(SendTo.Server)]
     public void AddWeaponServerRpc(int weaponIndex)
     {
-        var weapon = Instantiate(GameManager.Singleton.WeaponData.GetTeamWeaponData(Player.Singleton.Team.Value).Weapons[weaponIndex]);
+        var weapon = Instantiate(GameManager.Instance.WeaponData.GetTeamWeaponData(Player.Instance.Team.Value).Weapons[weaponIndex]);
 
         weapon.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
 
@@ -434,7 +332,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
     private void DropWeapon(Weapon weapon)
     {
-        weapon.Rigidbody.AddForce(_fpCamera.transform.forward * _dropForce, ForceMode.Impulse);
+        weapon.Rigidbody.AddForce(_fpCamera.transform.forward * _data.DropForce, ForceMode.Impulse);
 
         ChangeWeaponState(weapon, WeaponStates.Drop);
         weapon.gameObject.SetActive(true);
@@ -595,7 +493,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         Died.Invoke(killer, causeCode);
 
-        var spectatedPlayer = GameManager.Singleton.Players.FirstOrDefault(player => player.Team.Value == Player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled);
+        var spectatedPlayer = GameManager.Instance.Players.FirstOrDefault(player => player.Team.Value == Player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled);
 
         if (spectatedPlayer)
             Spectator.Instance.Spectate(spectatedPlayer);
@@ -613,13 +511,13 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         while (_recoil != 0)
         {
-            _angle += (_recoil - _weaponAnimationCurve.Evaluate(1 - time) * maxRecoil) * _cameraWeaponRecoilAngleUnit;
+            _angle += (_recoil - _data.WeaponAnimationCurve.Evaluate(1 - time) * maxRecoil) * _data.CameraWeaponRecoilAngleUnit;
 
-            _recoil = _weaponAnimationCurve.Evaluate(1 - time) * maxRecoil;
+            _recoil = _data.WeaponAnimationCurve.Evaluate(1 - time) * maxRecoil;
 
             time += _weapon.RecoilDecrease / maxRecoil * Time.deltaTime;
 
-            _handCamera.transform.localRotation = Quaternion.Euler(_recoil * _cameraWeaponRecoilAngleUnit, 0, 0);
+            _handCamera.transform.localRotation = Quaternion.Euler(_recoil * _data.CameraWeaponRecoilAngleUnit, 0, 0);
 
             //_handCamera.transform.localPosition = new Vector3(0, 0, Mathf.Clamp(_recoil * _weaponPivotRecoilOffsetUnit, 0, _weaponPivotMaxRecoilOffset));
 
@@ -635,7 +533,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
         while (_spread != 0)
         {
-            _spread = _weaponAnimationCurve.Evaluate(1 - time) * maxSpread;
+            _spread = _data.WeaponAnimationCurve.Evaluate(1 - time) * maxSpread;
 
             time += _weapon.SpreadDecrease / maxSpread * Time.deltaTime;
 
@@ -647,9 +545,9 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
     {
         float time = 0;
 
-        PlaySurfaceSound(Action.Move);
+        PlaySurfaceSound(PlayerControllerData.SurfaceSound.Action.Move);
 
-        while (time < _walkSoundDuration * GetPlayerStateSettings(PlayerState.Walk).Speed / GetPlayerStateSettings().Speed)
+        while (time < _data.WalkSoundDuration * _data.GetPlayerStateSettings(PlayerState.Walk).Speed / _data.GetPlayerStateSettings(_playerState).Speed)
         {
             time += Time.deltaTime;
 
@@ -658,16 +556,16 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         _moveSound = null;
     }
 
-    private void PlaySurfaceSound(Action action)
+    private void PlaySurfaceSound(PlayerControllerData.SurfaceSound.Action action)
     {
 
-        if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, _pickDistance))
+        if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, _data.PickDistance))
         {
             var surface = hit.transform.GetComponent<Surface>();
 
             if (surface != null)
             {
-                _networkAudioSource.PlayAudio(_surfaceSounds.First(surfaceSound => surfaceSound.SurfaceType == surface.SurfaceType && action == surfaceSound.ActionType).Sound);
+                _networkAudioSource.PlayAudio(_data.SurfaceSounds.First(surfaceSound => surfaceSound.SurfaceType == surface.SurfaceType && action == surfaceSound.ActionType).Sound);
             }
         }
     }
@@ -677,14 +575,14 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         if (!IsOwner)
             return;
 
-        _fpCamera.transform.localPosition = Mathf.Sin(_time / _cameraMovePeriod * GetPlayerStateSettings(_playerState).CameraMoveRate * 360 * Mathf.Deg2Rad) * _cameraMoveOffset;
+        _fpCamera.transform.localPosition = Mathf.Sin(_time / _data.CameraMovePeriod * _data.GetPlayerStateSettings(_playerState).CameraMoveRate * 360 * Mathf.Deg2Rad) * _data.CameraMoveOffset;
         _time += Time.deltaTime;
 
         if (!_controller.isGrounded)
             _velocity += Physics.gravity.y * Time.deltaTime * 2;
         else if (_velocity < -_controller.skinWidth)
         {
-            var damage = (int)_velocityDamageCurve.Evaluate(Mathf.Abs(_velocity * Time.deltaTime + Physics.gravity.y * Mathf.Pow(Time.deltaTime, 2) / 2));
+            var damage = (int)_data.VelocityDamageCurve.Evaluate(Mathf.Abs(_velocity * Time.deltaTime + Physics.gravity.y * Mathf.Pow(Time.deltaTime, 2) / 2));
 
             if (damage > 0)
             {
@@ -704,13 +602,13 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         #region Weapon
         if ((Input.GetMouseButtonDown(0)
                   || (Input.GetMouseButton(0) && Weapon.ActionMode == ActionMode.Auto))
-                        && GameManager.Singleton.IsPlayersActive.Value && _weapon.Action(_fpCamera.transform.position, _fpCamera.transform.forward, this))
+                        && GameManager.Instance.IsPlayersActive.Value && _weapon.Action(_fpCamera.transform.position, _fpCamera.transform.forward, Player.Instance))
         {
             _animator.SetBool("Shoot_b", true);
 
-            var recoil = _weapon.RecoilValue * (Input.GetMouseButtonDown(0) ? _weapon.FirstShotMultiplier : 1) * GetPlayerStateSettings().WeaponRecoilMultiplier * (_scope ? _weapon.ScopeRecoilMultiplier : 1);
+            var recoil = _weapon.RecoilValue * (Input.GetMouseButtonDown(0) ? _weapon.FirstShotMultiplier : 1) * _data.GetPlayerStateSettings(_playerState).WeaponRecoilMultiplier * (_isScoping ? _weapon.ScopeRecoilMultiplier : 1);
 
-            _angle -= recoil * _cameraWeaponRecoilAngleUnit;
+            _angle -= recoil * _data.CameraWeaponRecoilAngleUnit;
 
             _recoil += recoil;
 
@@ -719,7 +617,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
 
             _recoilCoroutine = StartCoroutine(Recoil());
 
-            _spread += _weapon.SpreadValue * (Input.GetMouseButtonDown(0) && PlayerState == PlayerState.Idle && PlayerState == PlayerState.CrouchIdle ? 0 : 1) * GetPlayerStateSettings().WeaponSpreadMultiplier * (_scope ? _weapon.ScopeSpreadMultiplier : 1);
+            _spread += _weapon.SpreadValue * (Input.GetMouseButtonDown(0) && PlayerState == PlayerState.Idle && PlayerState == PlayerState.CrouchIdle ? 0 : 1) * _data.GetPlayerStateSettings(_playerState).WeaponSpreadMultiplier * (_isScoping ? _weapon.ScopeSpreadMultiplier : 1);
 
             if (_spreadCoroutine != null)
                 StopCoroutine(_spreadCoroutine);
@@ -739,7 +637,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                 _handCamera.transform.position += (((Gun)_weapon).Sight.position - _handCamera.transform.position) * Time.deltaTime * ((Gun)_weapon).ScopeSpeed;
                 _fpCamera.fieldOfView = Mathf.Lerp(_fpCamera.fieldOfView, 60 / ((Gun)_weapon).ScopeValue, Time.deltaTime * ((Gun)_weapon).ScopeSpeed);
 
-                _scope = true;
+                _isScoping = true;
             }
 
             else
@@ -747,7 +645,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                 _handCamera.transform.localPosition = Vector3.Lerp(_handCamera.transform.localPosition, HandCameraStartPosition, ((Gun)_weapon).ScopeSpeed * Time.deltaTime);
                 _fpCamera.fieldOfView = Mathf.Lerp(_fpCamera.fieldOfView, 60, Time.deltaTime * ((Gun)_weapon).ScopeSpeed);
 
-                _scope = false;
+                _isScoping = false;
             }
 
             if (Input.GetMouseButtonDown(1))
@@ -800,7 +698,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         }
 
         RaycastHit hit;
-        if (Physics.Raycast(_fpCamera.transform.position, _fpCamera.transform.forward, out hit, _pickDistance))
+        if (Physics.Raycast(_fpCamera.transform.position, _fpCamera.transform.forward, out hit, _data.PickDistance))
         {
             var weapon = hit.transform.GetComponent<Gun>();
             if (weapon && Input.GetKeyDown(KeyCode.E))
@@ -815,7 +713,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         {
             _animator.SetBool("Crouch_b", true);
             _playerState = PlayerState.CrouchIdle;
-            _networkAudioSource.PlayAudio(_crouchSound);
+            _networkAudioSource.PlayAudio(_data.CrouchSound);
         }
 
         if (Input.GetKeyUp(KeyCode.LeftControl))
@@ -824,20 +722,20 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
             _playerState = PlayerState.Idle;
         }
 
-        if (GameManager.Singleton.IsPlayersActive.Value)
+        if (GameManager.Instance.IsPlayersActive.Value)
         {
             if (Input.GetKeyDown(KeyCode.Space) && _controller.isGrounded && _playerState != PlayerState.CrouchIdle && _playerState != PlayerState.CrouchWalk)
             {
-                _velocity = _jumpForce;
+                _velocity = _data.JumpForce;
                 _animator.SetTrigger("Jump_trig");
-                _networkAudioSource.PlayAudio(_jumpSound);
+                _networkAudioSource.PlayAudio(_data.JumpSound);
             }
 
             if (_playerState == PlayerState.Jump && _controller.isGrounded)
             {
                 _playerState = PlayerState.Idle;
 
-                PlaySurfaceSound(Action.Land);
+                PlaySurfaceSound(PlayerControllerData.SurfaceSound.Action.Land);
             }
 
             if (new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")).magnitude > 0)
@@ -849,7 +747,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                 {
                     _playerState = PlayerState.Run;
 
-                    _scope = false;
+                    _isScoping = false;
                 }
                 if (_playerState == PlayerState.Idle || (Input.GetKeyUp(KeyCode.LeftShift) && (_playerState == PlayerState.Idle || _playerState == PlayerState.Run)))
                     _playerState = PlayerState.Walk;
@@ -860,14 +758,14 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
                 _playerState = _playerState == PlayerState.CrouchWalk ? PlayerState.CrouchIdle : PlayerState.Idle;
 
             _controller.Move(transform.TransformDirection
-                (Vector3.ClampMagnitude(new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")), 1) * GetPlayerStateSettings().Speed * Time.deltaTime * _weapon.OwnerSpeedMultiplier * (_scope ? _scopeSpeedMultiplier : 1)));
+                (Vector3.ClampMagnitude(new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")), 1) * _data.GetPlayerStateSettings(_playerState).Speed * Time.deltaTime * _weapon.OwnerSpeedMultiplier * (_isScoping ? _data.ScopeSpeedMultiplier : 1)));
 
-            _animator.SetFloat("Speed_f", new Vector3(_controller.velocity.x, 0, _controller.velocity.z).magnitude / GetPlayerStateSettings(PlayerState.Walk).Speed / 4);
+            _animator.SetFloat("Speed_f", new Vector3(_controller.velocity.x, 0, _controller.velocity.z).magnitude / _data.GetPlayerStateSettings(PlayerState.Walk).Speed / 4);
         }
 
-        transform.Rotate(0, Input.GetAxis("Mouse X") * _sensitivity * Time.deltaTime, 0);
+        transform.Rotate(0, Input.GetAxis("Mouse X") * _data.Sensitivity * Time.deltaTime, 0);
 
-        _angle -= Input.GetAxis("Mouse Y") * _sensitivity * Time.deltaTime;
+        _angle -= Input.GetAxis("Mouse Y") * _data.Sensitivity * Time.deltaTime;
         _angle = Mathf.Clamp(_angle, -90, 90);
         _arms.transform.localRotation = _fpCamera.transform.localRotation = Quaternion.Euler(_angle, 0, 0);
         #endregion

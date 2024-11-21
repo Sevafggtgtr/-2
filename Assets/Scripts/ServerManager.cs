@@ -16,4 +16,9 @@ public class ServerManager : Singleton<ServerManager>
         NetworkManager.Singleton.Shutdown();
 
     }
+
+    private void Start()
+    {
+        DontDestroyOnLoad(this);
+    }
 }

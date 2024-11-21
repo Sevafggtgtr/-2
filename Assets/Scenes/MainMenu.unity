@@ -369,6 +369,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 247953826}
+  - component: {fileID: 247953828}
   - component: {fileID: 247953827}
   m_Layer: 0
   m_Name: Server Manager
@@ -404,6 +405,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61ecb2d94ae85b54d84b83c4965abc5d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &247953828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 247953825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 3972837318
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
 --- !u!1 &293306733
 GameObject:
   m_ObjectHideFlags: 0
@@ -1516,15 +1538,21 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a2f392e8b91d59d4a85f2854d691fc44, type: 2}
   _gameMode: {fileID: 11400000, guid: 7ddd3861ed4fae841ac97fe3e87bbabf, type: 2}
   _entities: {fileID: 0}
-  _teams:
+  _teamDatas:
   - _name: Terrorist
-    _color: {r: 0.754717, g: 0.6160921, b: 0.24682562, a: 1}
+    _color: {r: 1, g: 0.8570477, b: 0.34905648, a: 0}
     _team: 1
-    _playerSkins: []
-  - _name: CounterTerrorist
-    _color: {r: 0.20742849, g: 0.51316005, b: 0.7169812, a: 1}
+    _playerSkins:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - _name: Counter-terrorist
+    _color: {r: 0.35534585, g: 0.78883463, b: 1, a: 0}
     _team: 2
-    _playerSkins: []
+    _playerSkins:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
   _weaponData: {fileID: 11400000, guid: 517f1879b09265a4db066dffba7ba067, type: 2}
 --- !u!4 &1019236736
 Transform:

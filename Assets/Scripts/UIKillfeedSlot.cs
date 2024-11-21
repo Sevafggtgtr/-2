@@ -16,8 +16,8 @@ public class UIKillfeedSlot : MonoBehaviour
         _targetText.text = target.Nickname.Value.ToString();
         //_causeImage.sprite = Resources.Load<Sprite>(causeCode);
 
-        _killerText.color = GameManager.Singleton.Teams.First(team => team.Team == killer.Team.Value).Color;
-        _targetText.color = GameManager.Singleton.Teams.First(team => team.Team == target.Team.Value).Color;
+        _killerText.color = GameManager.Instance.GetTeamData(killer.Team.Value).Color;
+        _targetText.color = GameManager.Instance.GetTeamData(target.Team.Value).Color;
 
         Invoke("Destroy", 5);
     }

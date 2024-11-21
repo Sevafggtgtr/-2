@@ -38,7 +38,7 @@ public class UIWeaponStore : UIPanel
         {
             var weaponLayoutGroup = Instantiate(_weaponLayoutGroupPrefab, _weaponButtonLayoutGroup.transform);
 
-            foreach (var weapon in GameManager.Singleton.WeaponData.GetTeamWeaponData(Player.Singleton.Team.Value).Weapons.Where(weapon => weaponGroup.WeaponTypes.Contains(weapon.WeaponType)))
+            foreach (var weapon in GameManager.Instance.WeaponData.GetTeamWeaponData(Player.Instance.Team.Value).Weapons.Where(weapon => weaponGroup.WeaponTypes.Contains(weapon.WeaponType)))
             {
                 var weaponButton = Instantiate(_weaponButtonPrefab, weaponLayoutGroup.transform);
 
@@ -54,7 +54,7 @@ public class UIWeaponStore : UIPanel
     {
         foreach (var weaponButton in _weaponButtonLayoutGroup.transform.GetComponentsInChildren<UIWeaponStoreWeaponButton>())
         {
-            weaponButton.Button.interactable = weaponButton.Weapon.Price <= Player.Singleton.Balance.Value;
+            weaponButton.Button.interactable = weaponButton.Weapon.Price <= Player.Instance.Balance.Value;
         }
     }
 
@@ -63,10 +63,10 @@ public class UIWeaponStore : UIPanel
 
     public void Buy(Weapon weapon)
     {
-        Player.Singleton.Balance.Value -= weapon.Price;
+        Player.Instance.Balance.Value -= weapon.Price;
         
         CheckBalance();
 
-        PlayerController.Singleton.AddWeaponServerRpc(Array.IndexOf(GameManager.Singleton.WeaponData.GetTeamWeaponData(Player.Singleton.Team.Value).Weapons, weapon));
+        PlayerController.Instance.AddWeaponServerRpc(Array.IndexOf(GameManager.Instance.WeaponData.GetTeamWeaponData(Player.Instance.Team.Value).Weapons, weapon));
     }
 }

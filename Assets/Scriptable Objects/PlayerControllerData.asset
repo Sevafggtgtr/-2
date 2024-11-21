@@ -1,0 +1,126 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5e356e25cca3b14f8b315937919c757, type: 3}
+  m_Name: PlayerControllerData
+  m_EditorClassIdentifier: 
+  _playerStatesSettings:
+  - _playerState: 0
+    _speed: 0
+    _cameraMoveRate: 1
+    _weaponSpreadMultiplier: 1
+    _weaponRecoilMultiplier: 1
+  - _playerState: 1
+    _speed: 5
+    _cameraMoveRate: 3
+    _weaponSpreadMultiplier: 1
+    _weaponRecoilMultiplier: 1
+  - _playerState: 2
+    _speed: 8
+    _cameraMoveRate: 5
+    _weaponSpreadMultiplier: 1
+    _weaponRecoilMultiplier: 1
+  - _playerState: 3
+    _speed: 0
+    _cameraMoveRate: 0
+    _weaponSpreadMultiplier: 1
+    _weaponRecoilMultiplier: 1
+  - _playerState: 4
+    _speed: 0
+    _cameraMoveRate: 1
+    _weaponSpreadMultiplier: 1
+    _weaponRecoilMultiplier: 1
+  - _playerState: 5
+    _speed: 3
+    _cameraMoveRate: 2
+    _weaponSpreadMultiplier: 1
+    _weaponRecoilMultiplier: 1
+  _cameraWeaponRecoilAngleUnit: 1
+  _weaponPivotMaxRecoilOffset: 0.3
+  _weaponPivotRecoilOffsetUnit: 0.05
+  _weaponAnimationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  _cameraMovePeriod: 4
+  _surfaceSounds:
+  - _surfaceType: 0
+    _actionType: 0
+    _sound: {fileID: 8300000, guid: acccc987abab5d94f9a1a816bed7ef23, type: 3}
+  - _surfaceType: 1
+    _actionType: 0
+    _sound: {fileID: 8300000, guid: 46291cd11f46a50458c4cbf510cf10cf, type: 3}
+  - _surfaceType: 2
+    _actionType: 0
+    _sound: {fileID: 8300000, guid: f840226c20bd8b546a30c4f742206839, type: 3}
+  - _surfaceType: 0
+    _actionType: 1
+    _sound: {fileID: 0}
+  - _surfaceType: 1
+    _actionType: 1
+    _sound: {fileID: 0}
+  - _surfaceType: 2
+    _actionType: 1
+    _sound: {fileID: 0}
+  _jumpSound: {fileID: 0}
+  _crouchSound: {fileID: 0}
+  _walkSoundDuration: 1
+  _cameraMoveOffset: {x: 0, y: 0.1, z: 0}
+  _cameraRotateOffset: {x: 0, y: 0, z: 0}
+  _sensitivity: 750
+  _pickDistance: 10
+  _dropForce: 5
+  _jumpForce: 5
+  _velocityDamageCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 2
+      value: 0
+      inSlope: 1.0572332
+      outSlope: 3.5714285
+      tangentMode: 69
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.21672952
+    - serializedVersion: 3
+      time: 30
+      value: 100
+      inSlope: 3.5714285
+      outSlope: 3.5714285
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  _scopeSpeedMultiplier: 1

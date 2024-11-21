@@ -65,7 +65,7 @@ public class HUD : UIManager
 
         base.OpenPanel(panel);
 
-        PlayerController.Singleton.IsActive = false;
+        PlayerController.Instance.IsActive = false;
     }
 
     private void ClosePanel()
@@ -73,14 +73,14 @@ public class HUD : UIManager
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
 
-        PlayerController.Singleton.IsActive = true;
+        PlayerController.Instance.IsActive = true;
     }
 
     void OnPlayerControllerDamaged()
     {
         _vignetteAnimation.Play();
 
-        HealthBar.value = PlayerController.Singleton.Health.Value;
+        HealthBar.value = PlayerController.Instance.Health.Value;
     }
 
     void OnPlayerControllerDied()
@@ -95,6 +95,8 @@ public class HUD : UIManager
 
     public void SetPlayer(Player player)
     {
+        _player = player;
+
         _playerControllerPanel.SetActive(true);
 
         if (player.Controller.Value.TryGet(out PlayerController playerController))
@@ -149,6 +151,20 @@ public class HUD : UIManager
         _playerControllerPanel.SetActive(false);
 
         Closed += ClosePanel;
+
+        var roundFinishPanel = GetComponentInChildren<UIRoundFinishPanel>(true);
+
+        GameManager.Instance.RoundStarted += () =>
+        {
+            roundFinishPanel.gameObject.SetActive(false);
+        };
+
+        GameManager.Instance.RoundFinished += (team) =>
+        {
+            roundFinishPanel.gameObject.SetActive(true);
+
+            roundFinishPanel.Initialize(team);
+        };       
     }
 
     private void Awake()

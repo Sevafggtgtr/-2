@@ -112,7 +112,7 @@ MonoBehaviour:
   SceneMigrationSynchronization: 1
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
+  AutoObjectParentSync: 0
 --- !u!114 &2395569318072236145
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -127,7 +127,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _damage: 0
   _actionMode: 0
-  _slotType: 3
+  _slotType: 4
   _weaponType: 9
   _recoilValue: 0
   _recoilDecrease: 0
@@ -140,6 +140,7 @@ MonoBehaviour:
   _scopeSpreadMultiplier: 0
   _ownerSpeedMultiplier: 0
   _name: FlashBang
+  _code: 
   _icon: {fileID: 0}
   _price: 100
   _activateTime: 4

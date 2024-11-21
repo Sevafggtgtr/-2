@@ -55,7 +55,7 @@ public class Gun : Weapon
     public void Scope(bool value)
         => _isScoping = value;
 
-    public override bool Action(Vector3 origin, Vector3 direction, PlayerController owner)
+    public override bool Action(Vector3 origin, Vector3 direction, Player owner)
     {
         if (_currentClipAmmo > 0 && !_isShooting && !_isReloading)
         {
@@ -75,13 +75,13 @@ public class Gun : Weapon
     [ServerRpc]
     public void ActionServerRpc(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner)
     {
-        if(owner.TryGet(out PlayerController ownerObject))
+        if(owner.TryGet(out Player ownerObject))
         {
             RaycastHit hit;
             if (Physics.Raycast(origin, direction + Random.insideUnitSphere / 100, out hit, _shotDistance))
             {
                 if (hit.transform.GetComponent<IDamageableObject>() != null)
-                    hit.transform.GetComponent<IDamageableObject>().DamageClientRpc(_damage, owner, Code);
+                    hit.transform.GetComponent<IDamageableObject>().DamageServerRpc(_damage, owner, Code);
                 else
                 {
                     var bulletHit = Instantiate(_hitPrefab);

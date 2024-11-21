@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-public class FlashBang : Grenade
+public class FlashBang : TimeActivateGrenade
 {
     [Header("FlashBang")]
     [SerializeField]
-    private float _duration;
+    private float _duration,
+                  _radius;
 
-    protected override void Activate()
+    protected override void OnActivate()
     {
         ActivateClientRpc();
     }
@@ -22,6 +23,7 @@ public class FlashBang : Grenade
         GetComponent<MeshRenderer>().enabled = false;
         Collider.enabled = false;
 
+        //if(_radius = )
         HUD.Singleton.Blindness(_duration);
     }
 }

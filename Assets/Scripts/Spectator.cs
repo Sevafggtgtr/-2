@@ -14,14 +14,17 @@ public class Spectator : Singleton<Spectator>
 
     public void Spectate(Player player)
     {
-        HUD.Singleton.RemovePlayer(_player);
-
-        HUD.Singleton.SetPlayer(player);
-
-        if (_player.Controller.Value.TryGet(out PlayerController _playerController))
+        if (_player)
         {
-            _playerController.ChangeModelState(PlayerController.Layers.Default);
+            HUD.Singleton.RemovePlayer(_player);
+
+            if (_player.Controller.Value.TryGet(out PlayerController _playerController))
+            {
+                _playerController.ChangeModelState(PlayerController.Layers.Default);
+            }
         }
+
+        HUD.Singleton.SetPlayer(player);        
 
         if (player.Controller.Value.TryGet(out PlayerController playerController))
         {
@@ -33,7 +36,7 @@ public class Spectator : Singleton<Spectator>
 
     public void Spectate(int offset)
     {
-        var players = GameManager.Singleton.Players.Where(player => player.Team.Value == _player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled).ToList();
+        var players = GameManager.Instance.Players.Where(player => player.Team.Value == _player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled).ToList();
 
         Spectate(players[(players.IndexOf(_player) + offset + players.Count) % players.Count]);
     }

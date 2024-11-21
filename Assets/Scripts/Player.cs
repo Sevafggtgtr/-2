@@ -6,12 +6,9 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class Player : NetworkBehaviour
+public class Player : Singleton<Player>
 {
     public event UnityAction Disconnected;
-
-    private static Player _singleton;
-    public static Player Singleton => _singleton;
 
     public NetworkVariable<Teams> Team = new NetworkVariable<Teams>(Teams.Terrorist,NetworkVariableReadPermission.Everyone,NetworkVariableWritePermission.Owner);
 
@@ -28,11 +25,6 @@ public class Player : NetworkBehaviour
 
     private NetworkVariable<int> _balance = new NetworkVariable<int>();
     public NetworkVariable<int> Balance => _balance;
-
-    private void Awake()
-    {
-        _singleton = this;
-    }
 
     void Start()
     {

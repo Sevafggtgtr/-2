@@ -11,7 +11,7 @@ public class MeleeWeapon : Weapon
 
     private bool _isAction;
 
-    public override bool Action(Vector3 origin, Vector3 direction, PlayerController owner)
+    public override bool Action(Vector3 origin, Vector3 direction, Player owner)
     {
         ActionServerRpc(origin, direction, owner);
         return true;
@@ -20,7 +20,7 @@ public class MeleeWeapon : Weapon
     [ServerRpc]
     public  void ActionServerRpc(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner)
     {
-        if (owner.TryGet(out PlayerController ownerObject))
+        if (owner.TryGet(out Player ownerObject))
         {
             if (_isAction)
                 return;

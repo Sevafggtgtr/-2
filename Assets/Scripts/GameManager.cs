@@ -33,13 +33,10 @@ public struct TeamData
     public Texture[] PlayerSkins => _playerSkins;
 }
 
-public class GameManager : NetworkBehaviour
+public class GameManager : Singleton<GameManager>
 {
-    public event UnityAction RoundEnded;
-    public event UnityAction<int> RoundStarted;
-
-    private static GameManager _singleton;
-    public static GameManager Singleton => _singleton;
+    public event UnityAction<Teams> RoundFinished;
+    public event UnityAction RoundStarted;
 
     [SerializeField]
     private PlayerController _playerPrefab;
@@ -61,33 +58,29 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<bool> IsPlayersActive => _isPlayersActive;
 
     [SerializeField]
-    private TeamData[] _teams;
-    public TeamData[] Teams => _teams;
+    private TeamData[] _teamDatas;
+    public TeamData[] TeamDatas => _teamDatas;
 
     [SerializeField]
     private WeaponData _weaponData;
     public WeaponData WeaponData => _weaponData;
 
     public TeamData GetTeamData(Teams team)
-        => _teams.First(team_ => team_.Team == team);
-
-    private NetworkVariable<int>[] _points = new NetworkVariable<int>[2] { new NetworkVariable<int>(), new NetworkVariable<int>() };
-    public NetworkVariable<int>[] Points => _points;
+        => _teamDatas.First(team_ => team_.Team == team);
+    
+    public Dictionary<Teams, int> Points {get; private set;}
     private NetworkVariable<int> _time = new NetworkVariable<int>();
     public NetworkVariable<int> Time => _time;
 
     private Coroutine _timerCoroutine;
 
-    void Awake()
-    {
-        _singleton = this;
-
-        DontDestroyOnLoad(gameObject);
-    }
-
     private void Start()
     {
         Players = new List<Player>();
+
+        Points = new Dictionary<Teams, int> { { Teams.Terrorist, 0 }, { Teams.CounterTerrorist, 0 } };
+
+        DontDestroyOnLoad(gameObject);
 
         NetworkManager.OnServerStarted += () =>
         {
@@ -177,26 +170,27 @@ public class GameManager : NetworkBehaviour
             var playerController = SpawnPlayer(player);
             playerController.Died += (killer, causeCode) =>
             {
-                int[] teams = new int[2];
+                var teams = new Dictionary<Teams, int> { {Teams.Terrorist, 0}, { Teams.CounterTerrorist, 0} };
 
-                foreach (var player in NetworkManager.ConnectedClients)
-                    if (player.Value.PlayerObject.GetComponent<Player>().Controller.Value.TryGet(out PlayerController controller))
+                foreach (var player in Players)
+                    if (player.Controller.Value.TryGet(out PlayerController controller))
                         if (controller.Health.Value > 0)
-                            teams[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1]++;
-                if (teams[0] * teams[1] == 0)
+                            teams[player.Team.Value]++;
+                if (teams.ContainsValue(0))
                 {
-                    foreach (var player in NetworkManager.ConnectedClients)
-                    {
-                        player.Value.PlayerObject.GetComponent<Player>().Balance.Value += teams[(int)player.Value.PlayerObject.GetComponent<Player>().Team.Value - 1] == 0 ? GameMode.LossAward : GameMode.WinAward;
-                    }
+                    var winningTeam = teams.Max().Key;
 
-                        _points[teams[0] == 0 ? 1 : 0].Value++;
-                    if (Mathf.Max(teams) == _gameMode.RoundCount / 2 + 1)
+                    foreach (var player in Players)
+                    {
+                        player.Balance.Value += player.Team.Value == winningTeam ? GameMode.WinAward : GameMode.LossAward;
+                    }
+                  
+                    if (++Points[winningTeam] == _gameMode.RoundCount / 2 + 1)
                     {
                         foreach (var player in FindObjectsOfType<PlayerController>())
                             player.NetworkObject.Despawn();
                     }
-                    StartRoundServerRpc();
+                    FinishRoundClientRpc(winningTeam);
                 }
             };
         }
@@ -234,11 +228,21 @@ public class GameManager : NetworkBehaviour
     }
 
     [ClientRpc]
+    private void InitializeClientRpc()
+    {
+        
+    }
+
+    [ClientRpc]
     private void StartRoundClientRpc()
     {
-        Spectator.Instance.Spectate(Player.Singleton);
+        RoundStarted?.Invoke();
+    }
 
-        //RoundStarted.Invoke(90);
+    [ClientRpc]
+    private void FinishRoundClientRpc(Teams winningTeam)
+    {
+        RoundFinished.Invoke(winningTeam);
     }
 
     /*[Rpc(SendTo.Server)]
