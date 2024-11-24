@@ -2,22 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UIElements;
+using static UnityEngine.GraphicsBuffer;
 
-public class HEGrenade : TimeActivateGrenade
+public class HEGrenade : ExplosiveGrenade
 {
-    [Header("HEGrenade")]
-    [SerializeField]
-    private float _radius;
-
-    protected override void OnActivate()
-    {            
-        foreach (Collider target in Physics.OverlapSphere(transform.position, _radius))
-        {
-            if (target.GetComponent<IDamageableObject>() != null)
-                target.GetComponent<IDamageableObject>().DamageServerRpc(_damage, _owner, Code);
-        }
-
-        ActivateClientRpc();
+    protected override void Explode()
+    {
+        PlayerController.Instance.DamageServerRpc(_damage, _owner, Code);
     }
 
     [Rpc(SendTo.Everyone)]

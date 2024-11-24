@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-public class FlashBang : TimeActivateGrenade
-{
+public class FlashBang : ExplosiveGrenade
+{    
     [Header("FlashBang")]
     [SerializeField]
-    private float _duration,
-                  _radius;
-
-    protected override void OnActivate()
+    private float _duration;
+ 
+    protected override void Explode()
     {
+        HUD.Singleton.Blindness(_duration);
+
         ActivateClientRpc();
     }
 
@@ -21,9 +22,6 @@ public class FlashBang : TimeActivateGrenade
         _audioSource.Play();
 
         GetComponent<MeshRenderer>().enabled = false;
-        Collider.enabled = false;
-
-        //if(_radius = )
-        HUD.Singleton.Blindness(_duration);
+        Collider.enabled = false;        
     }
 }

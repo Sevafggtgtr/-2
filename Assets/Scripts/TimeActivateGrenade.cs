@@ -1,14 +1,17 @@
+using System.Collections;
 using UnityEngine;
 
-public abstract class TimeActivateGranade : MonoBehaviour
+public abstract class TimeActivateGrenade : Grenade
 {
-    void Start()
+    [SerializeField]
+    private float _activateTime;
+
+    protected override IEnumerator OnThrow()
     {
-        
+        yield return new WaitForSeconds(_activateTime);
+
+        Activate();
     }
 
-    void Update()
-    {
-        
-    }
+    protected abstract void Activate();
 }
