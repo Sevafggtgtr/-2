@@ -10,6 +10,8 @@ public abstract class TimeActivateGrenade : Grenade
     {
         yield return new WaitForSeconds(_activateTime);
 
+        OnEndThrowClientRpc();
+
         Activate();
     }
 

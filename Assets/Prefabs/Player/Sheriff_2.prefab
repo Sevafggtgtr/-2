@@ -129,6 +129,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 13700030, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 13700030, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 76788f53b40c9be4c82b69772ec902d5, type: 2}
@@ -136,29 +140,57 @@ PrefabInstance:
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 13700032, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 13700034, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 13700034, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 13700036, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 13700036, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 13700038, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 13700038, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 13700040, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 13700040, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 13700042, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 13700042, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 13700044, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 13700044, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 13700044, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -168,17 +200,33 @@ PrefabInstance:
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 13700046, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 13700048, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 13700048, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 13700050, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 13700050, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 13700052, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 13700052, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 13700052, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -188,17 +236,33 @@ PrefabInstance:
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 13700054, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 13700056, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 13700056, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 13700058, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 13700058, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4936133004089741856, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4936133004089741856, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4936133004089741856, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'

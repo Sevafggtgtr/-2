@@ -1540,14 +1540,14 @@ MonoBehaviour:
   _entities: {fileID: 0}
   _teamDatas:
   - _name: Terrorist
-    _color: {r: 1, g: 0.8570477, b: 0.34905648, a: 0}
+    _color: {r: 1, g: 0.8570477, b: 0.34905648, a: 1}
     _team: 1
     _playerSkins:
     - {fileID: 0}
     - {fileID: 0}
     - {fileID: 0}
   - _name: Counter-terrorist
-    _color: {r: 0.35534585, g: 0.78883463, b: 1, a: 0}
+    _color: {r: 0.35534585, g: 0.78883463, b: 1, a: 1}
     _team: 2
     _playerSkins:
     - {fileID: 0}
@@ -1862,6 +1862,7 @@ GameObject:
   - component: {fileID: 1274190124}
   - component: {fileID: 1274190123}
   - component: {fileID: 1274190122}
+  - component: {fileID: 1274190125}
   m_Layer: 5
   m_Name: InputField (Legacy) (1)
   m_TagString: Untagged
@@ -1953,7 +1954,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.71383643, g: 0.8388274, b: 1, a: 0.7529412}
-  m_Text: 
+  m_Text: Noname
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0
@@ -1996,6 +1997,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1274190120}
   m_CullTransparentMesh: 1
+--- !u!114 &1274190125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1274190120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e08678ccea50238498466fd5ae4104de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1358245840
 GameObject:
   m_ObjectHideFlags: 0
@@ -3110,7 +3123,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1701199004}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
   m_Name: 
@@ -3336,7 +3349,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 
+  m_Text: Noname
 --- !u!222 &1802102595
 CanvasRenderer:
   m_ObjectHideFlags: 0

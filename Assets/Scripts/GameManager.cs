@@ -178,7 +178,7 @@ public class GameManager : Singleton<GameManager>
                             teams[player.Team.Value]++;
                 if (teams.ContainsValue(0))
                 {
-                    var winningTeam = teams.Max().Key;
+                    var winningTeam = teams.OrderBy(team => team.Value).Last().Key;
 
                     foreach (var player in Players)
                     {
@@ -190,6 +190,7 @@ public class GameManager : Singleton<GameManager>
                         foreach (var player in FindObjectsOfType<PlayerController>())
                             player.NetworkObject.Despawn();
                     }
+                    FinishRoundTime();
                     FinishRoundClientRpc(winningTeam);
                 }
             };

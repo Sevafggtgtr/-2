@@ -7,19 +7,8 @@ using static UnityEngine.GraphicsBuffer;
 
 public class HEGrenade : ExplosiveGrenade
 {
-    protected override void Explode()
+    protected override void Explode(PlayerController playerController)
     {
-        PlayerController.Instance.DamageServerRpc(_damage, _owner, Code);
-    }
-
-    [Rpc(SendTo.Everyone)]
-    private void ActivateClientRpc()
-    {
-        _audioSource.Play();
-
-        GetComponent<MeshRenderer>().enabled = false;
-        Collider.enabled = false;
-
-        GetComponentInChildren<ParticleSystem>().Play();
+        playerController.DamageServerRpc(_damage, _owner, Code);
     }
 }

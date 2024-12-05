@@ -9,19 +9,21 @@ public class FlashBang : ExplosiveGrenade
     [SerializeField]
     private float _duration;
  
-    protected override void Explode()
+    protected override void Explode(PlayerController playerController)
     {
-        HUD.Singleton.Blindness(_duration);
-
-        ActivateClientRpc();
+        ExplodeClientRpc(playerController);
     }
 
     [Rpc(SendTo.Everyone)]
-    private void ActivateClientRpc()
+    private void ExplodeClientRpc(NetworkBehaviourReference playerController)
     {
-        _audioSource.Play();
+        print("+");
+        if(playerController.TryGet(out PlayerController playerControllerObject) && playerControllerObject == PlayerController.Instance)
+        {
+            print("-");
 
-        GetComponent<MeshRenderer>().enabled = false;
-        Collider.enabled = false;        
+            HUD.Singleton.Blindness(_duration);
+        }
+            
     }
 }

@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public abstract class ExplosiveGrenade : TimeActivateGrenade
@@ -9,10 +10,19 @@ public abstract class ExplosiveGrenade : TimeActivateGrenade
     {
         foreach (Collider target in Physics.OverlapSphere(transform.position, _radius))
         {
-            if (target.GetComponent<IDamageableObject>() != null && !Physics.Linecast(transform.position, target.transform.position))
-                Explode();
+            var playerController = target.GetComponent<PlayerController>();
+
+            if (playerController != null && !Physics.Linecast(transform.position, target.transform.position))
+                Explode(playerController);
         }
     }
 
-    protected abstract void Explode();      
+    [Rpc(SendTo.Everyone)]
+    private void ExplodeClientRpc()
+    {
+
+    }
+
+    protected abstract void Explode(PlayerController playerController);
+       
 }

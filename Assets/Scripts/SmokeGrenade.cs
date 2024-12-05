@@ -9,17 +9,7 @@ public class SmokeGrenade : Grenade
     {
         while (!Rigidbody.IsSleeping())
             yield return null;
-        ActivateClientRpc();
-    }
+        OnEndThrowClientRpc();
 
-    [Rpc(SendTo.Everyone)]
-    private void ActivateClientRpc()
-    {
-        _audioSource.Play();
-
-        GetComponent<MeshRenderer>().enabled = false;
-        Collider.enabled = false;
-
-        GetComponentInChildren<ParticleSystem>().Play();
     }
 }

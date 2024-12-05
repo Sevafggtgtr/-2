@@ -166,12 +166,14 @@ MonoBehaviour:
   _scopeSpeed: 0
   _scopeRecoilMultiplier: 0
   _scopeSpreadMultiplier: 0
-  _ownerSpeedMultiplier: 0
+  _ownerSpeedMultiplier: 1
   _name: Grenade
+  _code: 
   _icon: {fileID: 0}
   _price: 300
+  _throwForce: 10
+  _throwTime: 0.5
   _activateTime: 5
-  _throwForce: 1
   _radius: 6
 --- !u!82 &1222710236390171192
 AudioSource:

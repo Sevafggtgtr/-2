@@ -58,8 +58,8 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
     private Transform _arms;
 
-    private bool _isScoping,
-                 _canChangeWeapon;
+    private bool _isScoping;
+    public bool CanChangeWeapon = true;
 
     private float _velocity;
 
@@ -163,6 +163,12 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
     public void ChangeModelState(Layers layer)
     {
+        _fpCamera.enabled = _handCamera.enabled = layer switch
+        {
+            Layers.Hand => true,
+            Layers.Default => false
+        };
+
         foreach(Weapon weapon in _weapons)
         {
             if(weapon)
@@ -411,6 +417,9 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
     #region Change Weapon
     public void ChangeWeapon(Weapon weapon, bool dropWeapon)
     {
+        if(!CanChangeWeapon)
+            return;
+
         if (dropWeapon)
             DropWeapon(_weapon);
         else

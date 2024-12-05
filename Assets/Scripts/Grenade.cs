@@ -34,15 +34,36 @@ public abstract class Grenade : Weapon
 
     private IEnumerator Throw(Vector3 origin, Vector3 direction, Player owner)
     {
-        yield return new WaitForSeconds(_throwTime);
-
         if (owner.Controller.Value.TryGet(out PlayerController ownerObject))
-            ownerObject.ChangeWeapon(ownerObject.Weapons.First(weapon => weapon), true);       
+        {
+            ownerObject.CanChangeWeapon = false;
 
-        ActionServerRpc(origin, direction, owner);
+            yield return new WaitForSeconds(_throwTime);
 
-        StartCoroutine(OnThrow());
+            ownerObject.CanChangeWeapon = true;
+
+            ownerObject.ChangeWeapon(ownerObject.Weapons.First(weapon => weapon), true);
+
+            ActionServerRpc(origin, direction, owner);
+
+            StartCoroutine(OnThrow());
+        }
+
     }
 
-    protected abstract IEnumerator OnThrow();       
+    protected abstract IEnumerator OnThrow();
+
+    [Rpc(SendTo.Everyone)]
+    protected virtual void OnEndThrowClientRpc()
+    {
+        _audioSource.Play();
+
+        GetComponent<MeshRenderer>().enabled = false;
+        Collider.enabled = false;
+        Rigidbody.isKinematic = true;
+
+        var particleSystem = GetComponentInChildren<ParticleSystem>();
+        if(particleSystem)
+            particleSystem.Play();
+    }
 }
