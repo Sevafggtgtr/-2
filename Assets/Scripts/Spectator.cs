@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class Spectator : Singleton<Spectator>
 {
@@ -36,8 +37,12 @@ public class Spectator : Singleton<Spectator>
 
     public void Spectate(int offset)
     {
-        var players = GameManager.Instance.Players.Where(player => player.Team.Value == _player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled).ToList();
-
+        var players = new List<Player>();//.Where(player => player.Team.Value == _player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled).ToList();
+        foreach (var player in GameManager.Instance.NetworkPlayers)
+            if(player.TryGet(out Player playerObject) && playerObject.Team.Value == _player.Team.Value && playerObject.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled)
+            {
+                players.Add(playerObject); 
+            }
         Spectate(players[(players.IndexOf(_player) + offset + players.Count) % players.Count]);
     }
 

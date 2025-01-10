@@ -8,6 +8,13 @@ public class Singleton<T> : NetworkBehaviour where T : NetworkBehaviour
     void Awake()
     {
         _instance = this as T;
+
+        Initialize();
+    }
+
+    protected virtual void Initialize()
+    {
+
     }
 
 }

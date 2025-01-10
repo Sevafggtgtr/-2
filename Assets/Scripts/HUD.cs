@@ -47,33 +47,15 @@ public class HUD : UIManager
         if (_panel)
             base.Update();
         else if (Input.GetKeyDown(KeyCode.Escape))
-            OpenPanel(_pauseMenu);
+            OpenPanel(_pauseMenu.gameObject);
 
         if (Input.GetKeyDown(KeyCode.B))
-            OpenPanel(_weaponStore);
+            OpenPanel(_weaponStore.gameObject);
     }
 
     public void Blindness(float time)
     {
         _blindness.Activate(time);
-    }
-
-    private void OpenPanel(UIPanel panel)
-    {
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-
-        base.OpenPanel(panel);
-
-        PlayerController.Instance.IsActive = false;
-    }
-
-    private void ClosePanel()
-    {
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
-
-        PlayerController.Instance.IsActive = true;
     }
 
     void OnPlayerControllerDamaged()
@@ -103,6 +85,7 @@ public class HUD : UIManager
         {
             HealthBar.value = playerController.Health.Value;
 
+            print("+");
             _gunPanel.SetPlayer(playerController);
 
             playerController.Damaged += () =>
@@ -150,7 +133,20 @@ public class HUD : UIManager
     {
         _playerControllerPanel.SetActive(false);
 
-        Closed += ClosePanel;
+        Closed += () =>
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+
+            PlayerController.Instance.IsActive = true;
+        };
+        Opened += () =>
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+
+            PlayerController.Instance.IsActive = false;
+        }; ;
 
         var roundFinishPanel = GetComponentInChildren<UIRoundFinishPanel>(true);
 
@@ -164,7 +160,7 @@ public class HUD : UIManager
             roundFinishPanel.gameObject.SetActive(true);
 
             roundFinishPanel.Initialize(team);
-        };       
+        };
     }
 
     private void Awake()

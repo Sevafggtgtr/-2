@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -9,8 +6,9 @@ using UnityEngine.Events;
 public class Player : Singleton<Player>
 {
     public event UnityAction Disconnected;
+    public event UnityAction<Player, string> Died;
 
-    public NetworkVariable<Teams> Team = new NetworkVariable<Teams>(Teams.Terrorist,NetworkVariableReadPermission.Everyone,NetworkVariableWritePermission.Owner);
+    public NetworkVariable<Teams> Team = new NetworkVariable<Teams>(Teams.Terrorist, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     private NetworkVariable<int> _kills = new NetworkVariable<int>(writePerm: NetworkVariableWritePermission.Owner);
     private NetworkVariable<int> _deaths = new NetworkVariable<int>(writePerm: NetworkVariableWritePermission.Owner);
@@ -26,23 +24,46 @@ public class Player : Singleton<Player>
     private NetworkVariable<int> _balance = new NetworkVariable<int>();
     public NetworkVariable<int> Balance => _balance;
 
+    [SerializeField]
+    private PlayerController _playerControllerPrefab;
+
     void Start()
     {
         if (IsOwner)
         {
-            PlayerController.Spawn += (player) =>
+            _nickname.Value = UIMainMenu.Singleton.Nickname;
+        }
+    }
+
+    public void Spawn(Vector3 spawnPoint)
+    {
+        var playerController = Instantiate(_playerControllerPrefab);
+
+        playerController.NetworkObject.SpawnWithOwnership(OwnerClientId);
+
+        playerController.SpawnPlayersClientRpc(spawnPoint);
+
+        SpawnClientRpc(playerController);
+    }
+
+    [ClientRpc]
+    private void SpawnClientRpc(NetworkBehaviourReference playerController)
+    {
+        if (playerController.TryGet(out PlayerController controller) && controller.IsOwner)
+        {
+            controller.Died += (killer, causeCode) =>
             {
-                if (player.IsOwner)
-                {
-                    player.Died += (killer, causeCode) =>                    
-                        _deaths.Value++;
-                    player.Kill += () =>
-                        _kills.Value++;
-                    Controller.Value = player;
-                }
+                _deaths.Value++;
+                Died.Invoke(killer, causeCode);
+
+                //var spectatedPlayer = GameManager.Instance.NetworkPlayers.FirstOrDefault(player => player.Team.Value == Player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled);
+
+                Spectator.Instance.Spectate(0);
             };
 
-            _nickname.Value = UIMainMenu.Singleton.Nickname;
+            controller.Kill += () =>
+                _kills.Value++;
+            Controller.Value = controller;
         }
     }
 
@@ -58,6 +79,6 @@ public class Player : Singleton<Player>
 
     void Update()
     {
-        
+
     }
 }

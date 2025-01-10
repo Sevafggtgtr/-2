@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Linq;
-using System.Net.Http.Headers;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
@@ -96,8 +95,8 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
     public string Name { get; set; }
 
-    private Player _player;
-    public Player Player => _player;
+    //private Player _player;
+    //public Player Player => _player;
 
     private Vector3 _spawnPointPosition;
 
@@ -129,13 +128,11 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
     private void Start()
     {
-        Spawn.Invoke(this);
-
         _controller = GetComponent<CharacterController>();
 
         _networkAudioSource = GetComponent<NetworkAudioSource>();
 
-        _player = GameManager.Instance.Players.First(player => player.OwnerClientId == OwnerClientId);
+        //_player = GameManager.Instance.Players.First(player => player.OwnerClientId == OwnerClientId);
 
         if (!IsOwner)
         {
@@ -154,8 +151,6 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
             InitializeServerRpc();
 
             transform.position = _spawnPointPosition;
-
-            Spectator.Instance.Spectate(Player.Instance);
         }
 
         _controller.enabled = true;
@@ -200,7 +195,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
         _model.GetComponent<NetworkObject>().TrySetParent(transform);
 
-        InitializeClientRpc((NetworkBehaviourReference)_model);
+        InitializeClientRpc(OwnerClientId, _model);
 
         var weapons = GameManager.Instance.GameMode.DefaultWeaponIndices;
 
@@ -209,22 +204,28 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
     }
 
     [ClientRpc]
-    private void InitializeClientRpc(NetworkBehaviourReference model)
+    private void InitializeClientRpc(ulong id, NetworkBehaviourReference model)
     {
-        if (model.TryGet(out PlayerAnimator modelObject))
-            _model = modelObject;
+        if(id == OwnerClientId)
+        {
+            if (model.TryGet(out PlayerAnimator modelObject))
+                _model = modelObject;
 
-        _model.Initialize();
+            _model.transform.localPosition = Vector3.zero;
 
-        _animator = _model.Animator;
+            _model.Initialize();
 
-        _arms = _model.transform.Find("mesh_Arms");
+            _animator = _model.Animator;
 
-        ChangeModelState(Layers.Hand);
+            _arms = _model.transform.Find("mesh_Arms");
 
-        _handCamera.transform.SetParent(_arms, true);
+            if(IsOwner)
+                Spectator.Instance.Spectate(Player.Instance);
 
-        _handCameraStartPosition = _handCamera.transform.localPosition;
+            _handCamera.transform.SetParent(_arms, true);
+
+            _handCameraStartPosition = _handCamera.transform.localPosition;
+        }
     }
     #endregion    
 
@@ -253,19 +254,17 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
     [Rpc(SendTo.Server)]
     public void AddWeaponServerRpc(int weaponIndex)
     {
-        var weapon = Instantiate(GameManager.Instance.WeaponData.GetTeamWeaponData(Player.Instance.Team.Value).Weapons[weaponIndex]);
+        var weapon = Instantiate(GameManager.Instance.WeaponData.GetTeamWeaponData(GameManager.Instance.GetPlayer(OwnerClientId).Team.Value).Weapons[weaponIndex]);
 
         weapon.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
 
-        weapon.GetComponent<NetworkObject>().TrySetParent(transform);
-
-        AddWeaponClientRpc(weapon);
+        AddWeaponClientRpc(OwnerClientId, weapon);
     }
 
     [Rpc(SendTo.Owner)]
-    private void AddWeaponClientRpc(NetworkBehaviourReference weapon)
+    private void AddWeaponClientRpc(ulong id,NetworkBehaviourReference weapon)
     {
-        if (weapon.TryGet(out Weapon weaponObject))
+        if (id == OwnerClientId && weapon.TryGet(out Weapon weaponObject))
             AddWeapon(weaponObject);
     }
 
@@ -301,7 +300,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
             }
         }
 
-        weapon.Collider.enabled = state switch
+        weapon.Collider.enabled = weapon.NetworkTransform.enabled = state switch
         {
             WeaponStates.Take => false,
             WeaponStates.Drop => true
@@ -326,12 +325,16 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
             WeaponStates.Take => weapon,
             WeaponStates.Drop => null
         };
+        
 
         switch (state)
         {
             case WeaponStates.Take:
-
+                print(weapon.transform.position);
+                print(weapon.transform.localPosition);
                 weapon.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(0, 90, 90));
+                print(weapon.transform.position);
+                print(weapon.transform.localPosition);
                 break;
         }       
     }
@@ -500,12 +503,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
             _model.enabled = false;
         }
 
-        Died.Invoke(killer, causeCode);
-
-        var spectatedPlayer = GameManager.Instance.Players.FirstOrDefault(player => player.Team.Value == Player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled);
-
-        if (spectatedPlayer)
-            Spectator.Instance.Spectate(spectatedPlayer);
+        Died.Invoke(killer, causeCode);       
 
         _controller.enabled = false;
 
@@ -595,7 +593,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
             if (damage > 0)
             {
-                DamageServerRpc(damage, Player, "death");
+                DamageServerRpc(damage, null, "death");
             }       
             _velocity = -_controller.skinWidth;
         }

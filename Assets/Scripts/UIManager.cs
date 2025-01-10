@@ -7,17 +7,23 @@ using UnityEngine.UIElements;
 public class UIManager : MonoBehaviour
 {
     protected event UnityAction Closed = delegate { };
+    protected event UnityAction Opened = delegate { };
 
-    protected UIPanel _panel;
+    protected GameObject _panel;
 
-    protected void OpenPanel(UIPanel panel)
+    public virtual void OpenPanel(GameObject panel)
     {
-        panel.gameObject.SetActive(true);
+        if (!_panel)
+        {
+            panel.gameObject.SetActive(true);
 
-        _panel = panel;
+            _panel = panel;
+
+            Opened.Invoke();
+        }        
     }
 
-    private void ClosePanel()
+    public virtual void ClosePanel()
     {
         _panel.gameObject.SetActive(false);
 

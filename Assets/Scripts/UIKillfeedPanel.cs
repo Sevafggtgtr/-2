@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 using static UnityEngine.GraphicsBuffer;
@@ -8,6 +9,15 @@ public class UIKillfeedPanel : MonoBehaviour
     private UIKillfeedSlot _slotPrefab;
     void Start()
     {        
-        PlayerController.Spawn += playerController => playerController.Died += (killer,causeCode) => Instantiate(_slotPrefab, transform).Initialize(killer, playerController.Player, causeCode);
+        void OnPlayerDied(NetworkBehaviourReference player)
+        {
+            if (player.TryGet(out Player playerObject))
+                playerObject.Died += (killer, causeCode) => Instantiate(_slotPrefab, transform).Initialize(killer, playerObject, causeCode);
+        }
+
+        GameManager.Instance.NetworkPlayers.OnListChanged += NLevent => OnPlayerDied(NLevent.Value);
+
+        foreach(var player in GameManager.Instance.NetworkPlayers)        
+            OnPlayerDied(player);            
     }
 }

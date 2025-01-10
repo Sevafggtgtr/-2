@@ -18,12 +18,6 @@ public class UIGunPanel : MonoBehaviour
             _ammoText.text = "";
     }
 
-    void BeginChangeGun()
-    {
-        if (_playerController.Weapon is Gun)
-            ((Gun)_playerController.Weapon).AmmoChanged -= Change;
-    }
-
     void ChangeGun()
     {
         if (_playerController.Weapon is Gun)
@@ -33,9 +27,10 @@ public class UIGunPanel : MonoBehaviour
     }
 
     public void SetPlayer(PlayerController playerController)
-    {               
+    {
         _playerController = playerController;
         _playerController.WeaponChanged += ChangeGun;
+        if(playerController.Weapon)
         ChangeGun();
     }
 

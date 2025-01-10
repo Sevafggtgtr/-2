@@ -38,7 +38,7 @@ public class UIMainMenu : UIManager
     {
         _hostButton.onClick.AddListener(() =>
         {
-            OpenPanel(_hostPanel);
+            OpenPanel(_hostPanel.gameObject);
         });
         //_clientButton.onClick.AddListener(() => OpenPanel(_clientPanel));
         _clientButton.onClick.AddListener(() => NetworkManager.Singleton.StartClient());

@@ -46,6 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GlobalObjectIdHash: 2826294506
+  InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
@@ -67,3 +68,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Team:
     m_InternalValue: 0
+  _playerControllerPrefab: {fileID: 3207188583313776390, guid: 0b7529b4120c288428e5bd0bfb1f61dc, type: 3}
