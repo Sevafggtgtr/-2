@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using Unity.Netcode;
 
 public class UIWeaponStore : UIPanel
 {
@@ -45,9 +46,17 @@ public class UIWeaponStore : UIPanel
                 weaponButton.Initialize(weapon);
 
                 weaponButton.OnClick += () =>
-                    Buy(weapon);
+                {
+                    print(Player.Instance.Team.Value);
+
+                    Player.Instance.BuyServerRpc(weapon.Code);
+                };
+                    
+                
             }
         }
+        Player.Instance.Balance.OnValueChanged += (o,n) => CheckBalance();
+        print("+");
     }
 
     private void CheckBalance()
@@ -59,14 +68,5 @@ public class UIWeaponStore : UIPanel
     }
 
     private void OnEnable()
-        => CheckBalance();   
-
-    public void Buy(Weapon weapon)
-    {
-        Player.Instance.Balance.Value -= weapon.Price;
-        
-        CheckBalance();
-
-        PlayerController.Instance.AddWeaponServerRpc(Array.IndexOf(GameManager.Instance.WeaponData.GetTeamWeaponData(Player.Instance.Team.Value).Weapons, weapon));
-    }
+        => CheckBalance();
 }

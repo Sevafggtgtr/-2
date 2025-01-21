@@ -269,7 +269,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 3ac250f3da17ddb4ebfa77f9fe955c68, type: 2}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 100154, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+    - {fileID: 100152, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+    - {fileID: 100150, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+    - {fileID: 100148, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+    - {fileID: 100146, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+    - {fileID: 100144, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+    - {fileID: 100142, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+    - {fileID: 100140, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+    - {fileID: 100138, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+    - {fileID: 100164, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+    - {fileID: 100162, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+    - {fileID: 100160, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
+    - {fileID: 100158, guid: c72c97e952bf7834b85e6164373d310d, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 100084, guid: c72c97e952bf7834b85e6164373d310d, type: 3}

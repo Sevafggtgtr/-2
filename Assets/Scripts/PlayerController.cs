@@ -71,8 +71,8 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
     public Camera FpCamera => _fpCamera;
     public Camera HandCamera => _handCamera;
 
-    private float _angle;
-    public float Angle => _angle;
+    private NetworkVariable<float> _angle = new NetworkVariable<float>(writePerm: NetworkVariableWritePermission.Owner);
+    public NetworkVariable<float> Angle => _angle;
 
     private NetworkVariable<int> _health = new NetworkVariable<int>(100);
     public NetworkVariable<int> Health => _health;
@@ -80,8 +80,6 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
     private CharacterController _controller;
 
     private PlayerAnimator _model;
-
-    private Animator _animator;
 
     private NetworkAudioSource _networkAudioSource;
 
@@ -136,9 +134,12 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
         if (!IsOwner)
         {
-            Weapon weapon;
             _networkWeapon.Value.TryGet(out Weapon currentWeapon);
-          
+
+            foreach (var weapon in _networkWeapons)
+                if(weapon.TryGet(out Weapon weaponObject) && weaponObject != currentWeapon)
+                    weaponObject.gameObject.SetActive(false);
+                      
             _fpCamera.gameObject.SetActive(false);
             _handCamera.gameObject.SetActive(false);
         }
@@ -211,11 +212,9 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
             if (model.TryGet(out PlayerAnimator modelObject))
                 _model = modelObject;
 
-            _model.transform.localPosition = Vector3.zero;
+            _model.transform.localPosition = Vector3.zero;            
 
             _model.Initialize();
-
-            _animator = _model.Animator;
 
             _arms = _model.transform.Find("mesh_Arms");
 
@@ -330,11 +329,8 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
         switch (state)
         {
             case WeaponStates.Take:
-                print(weapon.transform.position);
-                print(weapon.transform.localPosition);
+
                 weapon.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(0, 90, 90));
-                print(weapon.transform.position);
-                print(weapon.transform.localPosition);
                 break;
         }       
     }
@@ -395,7 +391,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
         _weapon = weapon;
         _networkWeapon.Value = _weapon;
         _weapon.gameObject.SetActive(true);
-        _animator.SetInteger("WeaponType_int", (int)weapon.WeaponType + 1);
+        _model.Animator.SetInteger("WeaponType_int", (int)weapon.WeaponType + 1);
         WeaponChanged.Invoke();
         TakeWeaponServerRpc(_weapon);
     }
@@ -496,20 +492,38 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
             KnifeDespawnServerRpc();
 
-            _animator.SetBool("Death_b", true);
+            _model.Animator.SetBool("Death_b", true);
 
             ChangeModelState(Layers.Default);
 
             _model.enabled = false;
+
+            DieServerRpc();
         }
 
         Died.Invoke(killer, causeCode);       
 
         _controller.enabled = false;
 
-        enabled = false;
+        enabled = false;       
     }
     #endregion
+
+    [ServerRpc]
+    private void DieServerRpc()
+    {
+        DieClientRpc(OwnerClientId);
+    }
+
+    [ClientRpc]
+    private void DieClientRpc(ulong id)
+    {
+        if(OwnerClientId == id)
+        {
+            _model.Animator.enabled = false;
+        }
+    }
+
     private IEnumerator Recoil()
     {
         float maxRecoil = _recoil;
@@ -518,7 +532,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
         while (_recoil != 0)
         {
-            _angle += (_recoil - _data.WeaponAnimationCurve.Evaluate(1 - time) * maxRecoil) * _data.CameraWeaponRecoilAngleUnit;
+            _angle.Value += (_recoil - _data.WeaponAnimationCurve.Evaluate(1 - time) * maxRecoil) * _data.CameraWeaponRecoilAngleUnit;
 
             _recoil = _data.WeaponAnimationCurve.Evaluate(1 - time) * maxRecoil;
 
@@ -587,7 +601,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
         if (!_controller.isGrounded)
             _velocity += Physics.gravity.y * Time.deltaTime * 2;
-        else if (_velocity < -_controller.skinWidth)
+        else if (_velocity < 0)
         {
             var damage = (int)_data.VelocityDamageCurve.Evaluate(Mathf.Abs(_velocity * Time.deltaTime + Physics.gravity.y * Mathf.Pow(Time.deltaTime, 2) / 2));
 
@@ -595,27 +609,30 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
             {
                 DamageServerRpc(damage, null, "death");
             }       
-            _velocity = -_controller.skinWidth;
+            _velocity = 0;
         }
             
 
         _controller.Move(Vector3.up * _velocity * Time.deltaTime);
 
-        _animator.SetBool("Jump_b", _controller.velocity.y == 0 ? false : true);
+        _model.Animator.SetBool("Jump_b", _controller.velocity.y == 0 ? false : true);
 
         if (!IsActive)
             return;
 
         #region Weapon
+        
+
+
         if ((Input.GetMouseButtonDown(0)
                   || (Input.GetMouseButton(0) && Weapon.ActionMode == ActionMode.Auto))
                         && GameManager.Instance.IsPlayersActive.Value && _weapon.Action(_fpCamera.transform.position, _fpCamera.transform.forward, Player.Instance))
         {
-            _animator.SetBool("Shoot_b", true);
+            _model.Animator.SetBool("Shoot_b", true);
 
             var recoil = _weapon.RecoilValue * (Input.GetMouseButtonDown(0) ? _weapon.FirstShotMultiplier : 1) * _data.GetPlayerStateSettings(_playerState).WeaponRecoilMultiplier * (_isScoping ? _weapon.ScopeRecoilMultiplier : 1);
 
-            _angle -= recoil * _data.CameraWeaponRecoilAngleUnit;
+            _angle.Value -= recoil * _data.CameraWeaponRecoilAngleUnit;
 
             _recoil += recoil;
 
@@ -633,9 +650,9 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
         }
 
         else
-            _animator.SetBool("Shoot_b", false);
+            _model.Animator.SetBool("Shoot_b", false);
 
-
+        _weapon.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(0, 90, 90));
 
         if (_weapon is Gun)
         {
@@ -689,11 +706,11 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
         {
             ((Gun)_weapon).Reload();
 
-            _animator.SetBool("Reload_b", true);
+            _model.Animator.SetBool("Reload_b", true);
         }
 
         else
-            _animator.SetBool("Reload_b", false);
+            _model.Animator.SetBool("Reload_b", false);
 
         for (int i = 0; i < _weapons.Length; i++)
         {
@@ -718,14 +735,14 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
         #region Move
         if (Input.GetKeyDown(KeyCode.LeftControl))
         {
-            _animator.SetBool("Crouch_b", true);
+            _model.Animator.SetBool("Crouch_b", true);
             _playerState = PlayerState.CrouchIdle;
             _networkAudioSource.PlayAudio(_data.CrouchSound);
         }
 
         if (Input.GetKeyUp(KeyCode.LeftControl))
         {
-            _animator.SetBool("Crouch_b", false);
+            _model.Animator.SetBool("Crouch_b", false);
             _playerState = PlayerState.Idle;
         }
 
@@ -734,7 +751,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
             if (Input.GetKeyDown(KeyCode.Space) && _controller.isGrounded && _playerState != PlayerState.CrouchIdle && _playerState != PlayerState.CrouchWalk)
             {
                 _velocity = _data.JumpForce;
-                _animator.SetTrigger("Jump_trig");
+                _model.Animator.SetTrigger("Jump_trig");
                 _networkAudioSource.PlayAudio(_data.JumpSound);
             }
 
@@ -745,7 +762,9 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
                 PlaySurfaceSound(PlayerControllerData.SurfaceSound.Action.Land);
             }
 
-            if (new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")).magnitude > 0)
+            var moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+
+            if (moveDirection.magnitude > 0)
             {
                 if (_moveSound == null)
                     _moveSound = StartCoroutine(MoveSound());
@@ -760,21 +779,22 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
                     _playerState = PlayerState.Walk;
                 if (_playerState == PlayerState.CrouchIdle)
                     _playerState = PlayerState.CrouchWalk;
+
+                _controller.Move(transform.TransformDirection
+                (Vector3.ClampMagnitude(moveDirection, 1) * _data.GetPlayerStateSettings(_playerState).Speed * Time.deltaTime * _weapon.OwnerSpeedMultiplier * (_isScoping ? _data.ScopeSpeedMultiplier : 1)));
+
             }
             else
                 _playerState = _playerState == PlayerState.CrouchWalk ? PlayerState.CrouchIdle : PlayerState.Idle;
-
-            _controller.Move(transform.TransformDirection
-                (Vector3.ClampMagnitude(new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")), 1) * _data.GetPlayerStateSettings(_playerState).Speed * Time.deltaTime * _weapon.OwnerSpeedMultiplier * (_isScoping ? _data.ScopeSpeedMultiplier : 1)));
-
-            _animator.SetFloat("Speed_f", new Vector3(_controller.velocity.x, 0, _controller.velocity.z).magnitude / _data.GetPlayerStateSettings(PlayerState.Walk).Speed / 4);
+            
+            _model.Animator.SetFloat("Speed_f", new Vector3(_controller.velocity.x, 0, _controller.velocity.z).magnitude / _data.GetPlayerStateSettings(PlayerState.Walk).Speed / 4);
         }
 
         transform.Rotate(0, Input.GetAxis("Mouse X") * _data.Sensitivity * Time.deltaTime, 0);
 
-        _angle -= Input.GetAxis("Mouse Y") * _data.Sensitivity * Time.deltaTime;
-        _angle = Mathf.Clamp(_angle, -90, 90);
-        _arms.transform.localRotation = _fpCamera.transform.localRotation = Quaternion.Euler(_angle, 0, 0);
+        _angle.Value -= Input.GetAxis("Mouse Y") * _data.Sensitivity * Time.deltaTime;
+        _angle.Value = Mathf.Clamp(_angle.Value, -90, 90);
+        _arms.transform.localRotation = _fpCamera.transform.localRotation = Quaternion.Euler(_angle.Value, 0, 0);
         #endregion
     }
 }

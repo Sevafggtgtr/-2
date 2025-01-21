@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -65,6 +67,20 @@ public class Player : Singleton<Player>
                 _kills.Value++;
             Controller.Value = controller;
         }
+    }
+
+    [ServerRpc]
+    public void BuyServerRpc(FixedString32Bytes weaponCode)
+    {
+        var weapon = GameManager.Instance.WeaponData.GetTeamWeaponData(Team.Value).Weapons.First(weapon => weaponCode == weapon.Code);
+            Balance.Value -= weapon.Price;
+
+        PlayerController.Instance.AddWeaponServerRpc(Array.IndexOf(GameManager.Instance.WeaponData.GetTeamWeaponData(Team.Value).Weapons, weapon));
+    }
+    [ClientRpc]
+    private void BuyClientRpc()
+    {
+
     }
 
     public override void OnDestroy()

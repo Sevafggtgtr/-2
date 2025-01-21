@@ -24,7 +24,8 @@ public enum WeaponType
     Knife
 }
 
-[RequireComponent(typeof(AudioSource), typeof(Rigidbody))]
+[RequireComponent(typeof(AudioSource), typeof(Rigidbody), typeof(NetworkTransform))]
+[RequireComponent(typeof(BoxCollider))]
 public abstract class Weapon : NetworkBehaviour
 {
     [SerializeField]
