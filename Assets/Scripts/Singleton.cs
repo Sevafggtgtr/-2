@@ -5,7 +5,8 @@ public class Singleton<T> : NetworkBehaviour where T : NetworkBehaviour
 {
     protected static T _instance;   
     public static T Instance => _instance ? _instance : FindFirstObjectByType<T>();
-    void Awake()
+   
+    private void Awake()
     {
         _instance = this as T;
 

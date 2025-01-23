@@ -16,14 +16,14 @@ public enum PlayerState
 }
 
 [RequireComponent(typeof(NetworkAudioSource))]
-public class PlayerController : Singleton<PlayerController>, IDamageableObject
+public class PlayerController : NetworkBehaviour, IDamageableObject
 {
     public static event UnityAction<PlayerController> Spawn;
     public static event UnityAction Despawn;
-    public event UnityAction WeaponChanged = delegate { };
+    public event UnityAction<Weapon, Weapon> WeaponChanged = delegate { };
     public event UnityAction<Player, string> Died;
     public event UnityAction Kill;
-    public event UnityAction Damaged;
+    public event UnityAction<int> Damaged;
 
     [SerializeField]
     private PlayerControllerData _data;
@@ -55,7 +55,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
     private Coroutine _moveSound;
 
-    private Transform _arms;
+    public Transform Arms { get; private set; }
 
     private bool _isScoping;
     public bool CanChangeWeapon = true;
@@ -73,9 +73,6 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
     private NetworkVariable<float> _angle = new NetworkVariable<float>(writePerm: NetworkVariableWritePermission.Owner);
     public NetworkVariable<float> Angle => _angle;
-
-    private NetworkVariable<int> _health = new NetworkVariable<int>(100);
-    public NetworkVariable<int> Health => _health;
 
     private CharacterController _controller;
 
@@ -171,7 +168,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
                 ChangeLayer(weapon.gameObject, layer);
         }
 
-        ChangeLayer(_arms.gameObject, layer);
+        ChangeLayer(Arms.gameObject, layer);
 
         foreach (Transform child in _model.transform)
         {
@@ -190,7 +187,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
     [ServerRpc]
     private void InitializeServerRpc()
     {
-        _model = Instantiate(Map.Singleton.Data.SkinPackDatas.First(team => team.Team == Player.Instance.Team.Value).GetRandomSkin(), transform);
+        _model = Instantiate(Map.Singleton.Data.SkinPackDatas.First(team => team.Team == GameManager.Instance.Player.Team.Value).GetRandomSkin(), transform);
 
         _model.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
 
@@ -216,12 +213,12 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
             _model.Initialize();
 
-            _arms = _model.transform.Find("mesh_Arms");
+            Arms = _model.transform.Find("mesh_Arms");
 
             if(IsOwner)
-                Spectator.Instance.Spectate(Player.Instance);
+                Spectator.Instance.Spectate(GameManager.Instance.Player);
 
-            _handCamera.transform.SetParent(_arms, true);
+            _handCamera.transform.SetParent(Arms, true);
 
             _handCameraStartPosition = _handCamera.transform.localPosition;
         }
@@ -392,7 +389,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
         _networkWeapon.Value = _weapon;
         _weapon.gameObject.SetActive(true);
         _model.Animator.SetInteger("WeaponType_int", (int)weapon.WeaponType + 1);
-        WeaponChanged.Invoke();
+
         TakeWeaponServerRpc(_weapon);
     }
 
@@ -408,7 +405,9 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
     private void TakeWeaponClientRpc(NetworkBehaviourReference weapon)
     {
         if (weapon.TryGet(out Weapon weaponObject))
+        {
             weaponObject.gameObject.SetActive(true);
+        }
     }
     #endregion
 
@@ -443,8 +442,11 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
                 oldWeaponObject.Collider.enabled = true;
             else
                 oldWeaponObject.gameObject.SetActive(false);
+
         if (newWeapon.TryGet(out Weapon newWeaponObject))
             newWeaponObject.gameObject.SetActive(true);
+
+        WeaponChanged.Invoke(oldWeaponObject, newWeaponObject);
     }
     #endregion
 
@@ -461,26 +463,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
     [Rpc(SendTo.Server)]
     public void DamageServerRpc(int damage, NetworkBehaviourReference source, string causeCode)
     {
-        _health.Value -= damage;
-
-        DamageClientRpc(_health.Value, source, causeCode);
-    }
-
-    [Rpc(SendTo.Me)]
-    public void DamageClientRpc(int health, NetworkBehaviourReference source, string causeCode)
-    {      
-        Damaged?.Invoke();
-
-        if (health <= 0)
-        {
-            if (source.TryGet(out Player player))
-            {
-                //player.Player.Balance.Value += GameManager.Singleton.GameMode.KillAward;
-
-                Die(player,causeCode);
-            }
-
-        }
+        Damaged.Invoke(damage);
     }
 
     protected void Die(Player killer, string causeCode)
@@ -626,7 +609,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
         if ((Input.GetMouseButtonDown(0)
                   || (Input.GetMouseButton(0) && Weapon.ActionMode == ActionMode.Auto))
-                        && GameManager.Instance.IsPlayersActive.Value && _weapon.Action(_fpCamera.transform.position, _fpCamera.transform.forward, Player.Instance))
+                        && GameManager.Instance.IsPlayersActive.Value && _weapon.Action(_fpCamera.transform.position, _fpCamera.transform.forward, Spectator.Instance.Player))
         {
             _model.Animator.SetBool("Shoot_b", true);
 
@@ -794,7 +777,7 @@ public class PlayerController : Singleton<PlayerController>, IDamageableObject
 
         _angle.Value -= Input.GetAxis("Mouse Y") * _data.Sensitivity * Time.deltaTime;
         _angle.Value = Mathf.Clamp(_angle.Value, -90, 90);
-        _arms.transform.localRotation = _fpCamera.transform.localRotation = Quaternion.Euler(_angle.Value, 0, 0);
+        Arms.transform.localRotation = _fpCamera.transform.localRotation = Quaternion.Euler(_angle.Value, 0, 0);
         #endregion
     }
 }

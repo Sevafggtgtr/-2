@@ -1,49 +1,46 @@
-using System.Linq;
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Events;
 
 public class Spectator : Singleton<Spectator>
 {
-    private Player _player;
+    public event UnityAction<Player, Player> PlayerChanged;
+
+    public Player Player { get; private set; }
 
     private bool _isSpectate;
 
     void Start()
     {
-        
+
     }
 
     public void Spectate(Player player)
     {
-        if (_player)
+        if (Player && Player.Controller.Value.TryGet(out PlayerController playerController))
         {
-            HUD.Singleton.RemovePlayer(_player);
-
-            if (_player.Controller.Value.TryGet(out PlayerController _playerController))
-            {
-                _playerController.ChangeModelState(PlayerController.Layers.Default);
-            }
+            playerController.ChangeModelState(PlayerController.Layers.Default);
         }
 
-        HUD.Singleton.SetPlayer(player);        
-
-        if (player.Controller.Value.TryGet(out PlayerController playerController))
+        if (player.Controller.Value.TryGet(out playerController))
         {
             playerController.ChangeModelState(PlayerController.Layers.Hand);
         }
 
-        _player = player;
+        PlayerChanged.Invoke(Player, player);
+
+        Player = player;
     }
 
     public void Spectate(int offset)
     {
         var players = new List<Player>();//.Where(player => player.Team.Value == _player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled).ToList();
         foreach (var player in GameManager.Instance.NetworkPlayers)
-            if(player.TryGet(out Player playerObject) && playerObject.Team.Value == _player.Team.Value && playerObject.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled)
+            if (player.TryGet(out Player playerObject) && playerObject.Team.Value == Player.Team.Value && playerObject.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled)
             {
-                players.Add(playerObject); 
+                players.Add(playerObject);
             }
-        Spectate(players[(players.IndexOf(_player) + offset + players.Count) % players.Count]);
+        Spectate(players[(players.IndexOf(Player) + offset + players.Count) % players.Count]);
     }
 
     void Update()
@@ -59,6 +56,6 @@ public class Spectator : Singleton<Spectator>
             {
                 Spectate(-1);
             }
-        }       
+        }
     }
 }

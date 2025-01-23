@@ -63,7 +63,6 @@ public class Gun : Weapon
             _isShooting = true;
             _audioSource.PlayOneShot(_shotSound);
 
-            AmmoChanged.Invoke();
             ActionServerRpc(origin, direction, owner);
 
             return true;

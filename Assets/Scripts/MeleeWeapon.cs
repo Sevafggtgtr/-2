@@ -18,7 +18,7 @@ public class MeleeWeapon : Weapon
     }       
 
     [ServerRpc]
-    public  void ActionServerRpc(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner)
+    public void ActionServerRpc(Vector3 origin, Vector3 direction, NetworkBehaviourReference owner)
     {
         if (owner.TryGet(out Player ownerObject))
         {
@@ -31,7 +31,7 @@ public class MeleeWeapon : Weapon
             if (Physics.Raycast(origin, direction, out hit, _distance))
             {
                 if (hit.transform.GetComponent<IDamageableObject>() != null)
-                    hit.transform.GetComponent<IDamageableObject>().DamageClientRpc(_damage, owner, Code);
+                    hit.transform.GetComponent<IDamageableObject>().DamageServerRpc(_damage, owner, Code);
             }
             _isAction = true;
         }

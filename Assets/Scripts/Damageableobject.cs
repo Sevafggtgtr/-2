@@ -11,7 +11,7 @@ public interface IDamageableObject
 
     public void DamageServerRpc(int value, NetworkBehaviourReference source,string causeCode);
 
-    public void DamageClientRpc(int value, NetworkBehaviourReference source, string causeCode);
+    //public void DamageClientRpc(int value, NetworkBehaviourReference source, string causeCode);
 
     protected void Die(Player killer,string causeCode)
     {

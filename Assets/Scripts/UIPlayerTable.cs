@@ -11,23 +11,29 @@ public class UIPlayerTable : MonoBehaviour
     [SerializeField]
     private UINickname _nicknamePrefab;
 
-    void Start()
+    private void Start()
     {
-        foreach (var player in FindObjectsOfType<Player>())
-            Instantiate(_nicknamePrefab, _playerTable).Initialize(player);
+        Initialize();
 
-        NetworkManager.Singleton.OnClientConnectedCallback += (ID) =>
+        GameManager.Instance.PlayerConnected += (player) =>
         {
-            var player = NetworkManager.Singleton.ConnectedClients[ID].PlayerObject.GetComponent<Player>();
-            player.Team.OnValueChanged += (o, n) =>
-            {
-                Instantiate(_nicknamePrefab, _playerTable).Initialize(player);
-            };
+            Initialize();
+
+            player.Team.OnValueChanged += (previousValue, newValue)
+                => Initialize();
         };
+
+        GameManager.Instance.PlayerDisconnect += (player) 
+            => Initialize();
     }
 
-    void Update()
+    private void Initialize()
     {
-        
+        foreach (Transform child in _playerTable)
+            Destroy(child.gameObject);
+
+        foreach (var player in GameManager.Instance.NetworkPlayers)
+            if (player.TryGet(out Player playerObject))
+                Instantiate(_nicknamePrefab, _playerTable).Initialize(playerObject);
     }
 }

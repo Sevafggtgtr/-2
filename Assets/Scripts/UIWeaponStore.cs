@@ -39,31 +39,24 @@ public class UIWeaponStore : UIPanel
         {
             var weaponLayoutGroup = Instantiate(_weaponLayoutGroupPrefab, _weaponButtonLayoutGroup.transform);
 
-            foreach (var weapon in GameManager.Instance.WeaponData.GetTeamWeaponData(Player.Instance.Team.Value).Weapons.Where(weapon => weaponGroup.WeaponTypes.Contains(weapon.WeaponType)))
+            foreach (var weapon in GameManager.Instance.WeaponData.GetTeamWeaponData(Spectator.Instance.Player.Team.Value).Weapons.Where(weapon => weaponGroup.WeaponTypes.Contains(weapon.WeaponType)))
             {
                 var weaponButton = Instantiate(_weaponButtonPrefab, weaponLayoutGroup.transform);
 
                 weaponButton.Initialize(weapon);
 
                 weaponButton.OnClick += () =>
-                {
-                    print(Player.Instance.Team.Value);
-
-                    Player.Instance.BuyServerRpc(weapon.Code);
-                };
-                    
-                
+                    Spectator.Instance.Player.BuyServerRpc(weapon.Code);                               
             }
         }
-        Player.Instance.Balance.OnValueChanged += (o,n) => CheckBalance();
-        print("+");
+        Spectator.Instance.Player.Balance.OnValueChanged += (o,n) => CheckBalance();
     }
 
     private void CheckBalance()
     {
         foreach (var weaponButton in _weaponButtonLayoutGroup.transform.GetComponentsInChildren<UIWeaponStoreWeaponButton>())
         {
-            weaponButton.Button.interactable = weaponButton.Weapon.Price <= Player.Instance.Balance.Value;
+            weaponButton.Button.interactable = weaponButton.Weapon.Price <= Spectator.Instance.Player.Balance.Value;
         }
     }
 

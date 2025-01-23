@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 
 public class PlayerAnimator : NetworkBehaviour
@@ -9,11 +8,13 @@ public class PlayerAnimator : NetworkBehaviour
 
     private PlayerController _controller;
 
-    [SerializeField]
-    private Transform _head,
-                      _hand;
     public Transform Head => _head;
-    public Transform Hand => _hand;
+    public Transform Hand => _rightHandTransform;
+
+    private Transform _head,
+                      _leftUpperArmTransform,
+                      _rightUpperArmTransform,
+                      _rightHandTransform;   
 
     public void Start()
     {
@@ -25,17 +26,25 @@ public class PlayerAnimator : NetworkBehaviour
     public void Initialize()
     {
         _animator = GetComponent<Animator>();
-        
+
         _controller = GetComponentInParent<PlayerController>();
+
+        _head = _animator.GetBoneTransform(HumanBodyBones.Head);
+        _leftUpperArmTransform = _animator.GetBoneTransform(HumanBodyBones.LeftUpperArm);
+        _rightUpperArmTransform = _animator.GetBoneTransform(HumanBodyBones.RightUpperArm);
+        _rightHandTransform = _animator.GetBoneTransform(HumanBodyBones.RightHand);
     }
 
-    private void OnAnimatorIK(int layerIndex)
+    private void LateUpdate()
     {
-            var angle = _animator.GetBoneTransform(HumanBodyBones.LeftUpperArm).InverseTransformDirection(Vector3.up);
-            var angle1 = _animator.GetBoneTransform(HumanBodyBones.RightUpperArm).InverseTransformDirection(Vector3.up);
+        var eulerAngles = _leftUpperArmTransform.eulerAngles;
+        eulerAngles.z = 180 + _controller.Angle.Value;
 
-            _animator.SetBoneLocalRotation(HumanBodyBones.LeftUpperArm, Quaternion.Euler(_animator.GetBoneTransform(HumanBodyBones.LeftUpperArm).localEulerAngles - _controller.Angle.Value * angle));
-            _animator.SetBoneLocalRotation(HumanBodyBones.RightUpperArm, Quaternion.Euler(_animator.GetBoneTransform(HumanBodyBones.RightUpperArm).localEulerAngles + _controller.Angle.Value * angle1));
-            _animator.SetBoneLocalRotation(HumanBodyBones.Head, Quaternion.Euler(_animator.GetBoneTransform(HumanBodyBones.Head).localEulerAngles + _controller.Angle.Value * Vector3.up));
+        _leftUpperArmTransform.eulerAngles = eulerAngles;
+
+        eulerAngles = _rightUpperArmTransform.eulerAngles;
+        eulerAngles.z = _controller.Angle.Value;
+
+        _rightUpperArmTransform.eulerAngles = eulerAngles;
     }
 }

@@ -3,8 +3,7 @@ using UnityEngine.UI;
 
 public class HUD : UIManager
 {
-    private static HUD _singleton;
-    public static HUD Singleton => _singleton;
+    public static HUD Singleton { get; private set; }
 
     [SerializeField]
     private Animation _vignetteAnimation;
@@ -37,10 +36,13 @@ public class HUD : UIManager
     public UIChoiceTeamPanel ChooseTeamPanel => _chooseTeamPanel;
 
     [SerializeField]
-    private UIGunPanel _gunPanel;
-    public UIGunPanel GunPanel => _gunPanel;
+    private UIWeaponPanel _gunPanel;
+    public UIWeaponPanel GunPanel => _gunPanel;
 
-    private Player _player;
+    private void Awake()
+    {
+        Singleton = this;
+    }
 
     new void Update()
     {
@@ -58,77 +60,6 @@ public class HUD : UIManager
         _blindness.Activate(time);
     }
 
-    void OnPlayerControllerDamaged()
-    {
-        _vignetteAnimation.Play();
-
-        HealthBar.value = PlayerController.Instance.Health.Value;
-    }
-
-    void OnPlayerControllerDied()
-    {
-        _playerControllerPanel.SetActive(false);
-    }
-
-    void OnPlayerBalanceOnValueChanged()
-    {
-        _balanceText.text = "$" + _player.Balance.Value.ToString();
-    }
-
-    public void SetPlayer(Player player)
-    {
-        _player = player;
-
-        _playerControllerPanel.SetActive(true);
-
-        if (player.Controller.Value.TryGet(out PlayerController playerController))
-        {
-            HealthBar.value = playerController.Health.Value;
-
-            print("+");
-            _gunPanel.SetPlayer(playerController);
-
-            playerController.Damaged += () =>
-            {
-                OnPlayerControllerDamaged();
-            };
-            playerController.Died += (killer, causeCode) =>
-            {
-                OnPlayerControllerDied();
-            };
-        }
-
-        _balanceText.text = "$" + player.Balance.Value.ToString();
-
-        player.Balance.OnValueChanged += (pv, nv) =>
-        {
-            OnPlayerBalanceOnValueChanged();
-        };
-    }
-
-    public void RemovePlayer(Player player)
-    {
-        if (player.Controller.Value.TryGet(out PlayerController playerController))
-        {
-            _gunPanel.RemovePlayer(playerController);
-
-            playerController.Damaged -= () =>
-            {
-                OnPlayerControllerDamaged();
-            };
-            playerController.Died -= (killer, causeCode) =>
-            {
-                OnPlayerControllerDied();
-            };
-        }
-
-        player.Balance.OnValueChanged -= (pv, nv) =>
-        {
-            OnPlayerBalanceOnValueChanged();
-        };
-    }
-
-
     private void Start()
     {
         _playerControllerPanel.SetActive(false);
@@ -138,14 +69,14 @@ public class HUD : UIManager
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
 
-            PlayerController.Instance.IsActive = true;
+            GameManager.Instance.IsActive = true;
         };
         Opened += () =>
         {
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
 
-            PlayerController.Instance.IsActive = false;
+            GameManager.Instance.IsActive = false;
         }; ;
 
         var roundFinishPanel = GetComponentInChildren<UIRoundFinishPanel>(true);
@@ -161,10 +92,54 @@ public class HUD : UIManager
 
             roundFinishPanel.Initialize(team);
         };
-    }
 
-    private void Awake()
-    {
-        _singleton = this;
+        Spectator.Instance.PlayerChanged += (previousPlayer, newPlayer) =>
+        {
+            void OnPlayerDamaged(Player player)
+            {
+                _vignetteAnimation.Play();
+
+                HealthBar.value = player.Health.Value;
+            }
+
+            void OnPlayerDied(Player player)
+            {
+                _playerControllerPanel.SetActive(false);
+            }
+
+            void OnPlayerBalanceOnValueChanged(Player player)
+            {
+                _balanceText.text = "$" + player.Balance.Value.ToString();
+            }
+
+            if (previousPlayer)
+            {
+                previousPlayer.Damaged -= ()
+                    => OnPlayerDamaged(previousPlayer);
+
+                previousPlayer.Died -= (killer, causeCode)
+                    => OnPlayerDied(previousPlayer);
+
+                previousPlayer.Balance.OnValueChanged -= (previousValue, newValue)
+                    => OnPlayerBalanceOnValueChanged(previousPlayer);
+            }
+
+            _playerControllerPanel.SetActive(true);
+
+            HealthBar.value = newPlayer.Health.Value;
+
+            OnPlayerBalanceOnValueChanged(newPlayer);
+
+            _gunPanel.Initialize();
+
+            newPlayer.Balance.OnValueChanged += (previousValue, newValue)
+                => OnPlayerBalanceOnValueChanged(newPlayer);
+
+            newPlayer.Damaged += ()
+                => OnPlayerDamaged(newPlayer);
+
+            newPlayer.Died += (killer, causeCode)
+                => OnPlayerDied(newPlayer);
+        };
     }
 }

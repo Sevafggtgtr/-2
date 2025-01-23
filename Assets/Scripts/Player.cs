@@ -5,9 +5,11 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class Player : Singleton<Player>
+public class Player : NetworkBehaviour
 {
     public event UnityAction Disconnected;
+
+    public event UnityAction Damaged;
     public event UnityAction<Player, string> Died;
 
     public NetworkVariable<Teams> Team = new NetworkVariable<Teams>(Teams.Terrorist, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
@@ -21,10 +23,14 @@ public class Player : Singleton<Player>
     private NetworkVariable<FixedString32Bytes> _nickname = new NetworkVariable<FixedString32Bytes>(writePerm: NetworkVariableWritePermission.Owner);
     public NetworkVariable<FixedString32Bytes> Nickname => _nickname;
 
+    private PlayerController _controller;
     public NetworkVariable<NetworkBehaviourReference> Controller = new NetworkVariable<NetworkBehaviourReference>(writePerm: NetworkVariableWritePermission.Owner);
 
     private NetworkVariable<int> _balance = new NetworkVariable<int>();
     public NetworkVariable<int> Balance => _balance;
+
+    private NetworkVariable<int> _health = new NetworkVariable<int>(100);
+    public NetworkVariable<int> Health => _health;
 
     [SerializeField]
     private PlayerController _playerControllerPrefab;
@@ -66,6 +72,8 @@ public class Player : Singleton<Player>
             controller.Kill += () =>
                 _kills.Value++;
             Controller.Value = controller;
+
+            _controller = controller;
         }
     }
 
@@ -75,7 +83,7 @@ public class Player : Singleton<Player>
         var weapon = GameManager.Instance.WeaponData.GetTeamWeaponData(Team.Value).Weapons.First(weapon => weaponCode == weapon.Code);
             Balance.Value -= weapon.Price;
 
-        PlayerController.Instance.AddWeaponServerRpc(Array.IndexOf(GameManager.Instance.WeaponData.GetTeamWeaponData(Team.Value).Weapons, weapon));
+        _controller.AddWeaponServerRpc(Array.IndexOf(GameManager.Instance.WeaponData.GetTeamWeaponData(Team.Value).Weapons, weapon));
     }
     [ClientRpc]
     private void BuyClientRpc()

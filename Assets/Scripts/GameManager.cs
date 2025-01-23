@@ -36,7 +36,7 @@ public class GameManager : Singleton<GameManager>
 {
     public event UnityAction<Teams> RoundFinished;
     public event UnityAction RoundStarted;
-    private event UnityAction<Player> PlayerAdded = delegate { };
+    public event UnityAction<Player> PlayerConnected, PlayerDisconnect;
 
     [SerializeField]
     private PlayerController _playerPrefab;
@@ -78,6 +78,10 @@ public class GameManager : Singleton<GameManager>
 
     private Coroutine _timerCoroutine;
 
+    public bool IsActive = true;
+
+    public Player Player { get; private set; }
+
     protected override void Initialize()
     {
         Points = new Dictionary<Teams, int> { { Teams.Terrorist, 0 }, { Teams.CounterTerrorist, 0 } };
@@ -106,7 +110,7 @@ public class GameManager : Singleton<GameManager>
 
                 _players.Add(player);
 
-                PlayerAdded.Invoke(player);
+                OnPlayerConnectedClientRpc(player);
             };
 
             NetworkManager.OnClientDisconnectCallback += (id) =>
@@ -116,8 +120,26 @@ public class GameManager : Singleton<GameManager>
                 NetworkPlayers.Remove(player);
 
                 _players.Remove(player);
+
+                OnPlayerDisconnectClientRpc(player);
             };
         };
+
+        NetworkManager.OnClientStarted += () => Player = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Player>();
+    }
+
+    [ClientRpc]
+    private void OnPlayerConnectedClientRpc(NetworkBehaviourReference player)
+    {
+        if(player.TryGet(out Player playerObject))
+            PlayerConnected.Invoke(playerObject);
+    }
+
+    [ClientRpc]
+    private void OnPlayerDisconnectClientRpc(NetworkBehaviourReference player)
+    {
+        if (player.TryGet(out Player playerObject))
+            PlayerDisconnect.Invoke(playerObject);
     }
 
     private void StartWarmUp()
@@ -146,7 +168,7 @@ public class GameManager : Singleton<GameManager>
 
         _timerCoroutine = StartCoroutine(Timer(GameMode.WarmupTime, () =>
         {
-            PlayerAdded -= OnPlayerAdded;
+            PlayerConnected -= OnPlayerAdded;
 
             foreach (var player in _players)
                 player.Died -= (killer, causeCode) => OnDiedCallback(player);
@@ -154,7 +176,7 @@ public class GameManager : Singleton<GameManager>
             FinishWarmUp();
         }));
 
-        PlayerAdded += OnPlayerAdded;
+        PlayerConnected += OnPlayerAdded;
 
         StartRoundClientRpc();
     }
@@ -166,8 +188,9 @@ public class GameManager : Singleton<GameManager>
             var teams = new Dictionary<Teams, int> { { Teams.Terrorist, 0 }, { Teams.CounterTerrorist, 0 } };
 
             foreach (var player in _players)
-                if (player.Controller.Value.TryGet(out PlayerController playerController) && playerController.Health.Value > 0)
+                if (player.Health.Value > 0)
                     teams[player.Team.Value]++;
+
             if (teams.ContainsValue(0))
             {
                 var winningTeam = teams.OrderBy(team => team.Value).Last().Key;
@@ -193,7 +216,7 @@ public class GameManager : Singleton<GameManager>
             player.Died += (killer, causeCode) => OnDied();
         }
 
-        PlayerAdded += player => OnDied();
+        PlayerConnected += player => OnDied();
     }
 
     private void ClearMap()

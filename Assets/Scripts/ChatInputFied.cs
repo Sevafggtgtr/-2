@@ -17,7 +17,7 @@ public class ChatInputFied : NetworkBehaviour
     {
         _chatInputField.onSubmit.AddListener(call =>
         {
-            SendMessageServerRpc($"<color=#{ColorUtility.ToHtmlStringRGB(GameManager.Instance.GetTeamData(Player.Instance.Team.Value).Color)}>{Player.Instance.Nickname.Value}</color>: {call}");
+            SendMessageServerRpc($"<color=#{ColorUtility.ToHtmlStringRGB(GameManager.Instance.GetTeamData(Spectator.Instance.Player.Team.Value).Color)}>{Spectator.Instance.Player.Nickname.Value}</color>: {call}");
 
             _chatInputField.text = "";
         });

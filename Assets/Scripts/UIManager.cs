@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UIElements;
 
-public class UIManager : MonoBehaviour
+public class UIManager : Singleton<UIManager>
 {
     protected event UnityAction Closed = delegate { };
     protected event UnityAction Opened = delegate { };
