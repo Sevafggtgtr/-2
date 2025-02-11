@@ -309,9 +309,4 @@ public class GameManager : Singleton<GameManager>
         }
         callback.Invoke();
     }
-
-    void Update()
-    {
-
-    }
 }

@@ -2,38 +2,42 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UIPlayerTable : MonoBehaviour
 {
-    [SerializeField]
-    private Transform _playerTable;
+    private Dictionary<Teams, TeamPlayerTable> _teamPlayerTables = new Dictionary<Teams, TeamPlayerTable>();
 
     [SerializeField]
-    private UINickname _nicknamePrefab;
+    private TeamPlayerTable _teamPlayerTablePrefab;
+
+    [SerializeField]
+    private VerticalLayoutGroup _teamPlayerTableLayoutGroup;
 
     private void Start()
-    {
-        Initialize();
-
+    {   
         GameManager.Instance.PlayerConnected += (player) =>
         {
-            Initialize();
-
             player.Team.OnValueChanged += (previousValue, newValue)
-                => Initialize();
+                => _teamPlayerTables[newValue].AddPlayer(player);
         };
 
-        GameManager.Instance.PlayerDisconnect += (player) 
-            => Initialize();
+        /*GameManager.Instance.PlayerDisconnect += (player) 
+            => Initialize();*/      
     }
 
-    private void Initialize()
+    private void OnEnable()
     {
-        foreach (Transform child in _playerTable)
-            Destroy(child.gameObject);
+        foreach(var team in _teamPlayerTables.Values)
+            Destroy(team.gameObject);
 
-        foreach (var player in GameManager.Instance.NetworkPlayers)
-            if (player.TryGet(out Player playerObject))
-                Instantiate(_nicknamePrefab, _playerTable).Initialize(playerObject);
+        foreach (var teamData in GameManager.Instance.TeamDatas)
+        {
+            var teamPlayerTable = Instantiate(_teamPlayerTablePrefab, _teamPlayerTableLayoutGroup.transform);
+
+            teamPlayerTable.Initialize(teamData);
+
+            _teamPlayerTables.Add(teamData.Team, teamPlayerTable);
+        }
     }
 }

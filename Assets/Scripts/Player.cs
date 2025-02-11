@@ -91,11 +91,6 @@ public class Player : NetworkBehaviour
 
     }
 
-    public override void OnDestroy()
-    {
-        Disconnected.Invoke();
-    }
-
     public void ChangeTeam(Teams team)
     {
         Team.Value = team;

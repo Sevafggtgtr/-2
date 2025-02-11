@@ -39,6 +39,9 @@ public class HUD : UIManager
     private UIWeaponPanel _gunPanel;
     public UIWeaponPanel GunPanel => _gunPanel;
 
+    [SerializeField]
+    private UIPlayerTable _playerTable;
+
     private void Awake()
     {
         Singleton = this;
@@ -53,6 +56,11 @@ public class HUD : UIManager
 
         if (Input.GetKeyDown(KeyCode.B))
             OpenPanel(_weaponStore.gameObject);
+
+        if(Input.GetKeyDown(KeyCode.Tab))
+            OpenPanel(_playerTable.gameObject);
+        if (Input.GetKeyUp(KeyCode.Tab))
+            ClosePanel();
     }
 
     public void Blindness(float time)

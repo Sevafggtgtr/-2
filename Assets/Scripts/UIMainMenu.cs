@@ -40,8 +40,7 @@ public class UIMainMenu : UIManager
         {
             OpenPanel(_hostPanel.gameObject);
         });
-        //_clientButton.onClick.AddListener(() => OpenPanel(_clientPanel));
-        _clientButton.onClick.AddListener(() => NetworkManager.Singleton.StartClient());
+        _clientButton.onClick.AddListener(() => OpenPanel(_clientPanel.gameObject));
         _exitButton.onClick.AddListener(Application.Quit);
 
         _audioSource = GetComponent<AudioSource>();

@@ -1,16 +1,27 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class UIClientPanel : MonoBehaviour
+public class UIClientPanel : UIPanel
 {
-    // Start is called before the first frame update
+    [SerializeField]
+    private InputField _adressInputField;
+    [SerializeField]
+    private UIButton _joinButton;
+
     void Start()
     {
-        
+        _joinButton.OnClick += () =>
+        {
+            NetworkManager.Singleton.GetComponent<UnityTransport>().ConnectionData.Address = _adressInputField.text;
+
+            NetworkManager.Singleton.StartClient();
+        };
     }
 
-    // Update is called once per frame
     void Update()
     {
         
