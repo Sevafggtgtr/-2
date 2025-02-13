@@ -94,6 +94,11 @@ public class Player : NetworkBehaviour
     public void ChangeTeam(Teams team)
     {
         Team.Value = team;
+
+        if(_controller)
+        {
+            _controller.Die(this, "");
+        }
     }
 
     void Update()

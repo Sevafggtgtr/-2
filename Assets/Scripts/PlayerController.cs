@@ -466,7 +466,7 @@ public class PlayerController : NetworkBehaviour, IDamageableObject
         Damaged.Invoke(damage);
     }
 
-    protected void Die(Player killer, string causeCode)
+    public void Die(Player killer, string causeCode)
     {
         if (IsOwner)
         {

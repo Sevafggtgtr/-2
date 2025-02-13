@@ -4,12 +4,20 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UIElements;
 
+[RequireComponent(typeof(AudioSource))]
 public class UIManager : Singleton<UIManager>
 {
     protected event UnityAction Closed = delegate { };
     protected event UnityAction Opened = delegate { };
 
     protected GameObject _panel;
+
+    private AudioSource _audioSource;
+
+    protected override void Initialize()
+    {
+        _audioSource = GetComponent<AudioSource>();
+    }
 
     public virtual void OpenPanel(GameObject panel)
     {
@@ -30,6 +38,11 @@ public class UIManager : Singleton<UIManager>
         _panel = null;
 
         Closed.Invoke();
+    }
+
+    public void PlaySound()
+    {
+        _audioSource.Play();
     }
 
     protected void Update()

@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(Button))]
 public class UIButton : MonoBehaviour
 {
     public event UnityAction OnClick;
@@ -14,7 +15,12 @@ public class UIButton : MonoBehaviour
     {
         Button = GetComponent<Button>(); 
 
-        Button.onClick.AddListener(OnClick);
+        Button.onClick.AddListener(() =>
+        {
+            OnClick.Invoke();
+
+            UIManager.Instance.PlaySound();
+        });
     }
 
     void Update()

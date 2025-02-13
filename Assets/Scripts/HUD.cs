@@ -61,6 +61,9 @@ public class HUD : UIManager
             OpenPanel(_playerTable.gameObject);
         if (Input.GetKeyUp(KeyCode.Tab))
             ClosePanel();
+
+        if(Input.GetKeyDown(KeyCode.M))
+            OpenPanel(_chooseTeamPanel.gameObject);
     }
 
     public void Blindness(float time)

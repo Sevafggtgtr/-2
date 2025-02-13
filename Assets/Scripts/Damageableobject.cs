@@ -13,7 +13,7 @@ public interface IDamageableObject
 
     //public void DamageClientRpc(int value, NetworkBehaviourReference source, string causeCode);
 
-    protected void Die(Player killer,string causeCode)
+    public void Die(Player killer,string causeCode)
     {
         //Died?.Invoke(killer);
     }
