@@ -69,6 +69,8 @@ public class GameManager : Singleton<GameManager>
     private WeaponData _weaponData;
     public WeaponData WeaponData => _weaponData;
 
+    public Config Config { get; private set; }
+
     public TeamData GetTeamData(Teams team)
         => _teamDatas.First(team_ => team_.Team == team);
 
@@ -87,6 +89,8 @@ public class GameManager : Singleton<GameManager>
         Points = new Dictionary<Teams, int> { { Teams.Terrorist, 0 }, { Teams.CounterTerrorist, 0 } };
 
         DontDestroyOnLoad(gameObject);
+
+        Config = Config.Load();
     }
 
     private void Start()

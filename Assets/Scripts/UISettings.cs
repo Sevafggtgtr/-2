@@ -8,7 +8,7 @@ public class UISettings : MonoBehaviour
 
     void Start()
     {
-        
+        _mouseSensitivitySlider.onValueChanged.AddListener(call => GameManager.Instance.Config.Sensitivity = call);
     }
 
     void Update()
