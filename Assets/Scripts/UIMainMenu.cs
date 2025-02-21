@@ -13,26 +13,17 @@ public class UIMainMenu : UIManager
                    _hostButton,
                    _clientButton;
 
-    private static UIMainMenu _singleton;
-    public static UIMainMenu Singleton => _singleton;
-
     [SerializeField]
     private UIPanel _hostPanel,
-                    _clientPanel;
+                    _clientPanel,
+                    _settingsPanel;
 
     [SerializeField]
     private GameObject _mainCamera;
 
-    private AudioSource _audioSource;
-
     [SerializeField]
     private InputField _nicknameInputField;
     public string Nickname => _nicknameInputField.text;
-
-    private void Awake()
-    {
-        _singleton = this;
-    }
 
     void Start()
     {
@@ -42,12 +33,6 @@ public class UIMainMenu : UIManager
         });
         _clientButton.onClick.AddListener(() => OpenPanel(_clientPanel.gameObject));
         _exitButton.onClick.AddListener(Application.Quit);
-
-        _audioSource = GetComponent<AudioSource>();
-    }
-
-    public void PlaySound()
-    {
-        _audioSource.Play();
+        _settingsButton.onClick.AddListener(() => OpenPanel(_settingsPanel.gameObject));
     }
 }

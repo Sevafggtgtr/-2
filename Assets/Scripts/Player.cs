@@ -39,7 +39,7 @@ public class Player : NetworkBehaviour
     {
         if (IsOwner)
         {
-            _nickname.Value = UIMainMenu.Singleton.Nickname;
+            //_nickname.Value = UIMainMenu.Singleton.Nickname;
         }
     }
 

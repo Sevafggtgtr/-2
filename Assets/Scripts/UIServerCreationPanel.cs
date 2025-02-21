@@ -19,7 +19,7 @@ public class UIServerCreationPanel : UIPanel
 
     private UIMapSelectionButton _mapSelectionButton;   
 
-    void Start()
+    protected override void OnStart()
     {
         foreach(var map in GameManager.Instance.Maps)
         {

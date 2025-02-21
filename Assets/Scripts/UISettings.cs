@@ -1,18 +1,30 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UISettings : MonoBehaviour
+public class UISettings : UIPanel
 {
     [SerializeField]
-    private Slider _mouseSensitivitySlider;
+    private UISlider _mouseSensitivitySlider,
+                     _volumeSlider;
 
-    void Start()
-    {
-        _mouseSensitivitySlider.onValueChanged.AddListener(call => GameManager.Instance.Config.Sensitivity = call);
-    }
+    [SerializeField]
+    private UIButton _applyButton,
+                     _restoreButton;
 
-    void Update()
+    protected override void OnStart()
     {
-        
+        _mouseSensitivitySlider.ValueChanged += call => GameManager.Instance.Config.Sensitivity = call;
+        _volumeSlider.ValueChanged += call =>
+        {
+            GameManager.Instance.Config.Volume = call;
+
+            AudioListener.volume = call;
+        };
+
+        _mouseSensitivitySlider.ChangeValue(GameManager.Instance.Config.Sensitivity);
+        _volumeSlider.ChangeValue(GameManager.Instance.Config.Volume);
+
+        _applyButton.OnClick += GameManager.Instance.Config.Save;
+
     }
 }

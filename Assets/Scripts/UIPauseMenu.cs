@@ -12,7 +12,7 @@ public class UIPauseMenu : UIPanel
                    _settingsButton,
                    _continueButton;
 
-    void Start()
+    protected override void OnStart()
     {
         _exitButton.onClick.AddListener(ServerManager.Instance.Disconnect);
 

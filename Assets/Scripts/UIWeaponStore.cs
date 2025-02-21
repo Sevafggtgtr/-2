@@ -33,7 +33,7 @@ public class UIWeaponStore : UIPanel
     [SerializeField]
     private HorizontalLayoutGroup _weaponButtonLayoutGroup;
 
-    void Start()
+    protected override void OnStart()
     {
         foreach (var weaponGroup in _weaponGroups)
         {

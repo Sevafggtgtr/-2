@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class Config
 {
-    public float Sensitivity;
+    public float Sensitivity = 1,
+                 Volume = 1;
 
     public void Save()
     {
@@ -13,6 +14,11 @@ public class Config
 
     public static Config Load()
     {
-        return JsonUtility.FromJson<Config>(PlayerPrefs.GetString("Config"));
+        var config = JsonUtility.FromJson<Config>(PlayerPrefs.GetString("Config"));
+        if(config == null)
+            config = new Config();
+        AudioListener.volume = config.Volume;
+
+        return config;
     }
 }

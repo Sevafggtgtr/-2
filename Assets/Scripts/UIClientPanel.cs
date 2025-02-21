@@ -12,7 +12,7 @@ public class UIClientPanel : UIPanel
     [SerializeField]
     private UIButton _joinButton;
 
-    void Start()
+    protected override void OnStart()
     {
         _joinButton.OnClick += () =>
         {
