@@ -615,6 +615,7 @@ MonoBehaviour:
   _scopeSpreadMultiplier: 0.5
   _ownerSpeedMultiplier: 0.7
   _name: Desert Eagle
+  _code: desert_eagle
   _icon: {fileID: 0}
   _price: 700
   _currentClipAmmo: 7

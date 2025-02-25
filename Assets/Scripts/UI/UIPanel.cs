@@ -2,16 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UIPanel : MonoBehaviour
+public abstract class UIPanel : MonoBehaviour
 {
+    [SerializeField]
+    private UIButton _exitButton;
+
     void Start()
     {
-        
+        _exitButton.OnClick += () => UIManager.Instance.ClosePanel();
+
+        OnStart();
     }
 
-
-    void Update()
-    {
-        
-    }
+    protected abstract void OnStart();
 }

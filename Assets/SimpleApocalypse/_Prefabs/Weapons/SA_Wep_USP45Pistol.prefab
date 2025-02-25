@@ -270,6 +270,7 @@ MonoBehaviour:
   _scopeSpreadMultiplier: 0.5
   _ownerSpeedMultiplier: 0.7
   _name: USP
+  _code: usp
   _icon: {fileID: 0}
   _price: 200
   _currentClipAmmo: 20

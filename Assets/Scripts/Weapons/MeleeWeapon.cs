@@ -4,6 +4,8 @@ using System.Collections;
 
 public class MeleeWeapon : Weapon
 {
+    #region Methods
+
     [SerializeField]
     private float _distance,
                   _delay;
@@ -26,7 +28,7 @@ public class MeleeWeapon : Weapon
         if (Physics.Raycast(origin, direction, out var hit, _distance))
         {
             if (hit.transform.GetComponent<IDamageable>() != null)
-                hit.transform.GetComponent<IDamageable>().DamageServerRpc(_damage, OwnerClientId, Code);
+                hit.transform.GetComponent<IDamageable>().DamageServerRpc(_damage, _owningPlayer);
         }
 
         _hitCoroutine = StartCoroutine(Hit());
@@ -36,4 +38,6 @@ public class MeleeWeapon : Weapon
     {
         yield return new WaitForSeconds(_delay);
     }
+
+    #endregion
 }

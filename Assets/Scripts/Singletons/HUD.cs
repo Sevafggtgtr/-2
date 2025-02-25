@@ -3,6 +3,8 @@ using UnityEngine.UI;
 
 public class HUD : UIManager
 {
+    #region Variables
+
     public static HUD Singleton { get; private set; }
 
     [SerializeField]
@@ -39,12 +41,19 @@ public class HUD : UIManager
     private UIWeaponPanel _gunPanel;
     public UIWeaponPanel GunPanel => _gunPanel;
 
+    [SerializeField]
+    private UIPlayerTable _playerTable;
+
+    #endregion
+
+    #region Methods
+
     private void Awake()
     {
         Singleton = this;
     }
 
-    new void Update()
+    protected override void Update()
     {
         if (_panel)
             base.Update();
@@ -53,6 +62,14 @@ public class HUD : UIManager
 
         if (Input.GetKeyDown(KeyCode.B))
             OpenPanel(_weaponStore.gameObject);
+
+        if(Input.GetKeyDown(KeyCode.Tab))
+            OpenPanel(_playerTable.gameObject);
+        if (Input.GetKeyUp(KeyCode.Tab))
+            ClosePanel();
+
+        if(Input.GetKeyDown(KeyCode.M))
+            OpenPanel(_chooseTeamPanel.gameObject);
     }
 
     public void Blindness(float time)
@@ -95,51 +112,52 @@ public class HUD : UIManager
 
         Spectator.Instance.PlayerChanged += (previousPlayer, newPlayer) =>
         {
-            void OnPlayerDamaged(Player player)
-            {
-                _vignetteAnimation.Play();
-
-                HealthBar.value = player.Health.Value;
-            }
-
-            void OnPlayerDied(Player player)
-            {
-                _playerControllerPanel.SetActive(false);
-            }
-
             void OnPlayerBalanceOnValueChanged(Player player)
             {
                 _balanceText.text = "$" + player.Balance.Value.ToString();
             }
 
+            void OnPlayerControllerDamaged(PlayerController playerController)
+            {
+                _vignetteAnimation.Play();
+
+                HealthBar.value = playerController.Health.Value;
+            }
+
+            void OnPlayerControllerDied(PlayerController playerController)
+            {
+                _playerControllerPanel.SetActive(false);
+            }
+
             if (previousPlayer)
             {
-                previousPlayer.Damaged -= ()
-                    => OnPlayerDamaged(previousPlayer);
-
-                previousPlayer.Died -= (killer, causeCode)
-                    => OnPlayerDied(previousPlayer);
-
                 previousPlayer.Balance.OnValueChanged -= (previousValue, newValue)
                     => OnPlayerBalanceOnValueChanged(previousPlayer);
+
+                var previousPlayeController = previousPlayer.Controller;
+                previousPlayeController.Damaged -= ()
+                    => OnPlayerControllerDamaged(previousPlayeController);
+                previousPlayeController.Died -= (killer)
+                    => OnPlayerControllerDied(previousPlayeController);
             }
 
             OnPlayerBalanceOnValueChanged(newPlayer);
 
             _playerControllerPanel.SetActive(true);
 
-            HealthBar.value = newPlayer.Health.Value;
-
             _gunPanel.Initialize(previousPlayer, newPlayer);
 
             newPlayer.Balance.OnValueChanged += (previousValue, newValue)
                 => OnPlayerBalanceOnValueChanged(newPlayer);
 
-            newPlayer.Damaged += ()
-                => OnPlayerDamaged(newPlayer);
-
-            newPlayer.Died += (killer, causeCode)
-                => OnPlayerDied(newPlayer);
+            var newPlayerController = newPlayer.Controller;
+            HealthBar.value = newPlayerController.Health.Value;
+            newPlayerController.Damaged += ()
+                => OnPlayerControllerDamaged(newPlayerController);
+            newPlayerController.Died += (killer)
+                => OnPlayerControllerDied(newPlayerController);
         };
     }
+
+    #endregion
 }

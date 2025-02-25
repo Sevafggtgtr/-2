@@ -36,8 +36,8 @@ public class GameManager : Singleton<GameManager>
 {
     #region Events
 
-    public event UnityAction<Teams> RoundFinished;
     public event UnityAction RoundStarted;
+    public event UnityAction<Teams> RoundFinished;
     public event UnityAction<Player> PlayerConnected, PlayerDisconnect;
 
     #endregion
@@ -52,30 +52,45 @@ public class GameManager : Singleton<GameManager>
     private GameMode _gameMode;
     public GameMode GameMode => _gameMode;
 
+    public Dictionary<Teams, int> Points { get; private set; }
+
+    #region Team Data
+
     [SerializeField]
-    private Transform _entities;
+    private TeamData[] _teamDatas;
+    public TeamData[] TeamDatas => _teamDatas;
+    public TeamData GetTeamData(Teams team)
+        => _teamDatas.First(team_ => team_.Team == team);
 
-    public NetworkList<NetworkBehaviourReference> NetworkPlayers = new NetworkList<NetworkBehaviourReference>();
+    #endregion
+
+    #region Players
+
     private List<Player> _players;
-
+    public NetworkList<NetworkBehaviourReference> _Players = new NetworkList<NetworkBehaviourReference>();
+    public Player[] Players
+    {
+        get
+        {
+            var players = new Player[_Players.Count];
+            for(int i = 0; i < players.Length; i++)
+                players[i] = _Players[i].TryGet(out Player player) ? player : null;
+            return players;
+        }
+    }
     public Player GetPlayer(ulong id)
         => _players.First(player => id == player.OwnerClientId);  
 
     private NetworkVariable<bool> _isPlayersActive = new NetworkVariable<bool>();
     public NetworkVariable<bool> IsPlayersActive => _isPlayersActive;
 
-    [SerializeField]
-    private TeamData[] _teamDatas;
-    public TeamData[] TeamDatas => _teamDatas;
+    #endregion
 
     [SerializeField]
     private WeaponData _weaponData;
     public WeaponData WeaponData => _weaponData;
 
-    public TeamData GetTeamData(Teams team)
-        => _teamDatas.First(team_ => team_.Team == team);
-
-    public Dictionary<Teams, int> Points { get; private set; }
+    public Config Config { get; private set; }
 
     private NetworkVariable<int> _time = new NetworkVariable<int>();
     public NetworkVariable<int> Time => _time;
@@ -84,8 +99,6 @@ public class GameManager : Singleton<GameManager>
 
     public bool IsActive = true;
 
-    [SerializeField]
-    private Player _playerPrefab;
     public Player Player { get; private set; }
 
     #endregion
@@ -94,9 +107,11 @@ public class GameManager : Singleton<GameManager>
 
     protected override void Initialize()
     {
+        DontDestroyOnLoad(gameObject);
+
         Points = new Dictionary<Teams, int> { { Teams.Terrorist, 0 }, { Teams.CounterTerrorist, 0 } };
 
-        DontDestroyOnLoad(gameObject);
+        Config = Config.Load();
     }
 
     private void Start()
@@ -114,12 +129,10 @@ public class GameManager : Singleton<GameManager>
 
             NetworkManager.OnClientConnectedCallback += (id) =>
             {
-                //var player = Instantiate(_playerPrefab);
-                //player.NetworkObject.SpawnAsPlayerObject(id);
                 var player = NetworkManager.ConnectedClients[id].PlayerObject.GetComponent<Player>();
 
                 _players.Add(player);
-                NetworkPlayers.Add(player);
+                _Players.Add(player);
 
                 OnPlayerConnectedClientRpc(player);
             };
@@ -128,7 +141,7 @@ public class GameManager : Singleton<GameManager>
             {
                 var player = GetPlayer(id);
 
-                NetworkPlayers.Remove(player);
+                _Players.Remove(player);
 
                 _players.Remove(player);
 
@@ -174,14 +187,14 @@ public class GameManager : Singleton<GameManager>
 
                 SpawnPlayerServerRpc(player.OwnerClientId);
 
-                player.Died += (killer, causeCode) => OnDiedCallback(player);
+                player.Died += killer => OnDiedCallback(player);
             };
         };
 
         void OnDiedCallback(Player player)
         {
-            if(player.Controller.Value.TryGet(out PlayerController playerController))
-                playerController.NetworkObject.Despawn();
+            if(player.Controller)
+                player.Controller.NetworkObject.Despawn();
 
             SpawnPlayerServerRpc(player.OwnerClientId);
         }
@@ -191,7 +204,7 @@ public class GameManager : Singleton<GameManager>
             PlayerConnected -= OnPlayerAdded;
 
             foreach (var player in _players)
-                player.Died -= (killer, causeCode) => OnDiedCallback(player);
+                player.Died -= killer => OnDiedCallback(player);
 
             FinishWarmUpServerRpc();
         }));
@@ -209,7 +222,7 @@ public class GameManager : Singleton<GameManager>
             var teams = new Dictionary<Teams, int> { { Teams.Terrorist, 0 }, { Teams.CounterTerrorist, 0 } };
 
             foreach (var player in _players)
-                if (player.Health.Value > 0)
+                if (player.Controller && player.Controller.Health.Value != 0)
                     teams[player.Team.Value]++;
 
             if (teams.ContainsValue(0))
@@ -223,9 +236,11 @@ public class GameManager : Singleton<GameManager>
 
                 if (++Points[winningTeam] == _gameMode.RoundCount / 2 + 1)
                 {
-                    foreach (var player in FindObjectsOfType<PlayerController>())
-                        player.NetworkObject.Despawn();
+                    foreach (var player in _players)
+                        if(player.Controller)
+                            player.Controller.NetworkObject.Despawn();
                 }
+
                 FinishRoundTimeServerRpc();
                 FinishRoundClientRpc(winningTeam);
             }
@@ -234,7 +249,7 @@ public class GameManager : Singleton<GameManager>
 
         foreach (var player in _players)
         {
-            player.Died += (killer, causeCode) => OnDied();
+            player.Died += killer => OnDied();
         }
 
         PlayerConnected += player => OnDied();
@@ -245,7 +260,7 @@ public class GameManager : Singleton<GameManager>
     [ServerRpc]
     private void ClearMapServerRpc()
     {
-        foreach (var networkObject in FindObjectsOfType<NetworkObject>())
+        foreach (var networkObject in FindObjectsByType<NetworkObject>(FindObjectsSortMode.None))
         {
             if (!networkObject.IsPlayerObject && !networkObject.IsSceneObject.Value)
             {
@@ -319,12 +334,6 @@ public class GameManager : Singleton<GameManager>
 
     #endregion
 
-    /*[Rpc(SendTo.Server)]
-    public T SpawnEntityServerRpc<T>(T entityPrefab) where T : Object
-    {
-        return Instantiate(entityPrefab,_entities);
-    }*/
-
     private IEnumerator Timer(int time, UnityAction callback)
     {
         _time.Value = time;
@@ -335,8 +344,10 @@ public class GameManager : Singleton<GameManager>
 
             _time.Value--;
         }
+
         callback.Invoke();
     }
 
     #endregion
 }
+

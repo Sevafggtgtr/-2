@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 1222710236390171192}
   - component: {fileID: -5597473563872879503}
   - component: {fileID: 5212604560999184125}
+  - component: {fileID: 974272338330442963}
   m_Layer: 0
   m_Name: SA_Wep_Grenade
   m_TagString: Untagged
@@ -168,7 +169,7 @@ MonoBehaviour:
   _scopeSpreadMultiplier: 0
   _ownerSpeedMultiplier: 1
   _name: Grenade
-  _code: 
+  _code: grenade
   _icon: {fileID: 0}
   _price: 300
   _throwForce: 10
@@ -326,6 +327,27 @@ CapsuleCollider:
   m_Height: 0.3781837
   m_Direction: 1
   m_Center: {x: -0.002173543, y: -0.020687446, z: 0}
+--- !u!65 &974272338330442963
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 186104}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &7117062093091346671
 PrefabInstance:
   m_ObjectHideFlags: 0

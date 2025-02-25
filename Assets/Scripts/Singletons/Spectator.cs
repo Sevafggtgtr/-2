@@ -15,14 +15,16 @@ public class Spectator : Singleton<Spectator>
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        if (Player && Player.Controller.Value.TryGet(out PlayerController playerController))
+        var controller = Player.Controller;
+        if (controller)
         {
-            playerController.ChangeModelState(PlayerController.Layers.Default);
+            controller.ChangeModelState(PlayerController.Layers.Default);
         }
 
-        if (player.Controller.Value.TryGet(out playerController))
+        controller = player.Controller;
+        if (controller)
         {
-            playerController.ChangeModelState(PlayerController.Layers.Hand);
+            controller.ChangeModelState(PlayerController.Layers.Hand);
         }
 
         PlayerChanged.Invoke(Player, player);
@@ -32,8 +34,8 @@ public class Spectator : Singleton<Spectator>
     public void Spectate(int offset)
     {
         var players = new List<Player>(); //.Where(player => player.Team.Value == _player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled).ToList();
-        foreach (var player in GameManager.Instance.NetworkPlayers)
-            if (player.TryGet(out Player playerObject) && playerObject.Team.Value == Player.Team.Value && playerObject.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled)
+        foreach (var player in GameManager.Instance._Players)
+            if (player.TryGet(out Player playerObject) && playerObject.Team.Value == Player.Team.Value && playerObject.Controller)
             {
                 players.Add(playerObject);
             }

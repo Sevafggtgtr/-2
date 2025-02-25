@@ -1,11 +1,7 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using Unity.Netcode;
 
 public class UIWeaponStore : UIPanel
 {
@@ -17,7 +13,7 @@ public class UIWeaponStore : UIPanel
     {
         [SerializeField]
         private string _name;
-        public string Name =>_name;
+        public string Name => _name;
 
         [SerializeField]
         private WeaponType[] _weaponTypes;
@@ -33,7 +29,7 @@ public class UIWeaponStore : UIPanel
     [SerializeField]
     private HorizontalLayoutGroup _weaponButtonLayoutGroup;
 
-    private void Start()
+    protected override void OnStart()
     {
         foreach (var weaponGroup in _weaponGroups)
         {
@@ -46,14 +42,17 @@ public class UIWeaponStore : UIPanel
                 weaponButton.Initialize(weapon);
 
                 weaponButton.OnClick += () =>
-                    Spectator.Instance.Player.BuyWeaponServerRpc(weapon.Code);                               
+                    Spectator.Instance.Player.BuyWeaponServerRpc(weapon.Code);
             }
         }
-        
-        Spectator.Instance.Player.Balance.OnValueChanged += (o,n) => CheckBalance();
-    
+
+        GameManager.Instance.Player.Balance.OnValueChanged += (o, n) => CheckBalance();
+
         CheckBalance();
     }
+
+    private void OnEnable()
+        => CheckBalance();
 
     private void CheckBalance()
     {
@@ -62,7 +61,4 @@ public class UIWeaponStore : UIPanel
             weaponButton.Button.interactable = weaponButton.Weapon.Price <= GameManager.Instance.Player.Balance.Value;
         }
     }
-
-    private void OnEnable()
-        => CheckBalance();
 }

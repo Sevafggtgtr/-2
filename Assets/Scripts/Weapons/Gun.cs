@@ -28,8 +28,10 @@ public class Gun : Weapon
                   _reloadTime;
 
     [SerializeField]
-    private Transform _hitPrefab,
-                      _sight,
+    private NetworkObject _hitPrefab;
+
+    [SerializeField]
+    private Transform _sight,
                       _pivot;
 
     public Transform Sight => _sight;
@@ -70,13 +72,13 @@ public class Gun : Weapon
             if (Physics.Raycast(origin, direction + Random.insideUnitSphere / 100, out RaycastHit hit, _shotDistance))
             {
                 if (hit.transform.GetComponent<IDamageable>() != null)
-                    hit.transform.GetComponent<IDamageable>().DamageServerRpc(_damage, OwnerClientId, Code);
+                    hit.transform.GetComponent<IDamageable>().DamageServerRpc(_damage, _owningPlayer);
                 else
                 {
                     var bulletHit = Instantiate(_hitPrefab);
-                    bulletHit.position = hit.point + hit.normal * .001f;
-                    bulletHit.forward = -hit.normal;
-                    bulletHit.GetComponent<NetworkObject>().Spawn();
+                    bulletHit.transform.position = hit.point + hit.normal * .001f;
+                    bulletHit.transform.forward = -hit.normal;
+                    bulletHit.Spawn();
                 }
             }
 

@@ -8,13 +8,13 @@ public class UIWeaponPanel : MonoBehaviour
 
     public void Initialize(Player previousPlayer, Player newPlayer)
     {
-        if (previousPlayer && previousPlayer.Controller.Value.TryGet(out PlayerController playerController))
-            playerController.WeaponChanged -= OnWeaponChanged;
+        if (previousPlayer && previousPlayer.Controller)
+            previousPlayer.Controller.WeaponChanged -= OnWeaponChanged;
 
-        if (newPlayer.Controller.Value.TryGet(out playerController))
+        if (newPlayer.Controller)
         {
-            playerController.WeaponChanged += OnWeaponChanged;
-            OnWeaponChanged(null, playerController.Weapon);
+            newPlayer.Controller.WeaponChanged += OnWeaponChanged;
+            OnWeaponChanged(null, newPlayer.Controller.Weapon);
         }
     }
 

@@ -16,7 +16,7 @@ MonoBehaviour:
   _sensitivity: 90
   _pickDistance: 3
   _dropForce: 1
-  _jumpHeight: 3
+  _jumpHeight: 1
   _statesSettings:
   - _state: 0
     _speedMultiplier: 0

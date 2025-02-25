@@ -1,15 +1,20 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UIElements;
 
+[RequireComponent(typeof(AudioSource))]
 public class UIManager : Singleton<UIManager>
 {
     protected event UnityAction Closed = delegate { };
     protected event UnityAction Opened = delegate { };
 
     protected GameObject _panel;
+
+    private AudioSource _audioSource;
+
+    protected override void Initialize()
+    {
+        _audioSource = GetComponent<AudioSource>();
+    }
 
     public virtual void OpenPanel(GameObject panel)
     {
@@ -32,11 +37,14 @@ public class UIManager : Singleton<UIManager>
         Closed.Invoke();
     }
 
-    protected void Update()
+    public void PlaySound()
     {
-        if (Input.GetKeyDown(KeyCode.Escape) && _panel)
-        {            
+        _audioSource.Play();
+    }
+
+    protected virtual void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape) && _panel)       
             ClosePanel();
-        }
     }
 }

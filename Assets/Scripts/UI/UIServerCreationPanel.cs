@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,6 +5,8 @@ using UnityEngine.SceneManagement;
 
 public class UIServerCreationPanel : UIPanel
 {
+    #region Variables
+
     [SerializeField]
     private UIMapSelectionButton _mapSelectionButtonPrefab;
 
@@ -17,9 +16,11 @@ public class UIServerCreationPanel : UIPanel
     [SerializeField]
     private Button _startGameButton;
 
-    private UIMapSelectionButton _mapSelectionButton;   
+    private UIMapSelectionButton _mapSelectionButton;
 
-    void Start()
+    #endregion
+
+    protected override void OnStart()
     {
         foreach(var map in GameManager.Instance.Maps)
         {
@@ -43,10 +44,5 @@ public class UIServerCreationPanel : UIPanel
 
             NetworkManager.Singleton.SceneManager.LoadScene(_mapSelectionButton.Map.Scene.name,LoadSceneMode.Single);
         });
-    }
-
-    void Update()
-    {
-        
     }
 }

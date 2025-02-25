@@ -10,8 +10,6 @@ public abstract class Grenade : Weapon
     private float _throwForce,
                   _throwTime;
 
-    protected NetworkBehaviourReference _owner;
-
     public override void Action(Vector3 origin, Vector3 direction)
     {
         ActionServerRpc(origin, direction);

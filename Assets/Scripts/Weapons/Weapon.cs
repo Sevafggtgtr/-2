@@ -94,6 +94,8 @@ public abstract class Weapon : NetworkBehaviour
     public float ScopeRecoilMultiplier => _scopeRecoilMultiplier;
     public float ScopeSpreadMultiplier => _scopeSpreadMultiplier;
 
+    protected Player _owningPlayer;
+
     protected AudioSource _audioSource;
 
     protected Collider _collider;

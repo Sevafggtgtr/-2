@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 2630382682520841082}
   - component: {fileID: 2568300076627552360}
   - component: {fileID: -4449814364375742578}
+  - component: {fileID: 5187117763199877596}
   m_Layer: 0
   m_Name: SA_Wep_FlashBang
   m_TagString: Untagged
@@ -140,7 +141,7 @@ MonoBehaviour:
   _scopeSpreadMultiplier: 0
   _ownerSpeedMultiplier: 1
   _name: FlashBang
-  _code: 
+  _code: flashbang_grenade
   _icon: {fileID: 0}
   _price: 100
   _throwForce: 10
@@ -326,3 +327,24 @@ MonoBehaviour:
   InLocalSpace: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!65 &5187117763199877596
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 188556}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
