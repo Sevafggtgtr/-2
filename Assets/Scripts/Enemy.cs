@@ -66,11 +66,11 @@ public class Enemy : NetworkBehaviour//, IDamageableObject
         transform.rotation = Quaternion.Euler(0, transform.eulerAngles.y, 0);
 
         if(_gun.CurrentClipAmmo == 0)
-            _gun.Reload();
+            _gun.ReloadServerRpc();
 
         if (Vector3.Distance(_player.transform.position, transform.position) <= _distance)
         {
-            _gun.ActionServerRpc(_gun.transform.position, transform.forward, this);
+            _gun.Action(_gun.transform.position, transform.forward);
             _agent.destination = transform.position;
         }
         else

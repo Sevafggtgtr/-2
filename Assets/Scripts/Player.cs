@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Unity.Collections;
 using Unity.Netcode;
@@ -7,35 +6,46 @@ using UnityEngine.Events;
 
 public class Player : NetworkBehaviour
 {
+    #region Variables
+
+    #region Events
+
     public event UnityAction Disconnected;
 
-    public event UnityAction Damaged;
-    public event UnityAction<Player, string> Died;
+    public event UnityAction Damaged = delegate { };
+    public event UnityAction<Player, string> Died = delegate { };
 
-    public NetworkVariable<Teams> Team = new NetworkVariable<Teams>(Teams.Terrorist, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-
-    private NetworkVariable<int> _kills = new NetworkVariable<int>(writePerm: NetworkVariableWritePermission.Owner);
-    private NetworkVariable<int> _deaths = new NetworkVariable<int>(writePerm: NetworkVariableWritePermission.Owner);
-
-    public NetworkVariable<int> Kills => _kills;
-    public NetworkVariable<int> Deaths => _deaths;
-
-    private NetworkVariable<FixedString32Bytes> _nickname = new NetworkVariable<FixedString32Bytes>(writePerm: NetworkVariableWritePermission.Owner);
-    public NetworkVariable<FixedString32Bytes> Nickname => _nickname;
-
-    private PlayerController _controller;
-    public NetworkVariable<NetworkBehaviourReference> Controller = new NetworkVariable<NetworkBehaviourReference>(writePerm: NetworkVariableWritePermission.Owner);
-
-    private NetworkVariable<int> _balance = new NetworkVariable<int>();
-    public NetworkVariable<int> Balance => _balance;
-
-    private NetworkVariable<int> _health = new NetworkVariable<int>(100);
-    public NetworkVariable<int> Health => _health;
+    #endregion
 
     [SerializeField]
     private PlayerController _playerControllerPrefab;
 
-    void Start()
+    private NetworkVariable<FixedString32Bytes> _nickname = new NetworkVariable<FixedString32Bytes>(writePerm: NetworkVariableWritePermission.Owner);
+    public NetworkVariable<FixedString32Bytes> Nickname => _nickname;
+
+    private NetworkVariable<Teams> _team = new NetworkVariable<Teams>();
+    public NetworkVariable<Teams> Team => _team;
+
+    private NetworkVariable<int> _kills = new NetworkVariable<int>();
+    public NetworkVariable<int> Kills => _kills;
+
+    private NetworkVariable<int> _deaths = new NetworkVariable<int>();
+    public NetworkVariable<int> Deaths => _deaths;
+
+    private NetworkVariable<int> _balance = new NetworkVariable<int>();
+    public NetworkVariable<int> Balance => _balance;
+
+    private NetworkVariable<NetworkBehaviourReference> _controller = new NetworkVariable<NetworkBehaviourReference>();
+    public NetworkVariable<NetworkBehaviourReference> Controller => _controller;
+
+    private NetworkVariable<int> _health = new NetworkVariable<int>(100);
+    public NetworkVariable<int> Health => _health;
+
+    #endregion
+
+    #region Methods
+
+    private void Start()
     {
         if (IsOwner)
         {
@@ -43,66 +53,60 @@ public class Player : NetworkBehaviour
         }
     }
 
-    public void Spawn(Vector3 spawnPoint)
-    {
-        var playerController = Instantiate(_playerControllerPrefab);
-
-        playerController.NetworkObject.SpawnWithOwnership(OwnerClientId);
-
-        playerController.SpawnPlayersClientRpc(spawnPoint);
-
-        SpawnClientRpc(playerController);
-    }
-
-    [ClientRpc]
-    private void SpawnClientRpc(NetworkBehaviourReference playerController)
-    {
-        if (playerController.TryGet(out PlayerController controller) && controller.IsOwner)
-        {
-            controller.Died += (killer, causeCode) =>
-            {
-                _deaths.Value++;
-                Died.Invoke(killer, causeCode);
-
-                //var spectatedPlayer = GameManager.Instance.NetworkPlayers.FirstOrDefault(player => player.Team.Value == Player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled);
-
-                Spectator.Instance.Spectate(0);
-            };
-
-            controller.Kill += () =>
-                _kills.Value++;
-            Controller.Value = controller;
-
-            _controller = controller;
-        }
-    }
-
     [ServerRpc]
-    public void BuyServerRpc(FixedString32Bytes weaponCode)
-    {
-        var weapon = GameManager.Instance.WeaponData.GetTeamWeaponData(Team.Value).Weapons.First(weapon => weaponCode == weapon.Code);
-            Balance.Value -= weapon.Price;
-
-        _controller.AddWeaponServerRpc(Array.IndexOf(GameManager.Instance.WeaponData.GetTeamWeaponData(Team.Value).Weapons, weapon));
-    }
-    [ClientRpc]
-    private void BuyClientRpc()
-    {
-
-    }
-
-    public override void OnDestroy()
-    {
-        Disconnected.Invoke();
-    }
-
-    public void ChangeTeam(Teams team)
+    public void ChangeTeamServerRpc(Teams team)
     {
         Team.Value = team;
     }
 
-    void Update()
+    [ServerRpc]
+    public void SpawnServerRpc(Vector3 position, Quaternion rotation)
     {
+        var controller = Instantiate(_playerControllerPrefab, position, rotation);
+        controller.NetworkObject.SpawnWithOwnership(OwnerClientId);
+        controller.Kill += () =>
+            _kills.Value++;
+        controller.Died += (killer, causeCode) =>
+            _deaths.Value++;
 
+        _controller.Value = controller;
+
+        SpawnClientRpc(controller);
     }
+
+    [ClientRpc]
+    private void SpawnClientRpc(NetworkBehaviourReference controller)
+    {
+        if (controller.TryGet(out PlayerController controllerObject))
+        {
+            controllerObject.Died += (killer, causeCode) =>
+            {
+                Died.Invoke(killer, causeCode);
+
+                Spectator.Instance.Spectate(0);
+            };
+        }
+    }
+
+    [ServerRpc]
+    public void BuyWeaponServerRpc(FixedString32Bytes weaponCode)
+    {
+        var weaponData = GameManager.Instance.WeaponData.GetTeamWeaponData(Team.Value).Weapons.First(weapon => weaponCode == weapon.Code);
+            Balance.Value -= weaponData.Price;
+
+        var weapon = Instantiate(GameManager.Instance.WeaponData.GetWeapon(weaponCode.ToString()));
+        weapon.NetworkObject.SpawnWithOwnership(OwnerClientId);
+
+        if(Controller.Value.TryGet(out PlayerController controller))
+            controller.ChangeWeaponStateServerRpc(weapon, PlayerController.ChangeWeaponStates.Take);
+
+        BuyWeaponClientRpc(OwnerClientId);
+    }
+    [ClientRpc]
+    private void BuyWeaponClientRpc(ulong id)
+    {
+        print(OwnerClientId);
+    }
+
+    #endregion
 }
