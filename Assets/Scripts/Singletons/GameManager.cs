@@ -34,6 +34,8 @@ public struct TeamData
 
 public class GameManager : Singleton<GameManager>
 {
+    #region Variables
+
     #region Events
 
     public event UnityAction RoundStarted;
@@ -41,8 +43,6 @@ public class GameManager : Singleton<GameManager>
     public event UnityAction<Player> PlayerConnected, PlayerDisconnect;
 
     #endregion
-
-    #region Variables
 
     [SerializeField]
     private MapData[] _maps;
@@ -159,7 +159,7 @@ public class GameManager : Singleton<GameManager>
             PlayerConnected.Invoke(playerObject);
 
             if(playerObject.IsOwner)
-                GameManager.Instance.Player = playerObject;
+                Player = playerObject;
         }
     }
 
@@ -179,19 +179,17 @@ public class GameManager : Singleton<GameManager>
 
         _isPlayersActive.Value = true;
 
-        void OnPlayerAdded(Player player)
+        void OnPlayerConnected(Player player)
         {
-            player.Team.OnValueChanged += (o, n) =>
+            player.TeamChanged += () =>
             {
-                player.Balance.Value = GameMode.MaxBalance;
-
                 SpawnPlayerServerRpc(player.OwnerClientId);
 
-                player.Died += killer => OnDiedCallback(player);
+                player.Died += killer => OnDied(player);
             };
         };
 
-        void OnDiedCallback(Player player)
+        void OnDied(Player player)
         {
             if(player.Controller)
                 player.Controller.NetworkObject.Despawn();
@@ -201,15 +199,15 @@ public class GameManager : Singleton<GameManager>
 
         _timerCoroutine = StartCoroutine(Timer(GameMode.WarmupTime, () =>
         {
-            PlayerConnected -= OnPlayerAdded;
+            PlayerConnected -= OnPlayerConnected;
 
             foreach (var player in _players)
-                player.Died -= killer => OnDiedCallback(player);
+                player.Died -= killer => OnDied(player);
 
             FinishWarmUpServerRpc();
         }));
 
-        PlayerConnected += OnPlayerAdded;
+        PlayerConnected += OnPlayerConnected;
 
         StartRoundClientRpc();
     }
@@ -256,31 +254,6 @@ public class GameManager : Singleton<GameManager>
     }
 
     #endregion
-
-    [ServerRpc]
-    private void ClearMapServerRpc()
-    {
-        foreach (var networkObject in FindObjectsByType<NetworkObject>(FindObjectsSortMode.None))
-        {
-            if (!networkObject.IsPlayerObject && !networkObject.IsSceneObject.Value)
-            {
-                print(networkObject.name);
-
-                networkObject.Despawn();
-            }
-        }
-    }
-
-    [ServerRpc]
-    private void SpawnPlayerServerRpc(ulong id)
-    {
-        var player = GetPlayer(id);
-
-        var spawnpoints = Map.Singleton.GetTeamSpawnPoints(player.Team.Value).SpawnPoints.Where(spawnPoint => !Physics.OverlapSphere(spawnPoint.position, 1).Any(collider => collider.GetComponent<PlayerController>())).ToArray();
-        var spawnpoint = spawnpoints[Random.Range(0, spawnpoints.Length)];
-
-        player.SpawnServerRpc(spawnpoint.position, spawnpoint.rotation);
-    }
 
     #region Round
 
@@ -333,6 +306,31 @@ public class GameManager : Singleton<GameManager>
     }
 
     #endregion
+
+    [ServerRpc]
+    private void ClearMapServerRpc()
+    {
+        foreach (var networkObject in FindObjectsByType<NetworkObject>(FindObjectsSortMode.None))
+        {
+            if (!networkObject.IsPlayerObject && !networkObject.IsSceneObject.Value)
+            {
+                print(networkObject.name);
+
+                networkObject.Despawn();
+            }
+        }
+    }
+
+    [ServerRpc]
+    private void SpawnPlayerServerRpc(ulong id)
+    {
+        var player = GetPlayer(id);
+
+        var spawnpoints = Map.Singleton.GetTeamSpawnPoints(player.Team.Value).SpawnPoints.Where(spawnPoint => !Physics.OverlapSphere(spawnPoint.position, 1).Any(collider => collider.GetComponent<PlayerController>())).ToArray();
+        var spawnpoint = spawnpoints[Random.Range(0, spawnpoints.Length)];
+
+        player.SpawnServerRpc(spawnpoint.position, spawnpoint.rotation);
+    }
 
     private IEnumerator Timer(int time, UnityAction callback)
     {

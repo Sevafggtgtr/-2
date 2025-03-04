@@ -6,6 +6,8 @@ public class PlayerControllerData : ScriptableObject
 {
     #region Movement
 
+    [Header("Movement Settings")]
+
     [SerializeField]
     private float _speed,
                   _sensitivity,
@@ -50,6 +52,8 @@ public class PlayerControllerData : ScriptableObject
 
     #region Camera
 
+    [Header("Camera Settings")]
+
     [SerializeField]
     private float _cameraMovePeriod,
                   _scopeSpeedMultiplier;
@@ -66,6 +70,11 @@ public class PlayerControllerData : ScriptableObject
 
     #region Audio
 
+    [Header("Audio Settings")]
+
+    [SerializeField]
+    private SurfaceSound[] _surfaceSounds;
+    public SurfaceSound[] SurfaceSounds => _surfaceSounds;
     [System.Serializable]
     public struct SurfaceSound
     {
@@ -89,10 +98,6 @@ public class PlayerControllerData : ScriptableObject
     }
 
     [SerializeField]
-    private SurfaceSound[] _surfaceSounds;
-    public SurfaceSound[] SurfaceSounds => _surfaceSounds;
-
-    [SerializeField]
     private AudioClip _jumpSound,
                       _crouchSound;
     public AudioClip JumpSound => _jumpSound;
@@ -102,34 +107,15 @@ public class PlayerControllerData : ScriptableObject
     private float _walkSoundDuration;
     public float WalkSoundDuration => _walkSoundDuration;
 
-    #endregion 
+    #endregion
 
     #region Weapons
 
-    [System.Serializable]
-    public struct WeaponSlot
-    {
-        [SerializeField]
-        private SlotType _slotType;
-        public SlotType SlotType => _slotType;
-        [SerializeField]
-        private int _weaponCount;
-        public int WeaponCount => _weaponCount;
-        private Weapon[] _weapons;
-        public Weapon[] Weapons => _weapons;
-
-        public void Initialize()
-        {
-            _weapons = new Weapon[_weaponCount];
-        }
-    }
+    [Header("Weapon Settings")]
 
     [SerializeField]
     private AnimationCurve _recoilDecreaseAnimationCurve;
     public AnimationCurve RecoilDecreaseAnimationCurve => _recoilDecreaseAnimationCurve;
-
-    /*public WeaponSlot GetWeaponSlot(SlotType type)
-        => _weaponSlots.First(weaponSlot => weaponSlot.SlotType == type);*/
 
     #endregion
 }

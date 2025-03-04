@@ -74,9 +74,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
     //[HideInInspector]
     //public Constraints Constraint;
 
-    [HideInInspector]
-    public bool IsActive = true;
-
     private float _time,
                   _recoil,
                   _spread,
@@ -170,11 +167,20 @@ public class PlayerController : NetworkBehaviour, IDamageable
         _model.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
         _model.GetComponent<NetworkObject>().TrySetParent(transform);
 
-        InitializeClientRpc(OwnerClientId, _model);
+        var weapons = new NetworkBehaviourReference[GameManager.Instance.GameMode.DefaultWeaponIndices.Length];
+        for (int i = 0; i < weapons.Length; i++)
+        {
+            var weapon = Instantiate(GameManager.Instance.WeaponData.GetTeamWeaponData(GameManager.Instance.Player.Team.Value).Weapons[GameManager.Instance.GameMode.DefaultWeaponIndices[i]]);
+            weapon.NetworkObject.SpawnWithOwnership(OwnerClientId);
+            weapon.NetworkObject.TrySetParent(transform);
+            weapons[i] = weapon;
+        }
+
+        InitializeClientRpc(OwnerClientId, _model, weapons);
     }
 
     [ClientRpc]
-    private void InitializeClientRpc(ulong id, NetworkBehaviourReference model)
+    private void InitializeClientRpc(ulong id, NetworkBehaviourReference model, NetworkBehaviourReference[] weapons)
     {
         if (OwnerClientId == id)
         {
@@ -190,8 +196,15 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
             if (IsOwner)
             {
-
                 Spectator.Instance.Spectate(GameManager.Instance.Player);
+                for (int i = 0; i < weapons.Length; i++)
+                {
+                    ChangeWeaponStateServerRpc(weapons[i], ChangeWeaponStates.Take);
+                    if (i != weapons.Length - 1 && weapons[i].TryGet(out Weapon weapon))
+                        weapon.gameObject.SetActive(false);
+                    else
+                        SelectWeaponServerRpc(weapons[i]);
+                }
             }
         }
     }
@@ -257,9 +270,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
                     weaponObject.NetworkObject.ChangeOwnership(OwnerClientId);
                     weaponObject.NetworkObject.TrySetParent(transform);
 
-
-                    weaponObject.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(0, 90, 90));
-
                     break;
 
                 case ChangeWeaponStates.Drop:
@@ -298,6 +308,11 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 ChangeWeaponStates.Take => false,
                 ChangeWeaponStates.Drop => true
             };
+            weaponObject.enabled = state switch
+            {
+                ChangeWeaponStates.Take => true,
+                ChangeWeaponStates.Drop => false
+            };
             weaponObject.Rigidbody.isKinematic = state switch
             {
                 ChangeWeaponStates.Take => true,
@@ -308,13 +323,51 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 ChangeWeaponStates.Take => _model.Hand,
                 ChangeWeaponStates.Drop => null
             });
-            weaponObject.enabled = state switch
-            {
-                ChangeWeaponStates.Take => true,
-                ChangeWeaponStates.Drop => false
-            };
+            if(state == ChangeWeaponStates.Take)
+                weaponObject.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(0, 90, 90));
         }
     }
+
+    //private void ChangeWeaponState(Weapon weapon, ChangeWeaponStates state)
+    //{
+    //    if (OwnerClientId == id && weapon.TryGet(out Weapon weaponObject))
+    //    {
+    //        if (IsOwner)
+    //        {
+    //            ChangeLayer(weaponObject.gameObject, state switch
+    //            {
+    //                ChangeWeaponStates.Take => Layers.Hand,
+    //                ChangeWeaponStates.Drop => Layers.Default
+    //            });
+    //        }
+
+    //        weaponObject.Collider.enabled = weaponObject.NetworkTransform.enabled = state switch
+    //        {
+    //            ChangeWeaponStates.Take => false,
+    //            ChangeWeaponStates.Drop => true
+    //        };
+    //        weaponObject.enabled = state switch
+    //        {
+    //            ChangeWeaponStates.Take => true,
+    //            ChangeWeaponStates.Drop => false
+    //        };
+    //        weaponObject.Rigidbody.isKinematic = state switch
+    //        {
+    //            ChangeWeaponStates.Take => true,
+    //            ChangeWeaponStates.Drop => false
+    //        };
+    //        weaponObject.transform.SetParent(state switch
+    //        {
+    //            ChangeWeaponStates.Take => _model.Hand,
+    //            ChangeWeaponStates.Drop => null
+    //        });
+    //        //weaponObject.transform.localPosition = state switch
+    //        //{
+    //        //    ChangeWeaponStates.Take => Vector3.zero,
+    //        //    ChangeWeaponStates.Drop => Vector3.zero
+    //        //};
+    //    }
+    //}
 
     #endregion
 
@@ -323,6 +376,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [ServerRpc]
     public void SelectWeaponServerRpc(NetworkBehaviourReference weapon)
     {
+        if (weapon.TryGet(out Weapon weaponObject))
+            _model.Animator.SetInteger("WeaponType_int", (int)weaponObject.SlotType);
         var previousWeapon = Weapon;
         _weapon.Value = weapon;
         SelectWeaponClientRpc(OwnerClientId, previousWeapon, weapon);
@@ -434,7 +489,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
             enabled = _controller.enabled = _model.enabled = false;
         }
 
-        if(killer.TryGet(out Player killerPlayer))
+        if (killer.TryGet(out Player killerPlayer))
             Died.Invoke(killerPlayer);
     }
 
@@ -497,7 +552,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
             //_model.Animator.SetBool("Jump_b", _velocity == 0 ? false : true);
         }
 
-        if (!IsActive)
+        if (!GameManager.Instance.IsActive)
             return;
 
         #region Move
@@ -608,10 +663,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
                 _spreadCoroutine = StartCoroutine(Spread());
             }
-            else
-                _model.Animator.SetBool("Shoot_b", false);
-
-            //_weapon.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(0, 90, 90));
 
             if (Weapon is Gun)
             {
@@ -641,12 +692,17 @@ public class PlayerController : NetworkBehaviour, IDamageable
             int mouseScroll = (int)(Input.GetAxis("Mouse ScrollWheel") * -10);
             if (mouseScroll != 0)
             {
-                /*int i = 1;
-                while (i < _weapons.Length && !_weapons[(i * mouseScroll + (int)Weapon.SlotType + _weapons.Length) % _weapons.Length])
-                    i++;
-
-                if (_weapons[i])
-                    SelectWeaponServerRpc(_weapons[i]);*/
+                var weapons = new Weapon[_weapons.Count];
+                for (int i = 0; i < weapons.Length; i++)
+                    if (_weapons[i].TryGet(out Weapon weapon))
+                        weapons[i] = weapon;
+                weapons.OrderBy(weapon => weapon.SlotType);
+                print(weapons.Length);
+                int j = 1;
+                while (j < weapons.Length && !weapons[(j * mouseScroll + (int)Weapon.SlotType + weapons.Length) % weapons.Length])
+                    j++;
+                if (weapons[j])
+                    SelectWeaponServerRpc(weapons[j]);
             }
 
             if (Input.GetKeyDown(KeyCode.G) && Weapon.SlotType != SlotType.Knife)
@@ -659,7 +715,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
         else
         {
-            _fpCamera.transform.localPosition = Mathf.Sin(_time / _data.CameraMovePeriod * _data.GetStateSettings(_state.Value).SpeedMultiplier * 360 * Mathf.Deg2Rad) * _data.CameraMoveOffset;
+            _fpCamera.transform.localPosition = Mathf.Sin(_time / _data.CameraMovePeriod * _data.GetStateSettings(_state.Value).WeaponRecoilMultiplier * 360 * Mathf.Deg2Rad) * _data.CameraMoveOffset;
             _time += Time.deltaTime;
         }
     }

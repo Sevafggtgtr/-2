@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/Scenes/map_city.unity
     guid: dc8c9f3efd746429fa6f9482dc779492
   - enabled: 1
-    path: Assets/Scenes/MainMenu.unity
+    path: Assets/Scenes/menu.unity
     guid: 573dcac0cdc50d542b3d1bc692210891
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

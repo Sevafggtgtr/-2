@@ -368,7 +368,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 856971132
+  GlobalObjectIdHash: 2150532731
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -416,31 +416,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e051f30d9698d584eab8d95e9699462a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _damage: 20
-  _actionMode: 0
-  _slotType: 0
+  _name: AK-47
+  _code: ak_47
+  _icon: {fileID: 0}
+  _price: 2700
   _weaponType: 1
+  _slotType: 0
+  _actionMode: 0
+  _damage: 20
+  _ownerSpeedMultiplier: 0.6
+  _scopeValue: 1.5
+  _scopeSpeed: 20
   _recoilValue: 1
   _recoilDecrease: 6
   _firstShotMultiplier: 3
   _spreadValue: 5
   _spreadDecrease: 15
-  _scopeValue: 1.5
-  _scopeSpeed: 20
   _scopeRecoilMultiplier: 0.5
   _scopeSpreadMultiplier: 0.5
-  _ownerSpeedMultiplier: 0.6
-  _name: AK-47
-  _code: ak_47
-  _icon: {fileID: 0}
-  _price: 2700
-  _currentClipAmmo: 30
-  _maxClipAmmo: 30
-  _currentAmmo: 90
   _maxAmmo: 90
+  _maxClipAmmo: 30
   _fireRate: 600
-  _reloadTime: 2
   _shotDistance: 500
+  _reloadTime: 2
   _hitPrefab: {fileID: 650258782817574414, guid: d030239cdb35b534c833a9d7bf05fb25, type: 3}
   _sight: {fileID: 434218}
   _pivot: {fileID: 7474799444617728377}
@@ -583,16 +581,16 @@ MonoBehaviour:
   SyncRotAngleX: 1
   SyncRotAngleY: 1
   SyncRotAngleZ: 1
-  SyncScaleX: 1
-  SyncScaleY: 1
-  SyncScaleZ: 1
+  SyncScaleX: 0
+  SyncScaleY: 0
+  SyncScaleZ: 0
   PositionThreshold: 0.001
   RotAngleThreshold: 0.01
   ScaleThreshold: 0.01
   UseQuaternionSynchronization: 0
   UseQuaternionCompression: 0
   UseHalfFloatPrecision: 0
-  InLocalSpace: 0
+  InLocalSpace: 1
   Interpolate: 1
   SlerpPosition: 0
 --- !u!1 &180380

@@ -255,31 +255,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e051f30d9698d584eab8d95e9699462a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _damage: 10
-  _actionMode: 1
-  _slotType: 1
+  _name: Glock
+  _code: glock
+  _icon: {fileID: 0}
+  _price: 200
   _weaponType: 0
+  _slotType: 1
+  _actionMode: 1
+  _damage: 10
+  _ownerSpeedMultiplier: 0.8
+  _scopeValue: 1.75
+  _scopeSpeed: 30
   _recoilValue: 2
   _recoilDecrease: 10
   _firstShotMultiplier: 5
   _spreadValue: 5
   _spreadDecrease: 10
-  _scopeValue: 1.75
-  _scopeSpeed: 30
   _scopeRecoilMultiplier: 0.5
   _scopeSpreadMultiplier: 0.5
-  _ownerSpeedMultiplier: 0.8
-  _name: Glock
-  _code: glock
-  _icon: {fileID: 0}
-  _price: 200
-  _currentClipAmmo: 20
-  _maxClipAmmo: 20
-  _currentAmmo: 60
   _maxAmmo: 60
+  _maxClipAmmo: 20
   _fireRate: 300
-  _reloadTime: 2
   _shotDistance: 50
+  _reloadTime: 2
   _hitPrefab: {fileID: 650258782817574414, guid: d030239cdb35b534c833a9d7bf05fb25, type: 3}
   _sight: {fileID: 416192}
   _pivot: {fileID: 7971959969375088906}
@@ -304,16 +302,16 @@ MonoBehaviour:
   SyncRotAngleX: 1
   SyncRotAngleY: 1
   SyncRotAngleZ: 1
-  SyncScaleX: 1
-  SyncScaleY: 1
-  SyncScaleZ: 1
+  SyncScaleX: 0
+  SyncScaleY: 0
+  SyncScaleZ: 0
   PositionThreshold: 0.001
   RotAngleThreshold: 0.01
   ScaleThreshold: 0.01
   UseQuaternionSynchronization: 0
   UseQuaternionCompression: 0
   UseHalfFloatPrecision: 0
-  InLocalSpace: 0
+  InLocalSpace: 1
   Interpolate: 1
   SlerpPosition: 0
 --- !u!65 &-3249713310204229738

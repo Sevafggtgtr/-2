@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class UIPanel : MonoBehaviour
@@ -7,12 +5,12 @@ public abstract class UIPanel : MonoBehaviour
     [SerializeField]
     private UIButton _exitButton;
 
-    void Start()
+    private void Start()
     {
         _exitButton.OnClick += () => UIManager.Instance.ClosePanel();
 
         OnStart();
     }
 
-    protected abstract void OnStart();
+    protected virtual void OnStart() { }
 }

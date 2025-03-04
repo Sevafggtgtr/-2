@@ -12,6 +12,8 @@ public class Player : NetworkBehaviour
 
     public event UnityAction Disconnected = delegate { };
 
+    public event UnityAction TeamChanged = delegate { };
+
     public event UnityAction<Player> Died = delegate { };
 
     #endregion
@@ -42,12 +44,22 @@ public class Player : NetworkBehaviour
     #region Methods
 
     [ServerRpc]
-    public void ChangeTeamServerRpc(Teams team)
+    public void SelectTeamServerRpc(Teams team)
     {
-        Team.Value = team;
+        _team.Value = team;
 
         if(Controller)
             Controller.DieServerRpc(this);
+
+        SelectTeamClientRpc();
+    }
+
+    [ClientRpc]
+    private void SelectTeamClientRpc()
+    {
+        print($"SelectTeamClientRpc: " + OwnerClientId);
+
+        TeamChanged.Invoke();
     }
 
     [ServerRpc]
@@ -61,7 +73,6 @@ public class Player : NetworkBehaviour
             _deaths.Value++;
 
         _controller.Value = controller;
-
         SpawnClientRpc(controller);
     }
 

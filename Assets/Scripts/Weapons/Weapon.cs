@@ -99,13 +99,13 @@ public abstract class Weapon : NetworkBehaviour
     protected AudioSource _audioSource;
 
     protected Collider _collider;
-    public Collider Collider => _collider;
+    public Collider Collider => _collider ? _collider : GetComponent<Collider>();
 
     protected Rigidbody _rigidbody;
-    public Rigidbody Rigidbody => _rigidbody;
+    public Rigidbody Rigidbody => _rigidbody ? _rigidbody : GetComponent<Rigidbody>();
 
     protected NetworkTransform _networkTransform;
-    public NetworkTransform NetworkTransform => _networkTransform;
+    public NetworkTransform NetworkTransform => _networkTransform ? _networkTransform : GetComponent<NetworkTransform>();
 
     #endregion
 
@@ -117,9 +117,11 @@ public abstract class Weapon : NetworkBehaviour
         _collider = GetComponent<Collider>();
         _rigidbody = GetComponent<Rigidbody>();
         _networkTransform = GetComponent<NetworkTransform>();
+
+        OnStart();
     }
 
-    protected virtual void Initialize() { }
+    protected virtual void OnStart() { }
 
     public abstract void Action(Vector3 origin, Vector3 direction);
 

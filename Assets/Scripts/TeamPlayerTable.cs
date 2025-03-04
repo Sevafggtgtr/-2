@@ -36,9 +36,9 @@ public class TeamPlayerTable : MonoBehaviour
         var nickname = Instantiate(_textPrefab, _nicknameLayoutGroup.transform);
         nickname.text = player.Nickname.Value.ToString();
         var kills = Instantiate(_textPrefab, _killsLayoutGroup.transform);
-        kills.text = player.Kills.Value.ToString();
+        kills.text = player.Kills.ToString();
         var deaths = Instantiate(_textPrefab, _deathsLayoutGroup.transform);
-        deaths.text = player.Deaths.Value.ToString();
+        deaths.text = player.Deaths.ToString();
 
         player.Nickname.OnValueChanged += (o,n)
             => nickname.text = n.ToString();

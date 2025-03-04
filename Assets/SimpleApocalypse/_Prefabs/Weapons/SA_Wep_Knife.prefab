@@ -249,24 +249,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2bd7032d21248a4facb316d238a33f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _damage: 20
-  _actionMode: 0
-  _slotType: 2
+  _name: Knife
+  _code: knife
+  _icon: {fileID: 0}
+  _price: 0
   _weaponType: 8
+  _slotType: 2
+  _actionMode: 0
+  _damage: 20
+  _ownerSpeedMultiplier: 1
+  _scopeValue: 0
+  _scopeSpeed: 0
   _recoilValue: 0
   _recoilDecrease: 0
   _firstShotMultiplier: 0
   _spreadValue: 0
   _spreadDecrease: 0
-  _scopeValue: 0
-  _scopeSpeed: 0
   _scopeRecoilMultiplier: 0
   _scopeSpreadMultiplier: 0
-  _ownerSpeedMultiplier: 1
-  _name: Knife
-  _code: knife
-  _icon: {fileID: 0}
-  _price: 0
   _distance: 2
   _delay: 1
 --- !u!114 &2666366077035644681
@@ -288,16 +288,16 @@ MonoBehaviour:
   SyncRotAngleX: 1
   SyncRotAngleY: 1
   SyncRotAngleZ: 1
-  SyncScaleX: 1
-  SyncScaleY: 1
-  SyncScaleZ: 1
+  SyncScaleX: 0
+  SyncScaleY: 0
+  SyncScaleZ: 0
   PositionThreshold: 0.001
   RotAngleThreshold: 0.01
   ScaleThreshold: 0.01
   UseQuaternionSynchronization: 0
   UseQuaternionCompression: 0
   UseHalfFloatPrecision: 0
-  InLocalSpace: 0
+  InLocalSpace: 1
   Interpolate: 1
   SlerpPosition: 0
 --- !u!65 &-2423568969933598812
@@ -317,7 +317,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 0.12846763, y: 0.5759812, z: 0.03923009}
   m_Center: {x: -0.00000003482972, y: 0.19478196, z: 0.000000009032957}

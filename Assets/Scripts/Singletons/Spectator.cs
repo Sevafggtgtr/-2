@@ -4,33 +4,34 @@ using UnityEngine.Events;
 
 public class Spectator : Singleton<Spectator>
 {
+    #region Variables
+
     public event UnityAction<Player, Player> PlayerChanged = delegate { };
 
     public Player Player { get; private set; }
 
     private bool _isSpectate;
 
+    #endregion
+
+    #region Methods
+
     public void Spectate(Player player)
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        var controller = Player.Controller;
-        if (controller)
+        if (Player)
         {
-            controller.ChangeModelState(PlayerController.Layers.Default);
+            Player.Controller.ChangeModelState(PlayerController.Layers.Default);
         }
 
-        controller = player.Controller;
-        if (controller)
-        {
-            controller.ChangeModelState(PlayerController.Layers.Hand);
-        }
+        print(player.Controller);
+        player.Controller.ChangeModelState(PlayerController.Layers.Hand);
 
         PlayerChanged.Invoke(Player, player);
         Player = player;
     }
-
     public void Spectate(int offset)
     {
         var players = new List<Player>(); //.Where(player => player.Team.Value == _player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled).ToList();
@@ -57,4 +58,6 @@ public class Spectator : Singleton<Spectator>
             }
         }
     }
+
+    #endregion
 }

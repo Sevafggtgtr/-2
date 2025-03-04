@@ -34,8 +34,8 @@ public class HUD : UIManager
     private GameObject _playerControllerPanel;
 
     [SerializeField]
-    private UIChoiceTeamPanel _chooseTeamPanel;
-    public UIChoiceTeamPanel ChooseTeamPanel => _chooseTeamPanel;
+    private UITeamSelectionPanel _chooseTeamPanel;
+    public UITeamSelectionPanel ChooseTeamPanel => _chooseTeamPanel;
 
     [SerializeField]
     private UIWeaponPanel _gunPanel;

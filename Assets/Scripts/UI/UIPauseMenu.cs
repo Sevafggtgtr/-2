@@ -1,22 +1,23 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using Unity.Netcode;
-using UnityEngine.Events;
 
 public class UIPauseMenu : UIPanel
 {
+    #region Variables
+
     [SerializeField]
-    private Button _exitButton,
-                   _settingsButton,
-                   _continueButton;
+    private UIButton _continueButton,
+                     _settingsButton,
+                     _disconnectButton;
+
+    #endregion
+
+    #region Methods
 
     protected override void OnStart()
     {
-        _exitButton.onClick.AddListener(ServerManager.Instance.Disconnect);
-
-        _continueButton.onClick.AddListener(Continue);
+        _continueButton.OnClick += Continue;
+        _disconnectButton.OnClick += ServerManager.Instance.Disconnect;
     }
 
     private void Continue()
@@ -27,14 +28,5 @@ public class UIPauseMenu : UIPanel
         gameObject.SetActive(false);
     }
 
-    [ServerRpc]
-    private void SettingsRpc()
-    {
-
-    }
-
-    void Update()
-    {
-        
-    }
+    #endregion
 }

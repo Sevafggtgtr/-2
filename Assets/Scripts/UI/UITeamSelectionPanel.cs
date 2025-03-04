@@ -5,9 +5,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
 
-public class UIChoiceTeamPanel : MonoBehaviour
+public class UITeamSelectionPanel : MonoBehaviour
 {
-    public event UnityAction<Teams> TeamChoosed;
+    public event UnityAction<Teams> TeamSelected = delegate { };
 
     [SerializeField]
     private Button _terroristTeamButton,
@@ -17,7 +17,7 @@ public class UIChoiceTeamPanel : MonoBehaviour
     {
         void ChangeTeam(Teams team)
         {
-            GameManager.Instance.Player.ChangeTeamServerRpc(team);
+            GameManager.Instance.Player.SelectTeamServerRpc(team);
             gameObject.SetActive(false);
         }
 
