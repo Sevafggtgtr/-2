@@ -72,8 +72,9 @@ MonoBehaviour:
   _cameraMoveOffset: {x: 0, y: 1, z: 0}
   _cameraRotateOffset: {x: 0, y: 0, z: 0}
   _surfaceSounds: []
-  _jumpSound: {fileID: 0}
+  _jumpSound: {fileID: 8300000, guid: b94d076b3af942a4892b104afed0f8aa, type: 3}
   _crouchSound: {fileID: 0}
+  _landingSound: {fileID: 8300000, guid: 0007efd0106e3c54180219dec4ef2e59, type: 3}
   _walkSoundDuration: 0
   _recoilDecreaseAnimationCurve:
     serializedVersion: 2

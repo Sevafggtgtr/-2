@@ -94,9 +94,11 @@ public class PlayerControllerData : ScriptableObject
 
     [SerializeField]
     private AudioClip _jumpSound,
-                      _crouchSound;
+                      _crouchSound,
+                      _landingSound;
     public AudioClip JumpSound => _jumpSound;
     public AudioClip CrouchSound => _crouchSound;
+    public AudioClip LandingSound => _landingSound;
 
     [SerializeField]
     private float _walkSoundDuration;
