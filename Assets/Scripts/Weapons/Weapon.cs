@@ -36,7 +36,7 @@ public enum ActionMode
 
 [RequireComponent(typeof(AudioSource), typeof(BoxCollider), typeof(Rigidbody))]
 [RequireComponent(typeof(NetworkTransform))]
-public abstract class Weapon : NetworkBehaviour
+public abstract class Weapon : NetworkBehaviour, IKilleable
 {
     #region Variables
 
@@ -106,6 +106,10 @@ public abstract class Weapon : NetworkBehaviour
 
     protected NetworkTransform _networkTransform;
     public NetworkTransform NetworkTransform => _networkTransform ? _networkTransform : GetComponent<NetworkTransform>();
+
+    string IKilleable.KillerText => _owningPlayer.Nickname.Value.ToString();
+    Sprite IKilleable.KillerSprite => _icon;
+    Teams IKilleable.KillerTeam => _owningPlayer.Team.Value;
 
     #endregion
 

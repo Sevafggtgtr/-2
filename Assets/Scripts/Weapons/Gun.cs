@@ -72,7 +72,7 @@ public class Gun : Weapon
             if (Physics.Raycast(origin, direction + Random.insideUnitSphere / 100, out RaycastHit hit, _shotDistance))
             {
                 if (hit.transform.GetComponent<IDamageable>() != null)
-                    hit.transform.GetComponent<IDamageable>().DamageServerRpc(_damage, _owningPlayer);
+                    hit.transform.GetComponent<IDamageable>().DamageServerRpc(_damage, this);
                 else
                 {
                     var bulletHit = Instantiate(_hitPrefab);

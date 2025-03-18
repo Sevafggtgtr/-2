@@ -10,6 +10,9 @@ public class UIPauseMenu : UIPanel
                      _settingsButton,
                      _disconnectButton;
 
+    [SerializeField]
+    private UISettings _settingsPanel;
+
     #endregion
 
     #region Methods
@@ -18,6 +21,7 @@ public class UIPauseMenu : UIPanel
     {
         _continueButton.OnClick += Continue;
         _disconnectButton.OnClick += ServerManager.Instance.Disconnect;
+        _settingsButton.OnClick += () => HUD.Instance.OpenPanel(_settingsPanel.gameObject);
     }
 
     private void Continue()

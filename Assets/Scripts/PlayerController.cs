@@ -46,7 +46,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
     private bool _isScoping;
     public bool CanChangeWeapon = true;
 
-    private float _velocity;
+    private float _velocity,
+                  _weaponRecoilMultiplier;
 
     [SerializeField]
     private Camera _fpCamera,
@@ -229,6 +230,25 @@ public class PlayerController : NetworkBehaviour, IDamageable
     private void ChangeStateServerRpc(PlayerControllerStates state)
     {
         _state.Value = state;
+
+        IEnumerator Coroutine()
+        {
+            var t = 0f;
+
+            var a = _weaponRecoilMultiplier;
+
+            var b = _data.GetStateSettings(_state.Value).WeaponRecoilMultiplier;
+
+            while (_weaponRecoilMultiplier != b)
+            {
+                _weaponRecoilMultiplier = Mathf.Lerp(a, b, t);
+
+                t += Time.deltaTime / 1;
+
+                yield return null;
+            }         
+        }
+        StartCoroutine(Coroutine());
     }
 
     [ServerRpc]
@@ -528,7 +548,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     #endregion
 
     private void Update()
-    {
+    {        
         if (!IsOwner)
             return;
 
@@ -715,7 +735,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
         else
         {
-            _fpCamera.transform.localPosition = Mathf.Sin(_time / _data.CameraMovePeriod * _data.GetStateSettings(_state.Value).WeaponRecoilMultiplier * 360 * Mathf.Deg2Rad) * _data.CameraMoveOffset;
+            _fpCamera.transform.localPosition = Mathf.Sin(_time / _data.CameraMovePeriod * _weaponRecoilMultiplier * 360 * Mathf.Deg2Rad) * _data.CameraMoveOffset;
             _time += Time.deltaTime;
         }
     }
