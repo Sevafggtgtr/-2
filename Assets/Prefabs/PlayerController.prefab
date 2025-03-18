@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3083736456323095055}
+  - component: {fileID: 454929568022165323}
   m_Layer: 0
   m_Name: Cameras
   m_TagString: Untagged
@@ -33,6 +34,14 @@ Transform:
   - {fileID: 1458309616226849748}
   m_Father: {fileID: 5046625566975348350}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!81 &454929568022165323
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 159178315970528305}
+  m_Enabled: 1
 --- !u!1 &1458309615913357825
 GameObject:
   m_ObjectHideFlags: 0
@@ -43,7 +52,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1458309615913357854}
   - component: {fileID: 1458309615913357855}
-  - component: {fileID: 1458309615913357824}
   m_Layer: 0
   m_Name: First Person Camera
   m_TagString: MainCamera
@@ -117,14 +125,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!81 &1458309615913357824
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1458309615913357825}
-  m_Enabled: 1
 --- !u!1 &1458309616226849749
 GameObject:
   m_ObjectHideFlags: 0
@@ -381,7 +381,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3484374745
+  GlobalObjectIdHash: 4027646
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -449,7 +449,6 @@ MonoBehaviour:
   CanChangeWeapon: 1
   _fpCamera: {fileID: 1458309615913357855}
   _handCamera: {fileID: 1458309616226849746}
-  IsActive: 1
 --- !u!1 &7137433724716040768
 GameObject:
   m_ObjectHideFlags: 0

@@ -12,13 +12,8 @@ public class MeleeWeapon : Weapon
 
     private Coroutine _hitCoroutine;
 
-    public override void Action(Vector3 origin, Vector3 direction)
-    {
-        ActionServerRpc(origin, direction);
-    }
-
     [ServerRpc]
-    private void ActionServerRpc(Vector3 origin, Vector3 direction)
+    public override void ActivateServerRpc(Vector3 origin, Vector3 direction)
     {
         if (_hitCoroutine != null)
             return;
@@ -28,7 +23,7 @@ public class MeleeWeapon : Weapon
         if (Physics.Raycast(origin, direction, out var hit, _distance))
         {
             if (hit.transform.GetComponent<IDamageable>() != null)
-                hit.transform.GetComponent<IDamageable>().DamageServerRpc(_damage, _owningPlayer);
+                hit.transform.GetComponent<IDamageable>().DamageServerRpc(_damage, this);
         }
 
         _hitCoroutine = StartCoroutine(Hit());

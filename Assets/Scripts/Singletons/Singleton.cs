@@ -1,11 +1,10 @@
-using Unity.Netcode;
 using UnityEngine;
 
-public class Singleton<T> : NetworkBehaviour where T : NetworkBehaviour
+public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 {
-    protected static T _instance;   
+    protected static T _instance;
     public static T Instance => _instance ? _instance : FindFirstObjectByType<T>();
-   
+
     private void Awake()
     {
         _instance = this as T;
@@ -13,9 +12,5 @@ public class Singleton<T> : NetworkBehaviour where T : NetworkBehaviour
         Initialize();
     }
 
-    protected virtual void Initialize()
-    {
-
-    }
-
+    protected virtual void Initialize() { }
 }

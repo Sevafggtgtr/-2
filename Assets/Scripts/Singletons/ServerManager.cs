@@ -1,8 +1,7 @@
 using Unity.Netcode;
-using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class ServerManager : Singleton<ServerManager>
+public class ServerManager : NetworkSingleton<ServerManager>
 {
     public void Disconnect()
     {        

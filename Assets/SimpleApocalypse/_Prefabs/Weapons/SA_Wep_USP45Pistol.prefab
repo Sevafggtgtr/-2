@@ -255,32 +255,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e051f30d9698d584eab8d95e9699462a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _damage: 10
-  _actionMode: 1
-  _slotType: 1
+  _name: USP
+  _code: usp
+  _icon: {fileID: 0}
+  _price: 200
   _weaponType: 0
+  _slotType: 1
+  _actionMode: 1
+  _damage: 10
+  _ownerSpeedMultiplier: 0.7
+  _scopeValue: 1.75
+  _scopeSpeed: 30
   _recoilValue: 2
   _recoilDecrease: 10
   _firstShotMultiplier: 5
   _spreadValue: 5
   _spreadDecrease: 10
-  _scopeValue: 1.75
-  _scopeSpeed: 30
   _scopeRecoilMultiplier: 0.5
   _scopeSpreadMultiplier: 0.5
-  _ownerSpeedMultiplier: 0.7
-  _name: USP
-  _code: usp
-  _icon: {fileID: 0}
-  _price: 200
-  _currentClipAmmo: 20
-  _maxClipAmmo: 20
-  _currentAmmo: 50
-  _maxAmmo: 50
+  _ammo: 12
+  _clipAmmo: 24
   _fireRate: 300
-  _reloadTime: 2
   _shotDistance: 50
-  _hitPrefab: {fileID: 650258782817574414, guid: d030239cdb35b534c833a9d7bf05fb25, type: 3}
+  _reloadTime: 2
+  _hitPrefab: {fileID: 9037906236941776437, guid: d030239cdb35b534c833a9d7bf05fb25, type: 3}
   _sight: {fileID: 440182}
   _pivot: {fileID: 1279834636144209141}
   _shotSound: {fileID: 8300000, guid: 7bed88d751d31f84fb1b83d0cb5c9d86, type: 3}

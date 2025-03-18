@@ -6,6 +6,8 @@ using Unity.Netcode;
 
 public class Enemy : NetworkBehaviour//, IDamageableObject
 {
+    #region Variables
+
     public event UnityAction<Player> Died;
 
     private int _health = 100;
@@ -16,7 +18,7 @@ public class Enemy : NetworkBehaviour//, IDamageableObject
     private bool _alive = true;
 
     [SerializeField]
-    private Gun _gun;
+    private Weapon _weapon;
 
     [SerializeField]
     private float _distance,
@@ -30,6 +32,16 @@ public class Enemy : NetworkBehaviour//, IDamageableObject
     private Slider _healthBar;
 
     public string Name { get; set; }
+
+    #endregion
+
+    #region Methods
+
+    private void Start()
+    {
+        _animation = GetComponent<Animation>();
+        _agent = GetComponent<NavMeshAgent>();
+    }
 
     [ClientRpc]
     public void DamageClientRpc(int value, NetworkBehaviourReference killer)
@@ -51,35 +63,30 @@ public class Enemy : NetworkBehaviour//, IDamageableObject
         //Died?.Invoke(killer);
     }
 
-    void Start()
+    private void Update()
     {
-        _animation = GetComponent<Animation>();
-        _agent = GetComponent<NavMeshAgent>();        
+        //if (!_alive)
+        //    return;        
+        
+        //transform.forward = _player.transform.position - transform.position;
+        //transform.rotation = Quaternion.Euler(0, transform.eulerAngles.y, 0);
+
+        //if(_weapon.CurrentClipAmmo.Value == 0)
+        //    _weapon.ReloadServerRpc();
+
+        //if (Vector3.Distance(_player.transform.position, transform.position) <= _distance)
+        //{
+        //    _weapon.Action(_weapon.transform.position, transform.forward);
+        //    _agent.destination = transform.position;
+        //}
+        //else
+        //    _agent.destination = _player.transform.position;
+
+        //if (_weapon.IsReloading)
+        //{
+
+        //}     
     }
 
-    void Update()
-    {
-        if (!_alive)
-            return;        
-        
-        transform.forward = _player.transform.position - transform.position;
-        transform.rotation = Quaternion.Euler(0, transform.eulerAngles.y, 0);
-
-        if(_gun.CurrentClipAmmo == 0)
-            _gun.ReloadServerRpc();
-
-        if (Vector3.Distance(_player.transform.position, transform.position) <= _distance)
-        {
-            _gun.Action(_gun.transform.position, transform.forward);
-            _agent.destination = transform.position;
-        }
-        else
-            _agent.destination = _player.transform.position;
-
-        if (_gun.IsReloading)
-        {
-
-        }
-        
-    }
+    #endregion
 }

@@ -70,7 +70,7 @@ public abstract class Weapon : NetworkBehaviour
     protected int _damage;
 
     [SerializeField]
-    private float _ownerSpeedMultiplier,
+    private float _ownerSpeedMultiplier = 1,
                   _scopeValue,
                   _scopeSpeed,
                   _recoilValue,
@@ -93,8 +93,6 @@ public abstract class Weapon : NetworkBehaviour
     public float SpreadDecrease => _spreadDecrease;
     public float ScopeRecoilMultiplier => _scopeRecoilMultiplier;
     public float ScopeSpreadMultiplier => _scopeSpreadMultiplier;
-
-    protected Player _owningPlayer;
 
     protected AudioSource _audioSource;
 
@@ -123,7 +121,8 @@ public abstract class Weapon : NetworkBehaviour
 
     protected virtual void OnStart() { }
 
-    public abstract void Action(Vector3 origin, Vector3 direction);
+    [ServerRpc]
+    public virtual void ActivateServerRpc(Vector3 origin, Vector3 direction) { }
 
     #endregion
 }

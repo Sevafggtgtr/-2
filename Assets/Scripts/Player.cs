@@ -37,7 +37,8 @@ public class Player : NetworkBehaviour
     public NetworkVariable<int> Balance => _balance;
 
     private NetworkVariable<NetworkBehaviourReference> _controller = new NetworkVariable<NetworkBehaviourReference>();
-    public PlayerController Controller => _controller.Value.TryGet(out PlayerController controller) ? controller : null;
+    public NetworkVariable<NetworkBehaviourReference> Controller => _controller;
+    public PlayerController TryGetController() => _controller.Value.TryGet(out PlayerController controller) ? controller : null;
 
     #endregion
 
@@ -48,8 +49,8 @@ public class Player : NetworkBehaviour
     {
         _team.Value = team;
 
-        if(Controller)
-            Controller.DieServerRpc(this);
+        if(TryGetController())
+            TryGetController().DieServerRpc(this);
 
         SelectTeamClientRpc();
     }
@@ -95,7 +96,7 @@ public class Player : NetworkBehaviour
     [ServerRpc]
     public void BuyWeaponServerRpc(FixedString32Bytes weaponCode)
     {
-        if (!Controller)
+        if (!TryGetController())
             return;
 
         var weaponData = GameManager.Instance.WeaponData.GetTeamWeaponData(Team.Value).Weapons.First(weapon => weaponCode == weapon.Code);
@@ -105,7 +106,7 @@ public class Player : NetworkBehaviour
         var weapon = Instantiate(GameManager.Instance.WeaponData.GetWeapon(weaponCode.ToString()));
         weapon.NetworkObject.SpawnWithOwnership(OwnerClientId);
 
-        Controller.ChangeWeaponStateServerRpc(weapon, PlayerController.ChangeWeaponStates.Take);
+        TryGetController().ChangeWeaponStateServerRpc(weapon, PlayerController.ChangeWeaponStates.Take);
 
         BuyWeaponClientRpc(OwnerClientId);
     }

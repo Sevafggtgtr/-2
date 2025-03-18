@@ -5,96 +5,46 @@ public class HUD : UIManager
 {
     #region Variables
 
-    public static HUD Singleton { get; private set; }
-
-    [SerializeField]
-    private Animation _vignetteAnimation;
-
-    [SerializeField]
-    private UIBlindness _blindness;
-
-    [SerializeField]
-    private Slider _healthBar;
-    public Slider HealthBar => _healthBar;
-
-    [SerializeField]
-    private UIPauseMenu _pauseMenu;
-    public UIPauseMenu PauseMenu => _pauseMenu;
-
-    [SerializeField]
-    private UIKillfeedPanel _killfeed;
-
-    [SerializeField]
-    private UIWeaponStore _weaponStore;
-
-    [SerializeField]
-    private Text _balanceText;
-
-    [SerializeField]
-    private GameObject _playerControllerPanel;
+    new public static HUD Instance => UIManager.Instance as HUD;
 
     [SerializeField]
     private UITeamSelectionPanel _chooseTeamPanel;
     public UITeamSelectionPanel ChooseTeamPanel => _chooseTeamPanel;
 
     [SerializeField]
-    private UIWeaponPanel _gunPanel;
-    public UIWeaponPanel GunPanel => _gunPanel;
+    private UIPlayerTable _playerTable;
 
     [SerializeField]
-    private UIPlayerTable _playerTable;
+    private UIKillfeedPanel _killfeed;
+
+    [SerializeField]
+    private UIPausePanel _pauseMenu;
+    public UIPausePanel PauseMenu => _pauseMenu;
+
+    [Header("Player Settings")]
+    [SerializeField]
+    private Animation _vignetteAnimation;
+    [SerializeField]
+    private UIBlindness _blindness;
+    [SerializeField]
+    private Text _balanceText;
+    [Header("Player Controller Settings")]
+    [SerializeField]
+    private GameObject _playerControllerPanel;
+    [SerializeField]
+    private Slider _healthBar;
+    [SerializeField]
+    private UIWeaponPanel _weaponPanel;
+    [SerializeField]
+    private UIWeaponStore _weaponStore;
 
     #endregion
 
     #region Methods
 
-    private void Awake()
-    {
-        Singleton = this;
-    }
-
-    protected override void Update()
-    {
-        if (_panel)
-            base.Update();
-        else if (Input.GetKeyDown(KeyCode.Escape))
-            OpenPanel(_pauseMenu.gameObject);
-
-        if (Input.GetKeyDown(KeyCode.B))
-            OpenPanel(_weaponStore.gameObject);
-
-        if(Input.GetKeyDown(KeyCode.Tab))
-            OpenPanel(_playerTable.gameObject);
-        if (Input.GetKeyUp(KeyCode.Tab))
-            ClosePanel();
-
-        if(Input.GetKeyDown(KeyCode.M))
-            OpenPanel(_chooseTeamPanel.gameObject);
-    }
-
-    public void Blindness(float time)
-    {
-        _blindness.Activate(time);
-    }
-
     private void Start()
     {
         _playerControllerPanel.SetActive(false);
-
-        Closed += () =>
-        {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-
-            GameManager.Instance.IsActive = true;
-        };
-        Opened += () =>
-        {
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
-
-            GameManager.Instance.IsActive = false;
-        }; ;
 
         var roundFinishPanel = GetComponentInChildren<UIRoundFinishPanel>(true);
 
@@ -117,11 +67,11 @@ public class HUD : UIManager
                 _balanceText.text = "$" + player.Balance.Value.ToString();
             }
 
-            void OnPlayerControllerDamaged(PlayerController playerController)
+            void OnPlayerControllerHealthValueChanged(int value)
             {
                 _vignetteAnimation.Play();
 
-                HealthBar.value = playerController.Health.Value;
+                _healthBar.value = value;
             }
 
             void OnPlayerControllerDied(PlayerController playerController)
@@ -134,9 +84,9 @@ public class HUD : UIManager
                 previousPlayer.Balance.OnValueChanged -= (previousValue, newValue)
                     => OnPlayerBalanceOnValueChanged(previousPlayer);
 
-                var previousPlayeController = previousPlayer.Controller;
-                previousPlayeController.Damaged -= ()
-                    => OnPlayerControllerDamaged(previousPlayeController);
+                var previousPlayeController = previousPlayer.TryGetController();
+                previousPlayeController.Health.OnValueChanged -= (previousValue, newValue)
+                    => OnPlayerControllerHealthValueChanged(newValue);
                 previousPlayeController.Died -= (killer)
                     => OnPlayerControllerDied(previousPlayeController);
             }
@@ -145,18 +95,64 @@ public class HUD : UIManager
 
             _playerControllerPanel.SetActive(true);
 
-            _gunPanel.Initialize(previousPlayer, newPlayer);
+            _weaponPanel.Initialize(previousPlayer, newPlayer);
 
             newPlayer.Balance.OnValueChanged += (previousValue, newValue)
                 => OnPlayerBalanceOnValueChanged(newPlayer);
 
-            var newPlayerController = newPlayer.Controller;
-            HealthBar.value = newPlayerController.Health.Value;
-            newPlayerController.Damaged += ()
-                => OnPlayerControllerDamaged(newPlayerController);
+            var newPlayerController = newPlayer.TryGetController();
+            _healthBar.value = newPlayerController.Health.Value;
+            newPlayerController.Health.OnValueChanged += (previousValue, newValue)
+                => OnPlayerControllerHealthValueChanged(newValue);
             newPlayerController.Died += (killer)
                 => OnPlayerControllerDied(newPlayerController);
         };
+    }
+
+    private void SetActive(bool value)
+    {
+        Cursor.visible = value;
+        Cursor.lockState = value ? CursorLockMode.Locked: CursorLockMode.None;
+
+        GameManager.Instance.IsActive = value;
+    }
+
+    public override void OpenPanel(UIPanel panel)
+    {
+        base.OpenPanel(panel);
+
+        SetActive(false);
+    }
+
+    public override void ClosePanel()
+    {
+        base.ClosePanel();
+
+        SetActive(true);
+    }
+
+    public void Blind(float duration)
+    {
+        _blindness.Activate(duration);
+    }
+
+    protected override void Update()
+    {
+        if (_panel)
+            base.Update();
+        else if (Input.GetKeyDown(KeyCode.Escape))
+            OpenPanel(_pauseMenu);
+
+        if (Input.GetKeyDown(KeyCode.B))
+            OpenPanel(_weaponStore);
+
+        if (Input.GetKeyDown(KeyCode.Tab))
+            OpenPanel(_playerTable);
+        if (Input.GetKeyUp(KeyCode.Tab))
+            ClosePanel();
+
+        if (Input.GetKeyDown(KeyCode.M))
+            OpenPanel(_chooseTeamPanel);
     }
 
     #endregion

@@ -1,9 +1,10 @@
-using UnityEditor.U2D.Aseprite;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class TeamPlayerTable : MonoBehaviour
 {
+    #region Variables
+
     [SerializeField]
     private Text _teamNameText;
 
@@ -17,16 +18,22 @@ public class TeamPlayerTable : MonoBehaviour
     [SerializeField]
     private Text _textPrefab;
 
+    #endregion Variables
+
+    #region Methods
+
     public void Initialize(TeamData teamData)
     {
-        _team = teamData.Team;
+        GetComponent<Image>().color = teamData.Color;
 
         _teamNameText.text = teamData.Name;
+
+        _team = teamData.Team;
     }
 
     private void OnEnable()
     {
-        foreach (var player in GameManager.Instance._Players)
+        foreach (var player in GameManager.Instance.Players)
             if (player.TryGet(out Player playerObject) && playerObject.Team.Value == _team)
                 AddPlayer(playerObject);
     }
@@ -40,19 +47,20 @@ public class TeamPlayerTable : MonoBehaviour
         var deaths = Instantiate(_textPrefab, _deathsLayoutGroup.transform);
         deaths.text = player.Deaths.ToString();
 
-        player.Nickname.OnValueChanged += (o,n)
-            => nickname.text = n.ToString();
-        player.Kills.OnValueChanged += (o, n)
-            => kills.text = n.ToString();
-        player.Deaths.OnValueChanged += (o, n)
-            => deaths.text = n.ToString();
+        player.Nickname.OnValueChanged += (previousValue, newValue)
+            => nickname.text = newValue.ToString();
+        player.Kills.OnValueChanged += (previousValue, newValue)
+            => kills.text = newValue.ToString();
+        player.Deaths.OnValueChanged += (previousValue, newValue)
+            => deaths.text = newValue.ToString();
 
-        player.Team.OnValueChanged += (o, n) =>
+        player.Team.OnValueChanged += (previousValue, newValue) =>
         {
             Destroy(nickname.gameObject);
             Destroy(kills.gameObject);
             Destroy(deaths.gameObject);
-        };
-             
+        };    
     }
+
+    #endregion
 }

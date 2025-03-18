@@ -7,21 +7,18 @@ public class Gun : Weapon
 {
     #region Variables
 
-    public event UnityAction AmmoChanged = delegate { };
-
     [SerializeField]
-    private int _maxAmmo,
-                _maxClipAmmo,
+    private int _ammo,
+                _clipAmmo,
                 _fireRate;
 
-    public int MaxAmmo => _maxAmmo;
-    public int MaxClipAmmo => _maxClipAmmo;
+    public int Ammo => _ammo;
+    public int ClipAmmo => _clipAmmo;
 
     private NetworkVariable<int> _currentAmmo = new NetworkVariable<int>();
+    public NetworkVariable<int> CurrentAmmo => _currentAmmo;
     private NetworkVariable<int> _currentClipAmmo = new NetworkVariable<int>();
-
-    public int CurrentAmmo => _currentAmmo.Value;
-    public int CurrentClipAmmo => _currentClipAmmo.Value;
+    public NetworkVariable<int> CurrentClipAmmo => _currentClipAmmo;
 
     [SerializeField]
     private float _shotDistance,
@@ -52,16 +49,17 @@ public class Gun : Weapon
 
     #region Methods
 
+    protected override void OnStart()
+    {
+        _currentAmmo.Value = _ammo;
+        _currentClipAmmo.Value = _clipAmmo;
+    }
+
     public void Scope(bool value)
         => _isScoping = value;
 
-    public override void Action(Vector3 origin, Vector3 direction)
-    {
-        ActionServerRpc(origin, direction);
-    }
-
     [ServerRpc]
-    private void ActionServerRpc(Vector3 origin, Vector3 direction)
+    public override void ActivateServerRpc(Vector3 origin, Vector3 direction)
     {
         if (_currentClipAmmo.Value > 0 && !_isShooting && !_isReloading)
         {
@@ -72,7 +70,7 @@ public class Gun : Weapon
             if (Physics.Raycast(origin, direction + Random.insideUnitSphere / 100, out RaycastHit hit, _shotDistance))
             {
                 if (hit.transform.GetComponent<IDamageable>() != null)
-                    hit.transform.GetComponent<IDamageable>().DamageServerRpc(_damage, _owningPlayer);
+                    hit.transform.GetComponent<IDamageable>().DamageServerRpc(_damage, this);
                 else
                 {
                     var bulletHit = Instantiate(_hitPrefab);
@@ -82,12 +80,13 @@ public class Gun : Weapon
                 }
             }
 
-            ActionClientRpc();
+            ActivateClientRpc();
+            GameManager.Instance.GetPlayer(OwnerClientId).TryGetController().ShootClientRpc();
         }
     }
 
     [ClientRpc]
-    private void ActionClientRpc()
+    private void ActivateClientRpc()
     {
         _audioSource.PlayOneShot(_shotSound);
     }
@@ -95,14 +94,14 @@ public class Gun : Weapon
     [ServerRpc]
     public void ReloadServerRpc()
     {
-        if (!_isReloading && !_isShooting && _currentClipAmmo.Value < _maxClipAmmo && _currentAmmo.Value > 0)
+        if (!_isReloading && !_isShooting && _currentClipAmmo.Value < _clipAmmo && _currentAmmo.Value > 0)
         {
             _isReloading = true;
             _audioSource.PlayOneShot(_reloadSound);
         }
     }
 
-    void Update()
+    private void Update()
     {
         if (!IsOwner)
             return;
@@ -121,12 +120,11 @@ public class Gun : Weapon
             _time += Time.deltaTime;
             if (_time >= _reloadTime)
             {
-                var ammo = Mathf.Min(_currentAmmo.Value, _maxClipAmmo - _currentClipAmmo.Value);
+                var ammo = Mathf.Min(_currentAmmo.Value, _clipAmmo - _currentClipAmmo.Value);
                 _currentAmmo.Value -= ammo;
                 _currentClipAmmo.Value += ammo;
                 _time = 0;
                 _isReloading = false;
-                AmmoChanged.Invoke();
             }
         }
     }

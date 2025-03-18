@@ -3,11 +3,16 @@ using UnityEngine;
 public abstract class UIPanel : MonoBehaviour
 {
     [SerializeField]
+    protected bool _isEscapeable = true;
+    public bool IsEscapeable => _isEscapeable;
+
+    [SerializeField]
     private UIButton _exitButton;
 
     private void Start()
     {
-        _exitButton.OnClick += () => UIManager.Instance.ClosePanel();
+        if(_exitButton)
+            _exitButton.Clicked += () => UIManager.Instance.ClosePanel();
 
         OnStart();
     }

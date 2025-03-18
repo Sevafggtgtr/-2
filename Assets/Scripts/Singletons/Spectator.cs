@@ -23,11 +23,10 @@ public class Spectator : Singleton<Spectator>
 
         if (Player)
         {
-            Player.Controller.ChangeModelState(PlayerController.Layers.Default);
+            Player.TryGetController().ChangeModelState(PlayerController.Layers.Default);
         }
 
-        print(player.Controller);
-        player.Controller.ChangeModelState(PlayerController.Layers.Hand);
+        player.TryGetController().ChangeModelState(PlayerController.Layers.Hand);
 
         PlayerChanged.Invoke(Player, player);
         Player = player;
@@ -35,8 +34,8 @@ public class Spectator : Singleton<Spectator>
     public void Spectate(int offset)
     {
         var players = new List<Player>(); //.Where(player => player.Team.Value == _player.Team.Value && player.Controller.Value.TryGet(out PlayerController playerController) && playerController.enabled).ToList();
-        foreach (var player in GameManager.Instance._Players)
-            if (player.TryGet(out Player playerObject) && playerObject.Team.Value == Player.Team.Value && playerObject.Controller)
+        foreach (var player in GameManager.Instance.Players)
+            if (player.TryGet(out Player playerObject) && playerObject.Team.Value == Player.Team.Value && playerObject.TryGetController())
             {
                 players.Add(playerObject);
             }

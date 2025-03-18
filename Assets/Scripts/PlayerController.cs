@@ -44,7 +44,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
     public Transform Arms { get; private set; }
 
     private bool _isScoping;
-    public bool CanChangeWeapon = true;
 
     private float _velocity;
 
@@ -65,8 +64,21 @@ public class PlayerController : NetworkBehaviour, IDamageable
     #region Weapons
 
     private NetworkVariable<NetworkBehaviourReference> _weapon = new NetworkVariable<NetworkBehaviourReference>();
-    public Weapon Weapon => _weapon.Value.TryGet(out Weapon weapon) ? weapon : null;
+    public NetworkVariable<NetworkBehaviourReference> Weapon => _weapon;
+    public Weapon TryGetWeapon() => _weapon.Value.TryGet(out Weapon weapon) ? weapon : null;
+    
     private NetworkList<NetworkBehaviourReference> _weapons = new NetworkList<NetworkBehaviourReference>();
+    private Weapon[] TryGetWeapons()
+    {
+        var weapons = new Weapon[_weapons.Count];
+        for (int i = 0; i < weapons.Length; i++)
+            if (_weapons[i].TryGet(out Weapon weapon))
+                weapons[i] = weapon;
+        return weapons.OrderBy(weapon => weapon.SlotType).ToArray();
+    }
+
+    private NetworkVariable<bool> _canChangeWeapon = new NetworkVariable<bool>(true);
+    public NetworkVariable<bool> CanChangeWeapon => _canChangeWeapon;
 
     #endregion
 
@@ -248,7 +260,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     #region Methods
 
-    #region Change Weapon State
+    #region Change State
 
     public enum ChangeWeaponStates
     {
@@ -371,14 +383,14 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     #endregion
 
-    #region Select Weapon
+    #region Select
 
     [ServerRpc]
     public void SelectWeaponServerRpc(NetworkBehaviourReference weapon)
     {
         if (weapon.TryGet(out Weapon weaponObject))
             _model.Animator.SetInteger("WeaponType_int", (int)weaponObject.SlotType);
-        var previousWeapon = Weapon;
+        var previousWeapon = TryGetWeapon();
         _weapon.Value = weapon;
         SelectWeaponClientRpc(OwnerClientId, previousWeapon, weapon);
     }
@@ -400,6 +412,30 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     #endregion
 
+    #region Shoot
+
+    [ClientRpc]
+    public void ShootClientRpc()
+    {
+        _model.Animator.SetBool("Shoot_b", true);
+
+        var weapon = TryGetWeapon();
+
+        var recoil = weapon.RecoilValue * (Input.GetMouseButtonDown(0) ? weapon.FirstShotMultiplier : 1) * _data.GetStateSettings(_state.Value).WeaponRecoilMultiplier * (_isScoping ? weapon.ScopeRecoilMultiplier : 1);
+        _angle.Value -= recoil;
+        _recoil += recoil;
+        if (_recoilCoroutine != null)
+            StopCoroutine(_recoilCoroutine);
+        _recoilCoroutine = StartCoroutine(Recoil());
+
+        _spread += weapon.SpreadValue * (Input.GetMouseButtonDown(0) && _state.Value == PlayerControllerStates.Idle && _state.Value == PlayerControllerStates.CrouchIdle ? 0 : 1) * _data.GetStateSettings(_state.Value).WeaponSpreadMultiplier * (_isScoping ? weapon.ScopeSpreadMultiplier : 1);
+        if (_spreadCoroutine != null)
+            StopCoroutine(_spreadCoroutine);
+        _spreadCoroutine = StartCoroutine(Spread());
+    }
+
+    #endregion
+
     #endregion
 
     #region Coroutines
@@ -416,7 +452,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
             _recoil = _data.RecoilDecreaseAnimationCurve.Evaluate(1 - time) * maxRecoil;
 
-            time += Weapon.RecoilDecrease / maxRecoil * Time.deltaTime;
+            time += TryGetWeapon().RecoilDecrease / maxRecoil * Time.deltaTime;
 
             _handCamera.transform.localRotation = Quaternion.Euler(_recoil, 0, 0);
 
@@ -436,7 +472,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         {
             _spread = _data.RecoilDecreaseAnimationCurve.Evaluate(1 - time) * maxSpread;
 
-            time += Weapon.SpreadDecrease / maxSpread * Time.deltaTime;
+            time += TryGetWeapon().SpreadDecrease / maxSpread * Time.deltaTime;
 
             yield return null;
         }
@@ -447,6 +483,14 @@ public class PlayerController : NetworkBehaviour, IDamageable
     #endregion
 
     #region Damage
+
+    [ServerRpc]
+    public void BlindServerRpc(float duration)
+        => BlindClientRpc(duration);
+
+    [ClientRpc]
+    private void BlindClientRpc(float duration)
+        => HUD.Instance.Blind(duration);
 
     [ServerRpc]
     public void DamageServerRpc(int value, NetworkBehaviourReference source)
@@ -467,7 +511,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
     #endregion
 
     #region Die
-
 
     [ServerRpc]
     public void DieServerRpc(NetworkBehaviourReference cause)
@@ -601,7 +644,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 if (_state.Value == PlayerControllerStates.CrouchIdle)
                     ChangeStateServerRpc(PlayerControllerStates.CrouchWalk);
 
-                MoveServerRpc(movement * _data.Speed * _data.GetStateSettings(_state.Value).SpeedMultiplier * (Weapon ? Weapon.OwnerSpeedMultiplier * (_isScoping ? _data.ScopeSpeedMultiplier : 1) : 1));
+                MoveServerRpc(movement * _data.Speed * _data.GetStateSettings(_state.Value).SpeedMultiplier * (TryGetWeapon() ? TryGetWeapon().OwnerSpeedMultiplier * (_isScoping ? _data.ScopeSpeedMultiplier : 1) : 1));
             }
             else
                 ChangeStateServerRpc(_state.Value == PlayerControllerStates.CrouchWalk ? PlayerControllerStates.CrouchIdle : PlayerControllerStates.Idle);
@@ -636,54 +679,36 @@ public class PlayerController : NetworkBehaviour, IDamageable
             }
         }
 
-        if (Weapon)
+        if (TryGetWeapon())
         {
             if ((Input.GetMouseButtonDown(0)
                 || (Input.GetMouseButton(0)
-                && Weapon.ActionMode == ActionMode.Auto))
+                && TryGetWeapon().ActionMode == ActionMode.Auto))
                 && GameManager.Instance.IsPlayersActive.Value)
             {
-                Weapon.Action(_fpCamera.transform.position, _fpCamera.transform.forward);
-
-                _model.Animator.SetBool("Shoot_b", true);
-
-                var recoil = Weapon.RecoilValue * (Input.GetMouseButtonDown(0) ? Weapon.FirstShotMultiplier : 1) * _data.GetStateSettings(_state.Value).WeaponRecoilMultiplier * (_isScoping ? Weapon.ScopeRecoilMultiplier : 1);
-                _angle.Value -= recoil;
-                _recoil += recoil;
-
-                if (_recoilCoroutine != null)
-                    StopCoroutine(_recoilCoroutine);
-
-                _recoilCoroutine = StartCoroutine(Recoil());
-
-                _spread += Weapon.SpreadValue * (Input.GetMouseButtonDown(0) && _state.Value == PlayerControllerStates.Idle && _state.Value == PlayerControllerStates.CrouchIdle ? 0 : 1) * _data.GetStateSettings(_state.Value).WeaponSpreadMultiplier * (_isScoping ? Weapon.ScopeSpreadMultiplier : 1);
-
-                if (_spreadCoroutine != null)
-                    StopCoroutine(_spreadCoroutine);
-
-                _spreadCoroutine = StartCoroutine(Spread());
+                TryGetWeapon().ActivateServerRpc(_fpCamera.transform.position, _fpCamera.transform.forward);
             }
 
-            if (Weapon is Gun)
+            if (TryGetWeapon() is Gun)
             {
                 if (Input.GetMouseButton(1) && _state.Value != PlayerControllerStates.Run)
                 {
-                    _handCamera.transform.position += (((Gun)Weapon).Sight.position - _handCamera.transform.position) * Time.deltaTime * ((Gun)Weapon).ScopeSpeed;
-                    _fpCamera.fieldOfView = Mathf.Lerp(_fpCamera.fieldOfView, 60 / ((Gun)Weapon).ScopeValue, Time.deltaTime * ((Gun)Weapon).ScopeSpeed);
+                    _handCamera.transform.position += (((Gun)TryGetWeapon()).Sight.position - _handCamera.transform.position) * Time.deltaTime * ((Gun)TryGetWeapon()).ScopeSpeed;
+                    _fpCamera.fieldOfView = Mathf.Lerp(_fpCamera.fieldOfView, 60 / ((Gun)TryGetWeapon()).ScopeValue, Time.deltaTime * ((Gun)TryGetWeapon()).ScopeSpeed);
 
                     _isScoping = true;
                 }
                 else
                 {
-                    _handCamera.transform.localPosition = Vector3.Lerp(_handCamera.transform.localPosition, HandCameraStartPosition, ((Gun)Weapon).ScopeSpeed * Time.deltaTime);
-                    _fpCamera.fieldOfView = Mathf.Lerp(_fpCamera.fieldOfView, 60, Time.deltaTime * ((Gun)Weapon).ScopeSpeed);
+                    _handCamera.transform.localPosition = Vector3.Lerp(_handCamera.transform.localPosition, HandCameraStartPosition, ((Gun)TryGetWeapon()).ScopeSpeed * Time.deltaTime);
+                    _fpCamera.fieldOfView = Mathf.Lerp(_fpCamera.fieldOfView, 60, Time.deltaTime * ((Gun)TryGetWeapon()).ScopeSpeed);
 
                     _isScoping = false;
                 }
 
                 if (Input.GetKeyDown(KeyCode.R))
                 {
-                    ((Gun)Weapon).ReloadServerRpc();
+                    ((Gun)TryGetWeapon()).ReloadServerRpc();
 
                     _model.Animator.SetBool("Reload_b", true);
                 }
@@ -692,22 +717,21 @@ public class PlayerController : NetworkBehaviour, IDamageable
             int mouseScroll = (int)(Input.GetAxis("Mouse ScrollWheel") * -10);
             if (mouseScroll != 0)
             {
-                var weapons = new Weapon[_weapons.Count];
-                for (int i = 0; i < weapons.Length; i++)
-                    if (_weapons[i].TryGet(out Weapon weapon))
-                        weapons[i] = weapon;
-                weapons.OrderBy(weapon => weapon.SlotType);
-                print(weapons.Length);
+                var weapon = TryGetWeapon();
+                var weapons = TryGetWeapons();
+                foreach (var weapon_ in weapons)
+                    print(weapon);
                 int j = 1;
-                while (j < weapons.Length && !weapons[(j * mouseScroll + (int)Weapon.SlotType + weapons.Length) % weapons.Length])
-                    j++;
-                if (weapons[j])
-                    SelectWeaponServerRpc(weapons[j]);
+                while (j < weapons.Length && !weapons[(j * mouseScroll + (int)weapon.SlotType + weapons.Length) % weapons.Length])
+                    j += mouseScroll;
+                int index = ((int)weapon.SlotType + j + weapons.Length) % weapons.Length;
+                if (weapons[index])
+                    SelectWeaponServerRpc(weapons[index]);
             }
 
-            if (Input.GetKeyDown(KeyCode.G) && Weapon.SlotType != SlotType.Knife)
+            if (Input.GetKeyDown(KeyCode.G) && TryGetWeapon().SlotType != SlotType.Knife)
             {
-                ChangeWeaponStateServerRpc(Weapon, ChangeWeaponStates.Drop);
+                ChangeWeaponStateServerRpc(TryGetWeapon(), ChangeWeaponStates.Drop);
             }
         }
 

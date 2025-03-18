@@ -32,7 +32,7 @@ public struct TeamData
     public Texture[] PlayerSkins => _playerSkins;
 }
 
-public class GameManager : Singleton<GameManager>
+public class GameManager : NetworkSingleton<GameManager>
 {
     #region Variables
 
@@ -66,20 +66,18 @@ public class GameManager : Singleton<GameManager>
 
     #region Players
 
-    private List<Player> _players;
-    public NetworkList<NetworkBehaviourReference> _Players = new NetworkList<NetworkBehaviourReference>();
-    public Player[] Players
+    private NetworkList<NetworkBehaviourReference> _players = new NetworkList<NetworkBehaviourReference>();
+    public NetworkList<NetworkBehaviourReference> Players => _players;
+    public Player[] TryGetPlayers()
     {
-        get
-        {
-            var players = new Player[_Players.Count];
-            for(int i = 0; i < players.Length; i++)
-                players[i] = _Players[i].TryGet(out Player player) ? player : null;
-            return players;
-        }
+        var players = new Player[_players.Count];
+        for (int i = 0; i < players.Length; i++)
+            players[i] = _players[i].TryGet(out Player player) ? player : null;
+
+        return players;
     }
     public Player GetPlayer(ulong id)
-        => _players.First(player => id == player.OwnerClientId);  
+        => TryGetPlayers().First(player => id == player.OwnerClientId);
 
     private NetworkVariable<bool> _isPlayersActive = new NetworkVariable<bool>();
     public NetworkVariable<bool> IsPlayersActive => _isPlayersActive;
@@ -118,11 +116,9 @@ public class GameManager : Singleton<GameManager>
     {
         NetworkManager.OnServerStarted += () =>
         {
-            _players = new List<Player>();
-
             StartWarmUpServerRpc();
 
-            NetworkManager.OnClientStarted += () =>
+            NetworkManager.Singleton.OnClientStarted += () =>
             {
 
             };
@@ -132,7 +128,6 @@ public class GameManager : Singleton<GameManager>
                 var player = NetworkManager.ConnectedClients[id].PlayerObject.GetComponent<Player>();
 
                 _players.Add(player);
-                _Players.Add(player);
 
                 OnPlayerConnectedClientRpc(player);
             };
@@ -140,8 +135,6 @@ public class GameManager : Singleton<GameManager>
             NetworkManager.OnClientDisconnectCallback += (id) =>
             {
                 var player = GetPlayer(id);
-
-                _Players.Remove(player);
 
                 _players.Remove(player);
 
@@ -158,7 +151,7 @@ public class GameManager : Singleton<GameManager>
         {
             PlayerConnected.Invoke(playerObject);
 
-            if(playerObject.IsOwner)
+            if (playerObject.IsOwner)
                 Player = playerObject;
         }
     }
@@ -191,8 +184,8 @@ public class GameManager : Singleton<GameManager>
 
         void OnDied(Player player)
         {
-            if(player.Controller)
-                player.Controller.NetworkObject.Despawn();
+            if (player.TryGetController())
+                player.TryGetController().NetworkObject.Despawn();
 
             SpawnPlayerServerRpc(player.OwnerClientId);
         }
@@ -201,7 +194,7 @@ public class GameManager : Singleton<GameManager>
         {
             PlayerConnected -= OnPlayerConnected;
 
-            foreach (var player in _players)
+            foreach (var player in TryGetPlayers())
                 player.Died -= killer => OnDied(player);
 
             FinishWarmUpServerRpc();
@@ -218,25 +211,26 @@ public class GameManager : Singleton<GameManager>
         void OnDied()
         {
             var teams = new Dictionary<Teams, int> { { Teams.Terrorist, 0 }, { Teams.CounterTerrorist, 0 } };
+            var players = TryGetPlayers();
 
-            foreach (var player in _players)
-                if (player.Controller && player.Controller.Health.Value != 0)
+            foreach (var player in players)
+                if (player.TryGetController() && player.TryGetController().Health.Value != 0)
                     teams[player.Team.Value]++;
 
             if (teams.ContainsValue(0))
             {
                 var winningTeam = teams.OrderBy(team => team.Value).Last().Key;
 
-                foreach (var player in _players)
+                foreach (var player in players)
                 {
                     player.Balance.Value += player.Team.Value == winningTeam ? GameMode.WinAward : GameMode.LossAward;
                 }
 
                 if (++Points[winningTeam] == _gameMode.RoundCount / 2 + 1)
                 {
-                    foreach (var player in _players)
-                        if(player.Controller)
-                            player.Controller.NetworkObject.Despawn();
+                    foreach (var player in players)
+                        if (player.TryGetController())
+                            player.TryGetController().NetworkObject.Despawn();
                 }
 
                 FinishRoundTimeServerRpc();
@@ -245,7 +239,7 @@ public class GameManager : Singleton<GameManager>
 
         }
 
-        foreach (var player in _players)
+        foreach (var player in TryGetPlayers())
         {
             player.Died += killer => OnDied();
         }
@@ -266,7 +260,7 @@ public class GameManager : Singleton<GameManager>
 
         _timerCoroutine = StartCoroutine(Timer(GameMode.BuyTime, FinishBuyTimeServerRpc));
 
-        foreach (var player in _players)
+        foreach (var player in TryGetPlayers())
         {
             SpawnPlayerServerRpc(player.OwnerClientId);
         }
