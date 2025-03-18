@@ -4,7 +4,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class Player : NetworkBehaviour
+public class Player : NetworkBehaviour, IKilleable
 {
     #region Variables
 
@@ -40,6 +40,12 @@ public class Player : NetworkBehaviour
     public NetworkVariable<NetworkBehaviourReference> Controller => _controller;
     public PlayerController TryGetController() => _controller.Value.TryGet(out PlayerController controller) ? controller : null;
 
+    [SerializeField]
+    private Sprite _deathSprite;
+
+    string IKilleable.KillerText => _nickname.Value.ToString();
+    Sprite IKilleable.KillerSprite => _deathSprite;
+    Teams IKilleable.KillerTeam => _team.Value;
     #endregion
 
     #region Methods

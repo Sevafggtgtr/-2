@@ -9,12 +9,12 @@ public class UIKillfeedSlot : MonoBehaviour
     [SerializeField]
     private Image _causeImage;
 
-    public void Initialize(Player killer, Player target)
+    public void Initialize(IKilleable killer, Player target)
     {        
-        _killerText.text = killer.Nickname.Value.ToString();
+        _killerText.text = killer.KillerText;
         _targetText.text = target.Nickname.Value.ToString();
 
-        _killerText.color = GameManager.Instance.GetTeamData(killer.Team.Value).Color;
+        _killerText.color = GameManager.Instance.GetTeamData(killer.KillerTeam).Color;
         _targetText.color = GameManager.Instance.GetTeamData(target.Team.Value).Color;
 
         Invoke("Destroy", 5);
