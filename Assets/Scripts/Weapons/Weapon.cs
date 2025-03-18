@@ -105,9 +105,9 @@ public abstract class Weapon : NetworkBehaviour, IKilleable
     protected NetworkTransform _networkTransform;
     public NetworkTransform NetworkTransform => _networkTransform ? _networkTransform : GetComponent<NetworkTransform>();
 
-    string IKilleable.KillerText => _owningPlayer.Nickname.Value.ToString();
-    Sprite IKilleable.KillerSprite => _icon;
-    Teams IKilleable.KillerTeam => _owningPlayer.Team.Value;
+    string IKilleable.KillerText => null;// _owningPlayer.Nickname.Value.ToString();
+    Sprite IKilleable.KillerSprite => null;// _icon;
+    Teams IKilleable.KillerTeam => Teams.Spectator;// _owningPlayer.Team.Value;
 
     #endregion
 
