@@ -99,6 +99,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     private CharacterController _controller;
     private NetworkAudioSource _networkAudioSource;
     private PlayerModel _model;
+    private AudioListener _audioListener;
 
     #endregion
 
@@ -121,6 +122,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     {
         _controller = GetComponent<CharacterController>();
         _networkAudioSource = GetComponent<NetworkAudioSource>();
+        _audioListener = GetComponentInChildren<AudioListener>();
 
         if (!IsOwner)
         {
@@ -144,7 +146,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     public void ChangeModelState(Layers layer)
     {
-        _fpCamera.enabled = _handCamera.enabled = layer switch
+        _fpCamera.enabled = _handCamera.enabled = _audioListener.enabled = layer switch
         {
             Layers.Hand => true,
             Layers.Default => false
@@ -230,6 +232,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
     private void MoveServerRpc(Vector3 velocity)
     {
         _controller.Move(transform.TransformDirection(velocity) * Time.deltaTime);
+
+        _model.Animator.SetFloat("Speed_f", new Vector3(_controller.velocity.x, 0, _controller.velocity.z).magnitude / _data.GetStateSettings(PlayerControllerStates.Walk).SpeedMultiplier / 4);
     }
 
     [ServerRpc]
@@ -409,7 +413,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     public void SelectWeaponServerRpc(NetworkBehaviourReference weapon)
     {
         if (weapon.TryGet(out Weapon weaponObject))
-            _model.Animator.SetInteger("WeaponType_int", (int)weaponObject.SlotType);
+            _model.Animator.SetInteger("WeaponType_f", (int)weaponObject.SlotType);
         var previousWeapon = TryGetWeapon();
         _weapon.Value = weapon;
         SelectWeaponClientRpc(OwnerClientId, previousWeapon, weapon);
@@ -437,12 +441,13 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [ClientRpc]
     public void ShootClientRpc()
     {
-        _model.Animator.SetBool("Shoot_b", true);
+        _model.Animator.SetTrigger("Shoot_t");
 
         var weapon = TryGetWeapon();
 
         var recoil = weapon.RecoilValue * (Input.GetMouseButtonDown(0) ? weapon.FirstShotMultiplier : 1) * _data.GetStateSettings(_state.Value).WeaponRecoilMultiplier * (_isScoping ? weapon.ScopeRecoilMultiplier : 1);
-        _angle.Value -= recoil;
+        if(IsServer)
+            _angle.Value -= recoil;
         _recoil += recoil;
         if (_recoilCoroutine != null)
             StopCoroutine(_recoilCoroutine);
@@ -613,6 +618,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
             }
 
             //_model.Animator.SetBool("Jump_b", _velocity == 0 ? false : true);
+
+            MoveServerRpc(Vector3.zero);
         }
 
         if (!GameManager.Instance.IsActive)
@@ -668,8 +675,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
             }
             else
                 ChangeStateServerRpc(_state.Value == PlayerControllerStates.CrouchWalk ? PlayerControllerStates.CrouchIdle : PlayerControllerStates.Idle);
-
-            _model.Animator.SetFloat("Speed_f", new Vector3(_controller.velocity.x, 0, _controller.velocity.z).magnitude / _data.GetStateSettings(PlayerControllerStates.Walk).SpeedMultiplier / 4);
         }
 
         RotateServerRpc(Input.GetAxis("Mouse X") * _data.Sensitivity);
@@ -730,23 +735,14 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 {
                     ((Gun)TryGetWeapon()).ReloadServerRpc();
 
-                    _model.Animator.SetBool("Reload_b", true);
+                    _model.Animator.SetTrigger("Reload_t");
                 }
             }
 
             int mouseScroll = (int)(Input.GetAxis("Mouse ScrollWheel") * -10);
             if (mouseScroll != 0)
             {
-                var weapon = TryGetWeapon();
-                var weapons = TryGetWeapons();
-                foreach (var weapon_ in weapons)
-                    print(weapon);
-                int j = 1;
-                while (j < weapons.Length && !weapons[(j * mouseScroll + (int)weapon.SlotType + weapons.Length) % weapons.Length])
-                    j += mouseScroll;
-                int index = ((int)weapon.SlotType + j + weapons.Length) % weapons.Length;
-                if (weapons[index])
-                    SelectWeaponServerRpc(weapons[index]);
+                SelectWeaponServerRpc(TryGetWeapons().First(weapon => TryGetWeapon().SlotType > weapon.SlotType ));
             }
 
             if (Input.GetKeyDown(KeyCode.G) && TryGetWeapon().SlotType != SlotType.Knife)

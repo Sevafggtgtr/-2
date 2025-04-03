@@ -38,9 +38,10 @@ public class GameManager : NetworkSingleton<GameManager>
 
     #region Events
 
-    public event UnityAction RoundStarted;
-    public event UnityAction<Teams> RoundFinished;
-    public event UnityAction<Player> PlayerConnected, PlayerDisconnect;
+    public event UnityAction RoundStarted = delegate { };
+    public event UnityAction<Teams> RoundFinished = delegate { };
+    public event UnityAction<Player> PlayerConnected = delegate { }, PlayerDisconnect = delegate { };
+
 
     #endregion
 
@@ -323,7 +324,7 @@ public class GameManager : NetworkSingleton<GameManager>
         var spawnpoints = Map.Singleton.GetTeamSpawnPoints(player.Team.Value).SpawnPoints.Where(spawnPoint => !Physics.OverlapSphere(spawnPoint.position, 1).Any(collider => collider.GetComponent<PlayerController>())).ToArray();
         var spawnpoint = spawnpoints[Random.Range(0, spawnpoints.Length)];
 
-        player.SpawnServerRpc(spawnpoint.position, spawnpoint.rotation);
+        player.Spawn(spawnpoint.position, spawnpoint.rotation);
     }
 
     private IEnumerator Timer(int time, UnityAction callback)

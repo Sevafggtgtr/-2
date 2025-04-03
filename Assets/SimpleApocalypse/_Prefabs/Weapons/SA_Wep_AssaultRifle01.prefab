@@ -487,7 +487,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _name: AK-47
   _code: ak_47
-  _icon: {fileID: 0}
+  _icon: {fileID: 1635859873, guid: d62f9ed5c40c6c0449b3c76998a27d5e, type: 3}
   _price: 2700
   _weaponType: 1
   _slotType: 0
@@ -503,8 +503,8 @@ MonoBehaviour:
   _spreadDecrease: 15
   _scopeRecoilMultiplier: 0.5
   _scopeSpreadMultiplier: 0.5
-  _ammo: 30
-  _clipAmmo: 90
+  _ammo: 90
+  _clipAmmo: 30
   _fireRate: 600
   _shotDistance: 500
   _reloadTime: 2

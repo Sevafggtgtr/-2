@@ -298,8 +298,8 @@ MonoBehaviour:
   _spreadDecrease: 10
   _scopeRecoilMultiplier: 0.5
   _scopeSpreadMultiplier: 0.5
-  _ammo: 20
-  _clipAmmo: 120
+  _ammo: 120
+  _clipAmmo: 20
   _fireRate: 300
   _shotDistance: 50
   _reloadTime: 2

@@ -51,8 +51,11 @@ public class Gun : Weapon
 
     protected override void OnStart()
     {
-        _currentAmmo.Value = _ammo;
-        _currentClipAmmo.Value = _clipAmmo;
+        if(IsServer)
+        {
+            _currentAmmo.Value = _ammo;
+            _currentClipAmmo.Value = _clipAmmo;
+        }      
     }
 
     public void Scope(bool value)

@@ -69,8 +69,7 @@ public class Player : NetworkBehaviour, IKilleable
         TeamChanged.Invoke();
     }
 
-    [ServerRpc]
-    public void SpawnServerRpc(Vector3 position, Quaternion rotation)
+    public void Spawn(Vector3 position, Quaternion rotation)
     {
         var controller = Instantiate(_playerControllerPrefab, position, rotation);
         controller.NetworkObject.SpawnWithOwnership(OwnerClientId);
