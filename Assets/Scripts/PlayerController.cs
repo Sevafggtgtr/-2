@@ -57,7 +57,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     private Vector3 _handCameraStartPosition;
     public Vector3 HandCameraStartPosition => _handCameraStartPosition;
 
-    private NetworkVariable<float> _angle = new NetworkVariable<float>(writePerm: NetworkVariableWritePermission.Owner);
+    private NetworkVariable<float> _angle = new NetworkVariable<float>();
     public NetworkVariable<float> Angle => _angle;
 
     #endregion
@@ -178,14 +178,17 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [ServerRpc]
     private void InitializeServerRpc()
     {
-        _model = Instantiate(Map.Singleton.Data.SkinPackDatas.First(team => team.Team == GameManager.Instance.Player.Team.Value).GetRandomSkin(), transform);
+        var team = GameManager.Instance.GetPlayer(OwnerClientId).Team.Value;
+        var defaultWeapons = GameManager.Instance.WeaponData.GetTeamWeaponData(team).Weapons;
+
+        _model = Instantiate(Map.Singleton.Data.SkinPackDatas.First(skinPackData => skinPackData.Team == team).GetRandomSkin(), transform);
         _model.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
         _model.GetComponent<NetworkObject>().TrySetParent(transform);
 
         var weapons = new NetworkBehaviourReference[GameManager.Instance.GameMode.DefaultWeaponIndices.Length];
         for (int i = 0; i < weapons.Length; i++)
         {
-            var weapon = Instantiate(GameManager.Instance.WeaponData.GetTeamWeaponData(GameManager.Instance.Player.Team.Value).Weapons[GameManager.Instance.GameMode.DefaultWeaponIndices[i]]);
+            var weapon = Instantiate(defaultWeapons[GameManager.Instance.GameMode.DefaultWeaponIndices[i]]);
             weapon.NetworkObject.SpawnWithOwnership(OwnerClientId);
             weapon.NetworkObject.TrySetParent(transform);
             weapons[i] = weapon;
@@ -237,9 +240,12 @@ public class PlayerController : NetworkBehaviour, IDamageable
     }
 
     [ServerRpc]
-    private void RotateServerRpc(float rotation)
+    private void RotateServerRpc(Vector2 rotation)
     {
-        transform.Rotate(0, rotation * Time.deltaTime, 0);
+        transform.Rotate(0, rotation.y * Time.deltaTime, 0);
+
+        _angle.Value -= rotation.x * Time.deltaTime;
+        _angle.Value = Mathf.Clamp(_angle.Value, -90, 90);
     }
 
     [ServerRpc]
@@ -413,7 +419,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     public void SelectWeaponServerRpc(NetworkBehaviourReference weapon)
     {
         if (weapon.TryGet(out Weapon weaponObject))
-            _model.Animator.SetInteger("WeaponType_f", (int)weaponObject.SlotType);
+            _model.Animator.SetFloat("WeaponType_f", (int)weaponObject.SlotType);
         var previousWeapon = TryGetWeapon();
         _weapon.Value = weapon;
         SelectWeaponClientRpc(OwnerClientId, previousWeapon, weapon);
@@ -677,10 +683,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 ChangeStateServerRpc(_state.Value == PlayerControllerStates.CrouchWalk ? PlayerControllerStates.CrouchIdle : PlayerControllerStates.Idle);
         }
 
-        RotateServerRpc(Input.GetAxis("Mouse X") * _data.Sensitivity);
-
-        _angle.Value -= Input.GetAxis("Mouse Y") * _data.Sensitivity * Time.deltaTime;
-        _angle.Value = Mathf.Clamp(_angle.Value, -90, 90);
+        RotateServerRpc(new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")) * _data.Sensitivity * Time.deltaTime);
+       
         Arms.transform.localRotation = _fpCamera.transform.localRotation = Quaternion.Euler(_angle.Value, 0, 0);
 
         #endregion
@@ -742,7 +746,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
             int mouseScroll = (int)(Input.GetAxis("Mouse ScrollWheel") * -10);
             if (mouseScroll != 0)
             {
-                SelectWeaponServerRpc(TryGetWeapons().First(weapon => TryGetWeapon().SlotType > weapon.SlotType ));
+                //while(TryGetWeapon().SlotType > weapon.SlotType)              
             }
 
             if (Input.GetKeyDown(KeyCode.G) && TryGetWeapon().SlotType != SlotType.Knife)
