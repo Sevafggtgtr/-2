@@ -71,7 +71,19 @@ MonoBehaviour:
   _scopeSpeedMultiplier: 1
   _cameraMoveOffset: {x: 0, y: 0.25, z: 0}
   _cameraRotateOffset: {x: 0, y: 0, z: 0}
-  _surfaceSounds: []
+  _surfaceSounds:
+  - _surfaceType: 0
+    _actionType: 0
+    _sound: {fileID: 8300000, guid: acccc987abab5d94f9a1a816bed7ef23, type: 3}
+  - _surfaceType: 1
+    _actionType: 0
+    _sound: {fileID: 8300000, guid: 46291cd11f46a50458c4cbf510cf10cf, type: 3}
+  - _surfaceType: 2
+    _actionType: 0
+    _sound: {fileID: 8300000, guid: f840226c20bd8b546a30c4f742206839, type: 3}
+  - _surfaceType: 0
+    _actionType: 1
+    _sound: {fileID: 8300000, guid: b144e82fe16db6f469f8a14936e14b79, type: 3}
   _jumpSound: {fileID: 8300000, guid: b94d076b3af942a4892b104afed0f8aa, type: 3}
   _crouchSound: {fileID: 0}
   _landingSound: {fileID: 8300000, guid: 0007efd0106e3c54180219dec4ef2e59, type: 3}

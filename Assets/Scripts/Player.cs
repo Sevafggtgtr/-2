@@ -64,8 +64,6 @@ public class Player : NetworkBehaviour, IKilleable
     [ClientRpc]
     private void SelectTeamClientRpc()
     {
-        print($"SelectTeamClientRpc: " + OwnerClientId);
-
         TeamChanged.Invoke();
     }
 
@@ -85,8 +83,6 @@ public class Player : NetworkBehaviour, IKilleable
     [ClientRpc]
     private void SpawnClientRpc(NetworkBehaviourReference controller)
     {
-        print(OwnerClientId);
-
         if (controller.TryGet(out PlayerController controllerObject))
         {
             controllerObject.Died += killer =>

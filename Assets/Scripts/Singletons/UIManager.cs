@@ -25,8 +25,6 @@ public class UIManager : Singleton<UIManager>
 
     public virtual void OpenPanel(UIPanel panel)
     {
-        ClosePanel();
-
         panel.gameObject.SetActive(true);
 
         _panel = panel;

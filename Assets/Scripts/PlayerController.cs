@@ -15,7 +15,7 @@ public enum PlayerControllerStates
     CrouchWalk
 }
 
-[RequireComponent(typeof(CharacterController), typeof(NetworkAudioSource))]
+[RequireComponent(typeof(CharacterController), typeof(AudioSource))]
 public class PlayerController : NetworkBehaviour, IDamageable
 {
     #region Variables
@@ -41,8 +41,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
     private NetworkVariable<PlayerControllerStates> _state = new NetworkVariable<PlayerControllerStates>();
     //public PlayerState PlayerState => _playerState;
 
-    public Transform Arms { get; private set; }
-
     private bool _isScoping;
 
     private float _velocity,
@@ -67,7 +65,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     private NetworkVariable<NetworkBehaviourReference> _weapon = new NetworkVariable<NetworkBehaviourReference>();
     public NetworkVariable<NetworkBehaviourReference> Weapon => _weapon;
     public Weapon TryGetWeapon() => _weapon.Value.TryGet(out Weapon weapon) ? weapon : null;
-    
+
     private NetworkList<NetworkBehaviourReference> _weapons = new NetworkList<NetworkBehaviourReference>();
     private Weapon[] TryGetWeapons()
     {
@@ -97,7 +95,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
                       _moveAudioCoroutine;
 
     private CharacterController _controller;
-    private NetworkAudioSource _networkAudioSource;
+    private AudioSource _audioSource;
     private PlayerModel _model;
     private AudioListener _audioListener;
 
@@ -121,27 +119,56 @@ public class PlayerController : NetworkBehaviour, IDamageable
     private void Start()
     {
         _controller = GetComponent<CharacterController>();
-        _networkAudioSource = GetComponent<NetworkAudioSource>();
+        _audioSource = GetComponent<AudioSource>();
         _audioListener = GetComponentInChildren<AudioListener>();
 
-        if (!IsOwner)
+        if (IsServer)
         {
-            if (_weapon.Value.TryGet(out Weapon currentWeapon))
-            {
-                foreach (var weapon in _weapons)
-                    if (weapon.TryGet(out Weapon weaponObject) && weaponObject != currentWeapon)
-                        weaponObject.gameObject.SetActive(false);
-            }
+            var team = GameManager.Instance.GetPlayer(OwnerClientId).Team.Value;
+            var defaultWeapons = GameManager.Instance.WeaponData.GetTeamWeaponData(team).Weapons;
 
-            _fpCamera.gameObject.SetActive(false);
-            _handCamera.gameObject.SetActive(false);
+            _model = Instantiate(Map.Singleton.Data.SkinPackDatas.First(skinPackData => skinPackData.Team == team).GetRandomSkin(), transform);
+            _model.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
+            _model.GetComponent<NetworkObject>().TrySetParent(transform);
+
+            _model.Initialize();
+
+            var weapons = new NetworkBehaviourReference[GameManager.Instance.GameMode.DefaultWeaponIndices.Length];
+            for (int i = 0; i < weapons.Length; i++)
+            {
+                var weapon = Instantiate(defaultWeapons[GameManager.Instance.GameMode.DefaultWeaponIndices[i]]);
+                weapon.NetworkObject.SpawnWithOwnership(OwnerClientId);
+                weapon.NetworkObject.TrySetParent(transform);
+                weapons[i] = weapon;
+
+                ChangeWeaponStateServerRpc(weapons[i], ChangeWeaponStates.Take);
+                weapon.gameObject.SetActive(false);
+                SelectWeaponServerRpc(weapons[i]);
+            }
+        }
+        else
+        {            
+            _model = GetComponentInChildren<PlayerModel>();
+            print(_model);
+
+            _model.Initialize();
+
+            _handCamera.transform.SetParent(_model.Arms.transform, true);
+            _handCameraStartPosition = _handCamera.transform.localPosition;
+        }
+
+        if (IsOwner)
+        {
+            Spectator.Instance.Spectate(GameManager.Instance.Player);
         }
         else
         {
-            InitializeServerRpc();
-        }
+            foreach (var weapon in TryGetWeapons())
+                weapon.gameObject.SetActive(false);
+            TryGetWeapon().gameObject.SetActive(true);
 
-        _controller.enabled = true;
+            ChangeModelState(Layers.Default);
+        }
     }
 
     public void ChangeModelState(Layers layer)
@@ -158,7 +185,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 ChangeLayer(weaponObject.gameObject, layer);
         }
 
-        ChangeLayer(Arms.gameObject, layer);
+        ChangeLayer(_model.Arms, layer);
 
         foreach (Transform child in _model.transform)
         {
@@ -178,53 +205,13 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [ServerRpc]
     private void InitializeServerRpc()
     {
-        var team = GameManager.Instance.GetPlayer(OwnerClientId).Team.Value;
-        var defaultWeapons = GameManager.Instance.WeaponData.GetTeamWeaponData(team).Weapons;
 
-        _model = Instantiate(Map.Singleton.Data.SkinPackDatas.First(skinPackData => skinPackData.Team == team).GetRandomSkin(), transform);
-        _model.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
-        _model.GetComponent<NetworkObject>().TrySetParent(transform);
-
-        var weapons = new NetworkBehaviourReference[GameManager.Instance.GameMode.DefaultWeaponIndices.Length];
-        for (int i = 0; i < weapons.Length; i++)
-        {
-            var weapon = Instantiate(defaultWeapons[GameManager.Instance.GameMode.DefaultWeaponIndices[i]]);
-            weapon.NetworkObject.SpawnWithOwnership(OwnerClientId);
-            weapon.NetworkObject.TrySetParent(transform);
-            weapons[i] = weapon;
-        }
-
-        InitializeClientRpc(OwnerClientId, _model, weapons);
     }
 
     [ClientRpc]
     private void InitializeClientRpc(ulong id, NetworkBehaviourReference model, NetworkBehaviourReference[] weapons)
     {
-        if (OwnerClientId == id)
-        {
-            if (model.TryGet(out PlayerModel modelObject))
-                _model = modelObject;
 
-            _model.Initialize();
-
-            Arms = _model.transform.Find("mesh_Arms");
-
-            _handCamera.transform.SetParent(Arms, true);
-            _handCameraStartPosition = _handCamera.transform.localPosition;
-
-            if (IsOwner)
-            {
-                Spectator.Instance.Spectate(GameManager.Instance.Player);
-                for (int i = 0; i < weapons.Length; i++)
-                {
-                    ChangeWeaponStateServerRpc(weapons[i], ChangeWeaponStates.Take);
-                    if (i != weapons.Length - 1 && weapons[i].TryGet(out Weapon weapon))
-                        weapon.gameObject.SetActive(false);
-                    else
-                        SelectWeaponServerRpc(weapons[i]);
-                }
-            }
-        }
     }
 
     #endregion
@@ -232,26 +219,44 @@ public class PlayerController : NetworkBehaviour, IDamageable
     #region Movement
 
     [ServerRpc]
-    private void MoveServerRpc(Vector3 velocity)
+    private void MoveServerRpc(Vector3 velocity, float time)
     {
-        _controller.Move(transform.TransformDirection(velocity) * Time.deltaTime);
+        _controller.Move(transform.TransformDirection(velocity) * _data.Speed * _data.GetStateSettings(_state.Value).SpeedMultiplier * (TryGetWeapon() ? TryGetWeapon().OwnerSpeedMultiplier * (_isScoping ? _data.ScopeSpeedMultiplier : 1) : 1) * (IsServer ? 1 : (NetworkManager.ServerTime.TimeAsFloat - time)));
+
+        if (_moveAudioCoroutine == null)
+            _moveAudioCoroutine = StartCoroutine(MoveSound());
 
         _model.Animator.SetFloat("Speed_f", new Vector3(_controller.velocity.x, 0, _controller.velocity.z).magnitude / _data.GetStateSettings(PlayerControllerStates.Walk).SpeedMultiplier / 4);
     }
 
     [ServerRpc]
-    private void RotateServerRpc(Vector2 rotation)
+    private void RotateServerRpc(Vector2 rotation, float time)
     {
-        transform.Rotate(0, rotation.y * Time.deltaTime, 0);
+        rotation *= IsServer ? 1 : (NetworkManager.ServerTime.TimeAsFloat - time);
 
-        _angle.Value -= rotation.x * Time.deltaTime;
+        transform.Rotate(0, rotation.x, 0);
+
+        _angle.Value += rotation.y;
         _angle.Value = Mathf.Clamp(_angle.Value, -90, 90);
     }
 
     [ServerRpc]
     private void ChangeStateServerRpc(PlayerControllerStates state)
     {
-        _state.Value = state;
+        if (state == PlayerControllerStates.Run && (_state.Value == PlayerControllerStates.Walk || _state.Value == PlayerControllerStates.Idle))
+        {
+            _state.Value = state;
+
+            _isScoping = false;
+        }
+        if (_state.Value == PlayerControllerStates.Idle || _state.Value == PlayerControllerStates.Idle || _state.Value == PlayerControllerStates.Run)
+        {
+            _state.Value = state;
+        }
+        if (_state.Value == PlayerControllerStates.CrouchIdle)
+        {
+
+        }
 
         IEnumerator Coroutine()
         {
@@ -268,7 +273,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 t += Time.deltaTime / 1;
 
                 yield return null;
-            }         
+            }
         }
         StartCoroutine(Coroutine());
     }
@@ -279,7 +284,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (_controller.isGrounded)
         {
             _velocity = _data.JumpHeight - Physics.gravity.y / 2;
-            _networkAudioSource.PlayAudio(_data.JumpSound);
+            _audioSource.PlayOneShot(_data.JumpSound);
             _model.Animator.SetTrigger("Jump_trig");
         }
     }
@@ -290,6 +295,22 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     #region Methods
 
+    #region Interact
+
+    [ServerRpc]
+    private void InteractServerRpc()
+    {
+        if (Physics.Raycast(_fpCamera.transform.position, _fpCamera.transform.forward, out var hit, _data.PickDistance))
+        {
+            var weapon = hit.transform.GetComponent<Gun>();
+
+            ChangeWeaponStateServerRpc(weapon, ChangeWeaponStates.Take);
+
+        }
+    }
+
+    #endregion
+
     #region Change State
 
     public enum ChangeWeaponStates
@@ -298,7 +319,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         Drop
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void ChangeWeaponStateServerRpc(NetworkBehaviourReference weapon, ChangeWeaponStates state)
     {
         if (weapon.TryGet(out Weapon weaponObject))
@@ -328,13 +349,13 @@ public class PlayerController : NetworkBehaviour, IDamageable
             }
         }
 
-        ChangeWeaponStateClientRpc(OwnerClientId, weapon, state);
+        ChangeWeaponStateClientRpc(weapon, state);
     }
 
     [ClientRpc]
-    private void ChangeWeaponStateClientRpc(ulong id, NetworkBehaviourReference weapon, ChangeWeaponStates state)
+    private void ChangeWeaponStateClientRpc(NetworkBehaviourReference weapon, ChangeWeaponStates state)
     {
-        if (OwnerClientId == id && weapon.TryGet(out Weapon weaponObject))
+        if (weapon.TryGet(out Weapon weaponObject))
         {
             if (IsOwner)
             {
@@ -365,79 +386,33 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 ChangeWeaponStates.Take => _model.Hand,
                 ChangeWeaponStates.Drop => null
             });
-            if(state == ChangeWeaponStates.Take)
+            if (state == ChangeWeaponStates.Take)
                 weaponObject.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(0, 90, 90));
         }
     }
-
-    //private void ChangeWeaponState(Weapon weapon, ChangeWeaponStates state)
-    //{
-    //    if (OwnerClientId == id && weapon.TryGet(out Weapon weaponObject))
-    //    {
-    //        if (IsOwner)
-    //        {
-    //            ChangeLayer(weaponObject.gameObject, state switch
-    //            {
-    //                ChangeWeaponStates.Take => Layers.Hand,
-    //                ChangeWeaponStates.Drop => Layers.Default
-    //            });
-    //        }
-
-    //        weaponObject.Collider.enabled = weaponObject.NetworkTransform.enabled = state switch
-    //        {
-    //            ChangeWeaponStates.Take => false,
-    //            ChangeWeaponStates.Drop => true
-    //        };
-    //        weaponObject.enabled = state switch
-    //        {
-    //            ChangeWeaponStates.Take => true,
-    //            ChangeWeaponStates.Drop => false
-    //        };
-    //        weaponObject.Rigidbody.isKinematic = state switch
-    //        {
-    //            ChangeWeaponStates.Take => true,
-    //            ChangeWeaponStates.Drop => false
-    //        };
-    //        weaponObject.transform.SetParent(state switch
-    //        {
-    //            ChangeWeaponStates.Take => _model.Hand,
-    //            ChangeWeaponStates.Drop => null
-    //        });
-    //        //weaponObject.transform.localPosition = state switch
-    //        //{
-    //        //    ChangeWeaponStates.Take => Vector3.zero,
-    //        //    ChangeWeaponStates.Drop => Vector3.zero
-    //        //};
-    //    }
-    //}
 
     #endregion
 
     #region Select
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void SelectWeaponServerRpc(NetworkBehaviourReference weapon)
     {
         if (weapon.TryGet(out Weapon weaponObject))
             _model.Animator.SetFloat("WeaponType_f", (int)weaponObject.SlotType);
-        var previousWeapon = TryGetWeapon();
-        _weapon.Value = weapon;
-        SelectWeaponClientRpc(OwnerClientId, previousWeapon, weapon);
+        SelectWeaponClientRpc(_weapon.Value, _weapon.Value = weapon);
     }
 
     [ClientRpc]
-    private void SelectWeaponClientRpc(ulong id, NetworkBehaviourReference previousWeapon, NetworkBehaviourReference newWeapon)
+    private void SelectWeaponClientRpc(NetworkBehaviourReference previousWeapon, NetworkBehaviourReference newWeapon)
     {
-        if (OwnerClientId == id)
-        {
-            if (previousWeapon.TryGet(out Weapon previousWeaponObject))
-                previousWeaponObject.gameObject.SetActive(false);
+        if (previousWeapon.TryGet(out Weapon previousWeaponObject))
+            previousWeaponObject.gameObject.SetActive(false);
 
-            if (newWeapon.TryGet(out Weapon newWeaponObject))
-                newWeaponObject.gameObject.SetActive(true);
+        if (newWeapon.TryGet(out Weapon newWeaponObject))
+            newWeaponObject.gameObject.SetActive(true);
 
-            WeaponChanged.Invoke(previousWeaponObject, newWeaponObject);
-        }
+        WeaponChanged.Invoke(previousWeaponObject, newWeaponObject);
     }
 
     #endregion
@@ -452,7 +427,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         var weapon = TryGetWeapon();
 
         var recoil = weapon.RecoilValue * (Input.GetMouseButtonDown(0) ? weapon.FirstShotMultiplier : 1) * _data.GetStateSettings(_state.Value).WeaponRecoilMultiplier * (_isScoping ? weapon.ScopeRecoilMultiplier : 1);
-        if(IsServer)
+        if (IsServer)
             _angle.Value -= recoil;
         _recoil += recoil;
         if (_recoilCoroutine != null)
@@ -575,7 +550,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     {
         float time = 0;
 
-        PlaySurfaceSound(PlayerControllerData.SurfaceSound.Action.Move);
+        PlayActionSurfaceSound(PlayerControllerData.SurfaceSound.Action.Move);
 
         while (time < _data.WalkSoundDuration * _data.GetStateSettings(PlayerControllerStates.Walk).SpeedMultiplier / _data.GetStateSettings(_state.Value).SpeedMultiplier)
         {
@@ -586,23 +561,29 @@ public class PlayerController : NetworkBehaviour, IDamageable
         _moveAudioCoroutine = null;
     }
 
-    private void PlaySurfaceSound(PlayerControllerData.SurfaceSound.Action action)
+    private void PlayActionSurfaceSound(PlayerControllerData.SurfaceSound.Action action)
     {
-        if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, _data.PickDistance))
+        if (Physics.Raycast(transform.position, -transform.up, out var hit, _data.PickDistance))
         {
             var surface = hit.transform.GetComponent<Surface>();
 
-            if (surface != null)
+            if (surface)
             {
-                _networkAudioSource.PlayAudio(_data.SurfaceSounds.First(surfaceSound => surfaceSound.SurfaceType == surface.SurfaceType && action == surfaceSound.ActionType).Sound);
+                PlayActionSurfaceSoundClientRpc(action, surface.SurfaceType);
             }
         }
+    }
+
+    [ClientRpc]
+    private void PlayActionSurfaceSoundClientRpc(PlayerControllerData.SurfaceSound.Action action, SurfaceType surfaceType)
+    {
+        _audioSource.PlayOneShot(_data.SurfaceSounds.First(surfaceSound => surfaceSound.SurfaceType == surfaceType && action == surfaceSound.ActionType).Sound);
     }
 
     #endregion
 
     private void Update()
-    {        
+    {
         if (!IsOwner)
             return;
 
@@ -611,10 +592,14 @@ public class PlayerController : NetworkBehaviour, IDamageable
             if (!_controller.isGrounded || _velocity > 0)
             {
                 _velocity += Physics.gravity.y * Time.deltaTime;
-                MoveServerRpc(new Vector3(0, _velocity, 0));
+                _controller.Move(new Vector3(0, _velocity, 0) * Time.deltaTime);
             }
             else if (_velocity < 0)
             {
+                ChangeStateServerRpc(PlayerControllerStates.Idle);
+
+                PlayActionSurfaceSound(PlayerControllerData.SurfaceSound.Action.Land);
+
                 var damage = (int)_data.VelocityDamageCurve.Evaluate(Mathf.Abs(_velocity * Time.deltaTime + Physics.gravity.y * Mathf.Pow(Time.deltaTime, 2) / 2));
 
                 if (damage > 0)
@@ -625,7 +610,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
             //_model.Animator.SetBool("Jump_b", _velocity == 0 ? false : true);
 
-            MoveServerRpc(Vector3.zero);
+            //MoveServerRpc(Vector3.zero);
         }
 
         if (!GameManager.Instance.IsActive)
@@ -637,7 +622,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         {
             _model.Animator.SetBool("Crouch_b", true);
             ChangeStateServerRpc(PlayerControllerStates.CrouchIdle);
-            _networkAudioSource.PlayAudio(_data.CrouchSound);
+            _audioSource.PlayOneShot(_data.CrouchSound);
         }
 
         if (Input.GetKeyUp(KeyCode.LeftControl))
@@ -651,41 +636,29 @@ public class PlayerController : NetworkBehaviour, IDamageable
             if (Input.GetKeyDown(KeyCode.Space) && _controller.isGrounded && _state.Value != PlayerControllerStates.CrouchIdle && _state.Value != PlayerControllerStates.CrouchWalk)
                 JumpServerRpc();
 
-            if (_state.Value == PlayerControllerStates.Jump && _controller.isGrounded)
-            {
-                ChangeStateServerRpc(PlayerControllerStates.Idle);
-
-                PlaySurfaceSound(PlayerControllerData.SurfaceSound.Action.Land);
-            }
-
             var movement = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
             if (movement.magnitude > 0)
             {
-                //if (_moveAudioCoroutine == null)
-                //    _moveAudioCoroutine = StartCoroutine(MoveSound());
-
-                if (Input.GetKey(KeyCode.LeftShift) && (_state.Value == PlayerControllerStates.Walk || _state.Value == PlayerControllerStates.Idle))
+                if (Input.GetKey(KeyCode.LeftShift))
                 {
                     ChangeStateServerRpc(PlayerControllerStates.Run);
-
-                    _isScoping = false;
                 }
-                if (_state.Value == PlayerControllerStates.Idle || (Input.GetKeyUp(KeyCode.LeftShift) && (_state.Value == PlayerControllerStates.Idle || _state.Value == PlayerControllerStates.Run)))
+                if (Input.GetKeyUp(KeyCode.LeftShift))
                 {
                     ChangeStateServerRpc(PlayerControllerStates.Walk);
                 }
-                if (_state.Value == PlayerControllerStates.CrouchIdle)
-                    ChangeStateServerRpc(PlayerControllerStates.CrouchWalk);
 
-                MoveServerRpc(movement * _data.Speed * _data.GetStateSettings(_state.Value).SpeedMultiplier * (TryGetWeapon() ? TryGetWeapon().OwnerSpeedMultiplier * (_isScoping ? _data.ScopeSpeedMultiplier : 1) : 1));
+                ChangeStateServerRpc(PlayerControllerStates.Walk);
+
+                MoveServerRpc(movement * Time.deltaTime, NetworkManager.LocalTime.TimeAsFloat);
             }
             else
                 ChangeStateServerRpc(_state.Value == PlayerControllerStates.CrouchWalk ? PlayerControllerStates.CrouchIdle : PlayerControllerStates.Idle);
         }
 
-        RotateServerRpc(new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")) * _data.Sensitivity * Time.deltaTime);
-       
-        Arms.transform.localRotation = _fpCamera.transform.localRotation = Quaternion.Euler(_angle.Value, 0, 0);
+        RotateServerRpc(new Vector2(Input.GetAxis("Mouse X"), -Input.GetAxis("Mouse Y")) * _data.Sensitivity * Time.deltaTime, NetworkManager.LocalTime.TimeAsFloat);
+
+        _fpCamera.transform.localRotation = Quaternion.Euler(_angle.Value, 0, 0);
 
         #endregion
 
@@ -699,13 +672,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
                         SelectWeaponServerRpc(weaponObject);
         }
 
-        if (Physics.Raycast(_fpCamera.transform.position, _fpCamera.transform.forward, out var hit, _data.PickDistance))
+        if (Input.GetKeyDown(KeyCode.E))
         {
-            var weapon = hit.transform.GetComponent<Gun>();
-            if (weapon && Input.GetKeyDown(KeyCode.E))
-            {
-                ChangeWeaponStateServerRpc(weapon, ChangeWeaponStates.Take);
-            }
+            InteractServerRpc();
         }
 
         if (TryGetWeapon())

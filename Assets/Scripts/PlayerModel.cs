@@ -16,14 +16,9 @@ public class PlayerModel : NetworkBehaviour
     private Transform _head,
                       _leftUpperArmTransform,
                       _rightUpperArmTransform,
-                      _rightHandTransform;   
+                      _rightHandTransform;
 
-    public void Start()
-    {
-        _animator = GetComponent<Animator>();
-
-        _controller = GetComponentInParent<PlayerController>();
-    }
+    public GameObject Arms {  get; private set; }
 
     public void Initialize()
     {
@@ -35,6 +30,8 @@ public class PlayerModel : NetworkBehaviour
         _leftUpperArmTransform = _animator.GetBoneTransform(HumanBodyBones.LeftUpperArm);
         _rightUpperArmTransform = _animator.GetBoneTransform(HumanBodyBones.RightUpperArm);
         _rightHandTransform = _animator.GetBoneTransform(HumanBodyBones.RightHand);
+
+        Arms = transform.Find("mesh_Arms").gameObject;
     }
 
     private void LateUpdate()
@@ -48,5 +45,7 @@ public class PlayerModel : NetworkBehaviour
         eulerAngles.z = _controller.Angle.Value;
 
         _rightUpperArmTransform.eulerAngles = eulerAngles;
+
+        _head.localEulerAngles = new Vector3(0, 0, _controller.Angle.Value);
     }
 }
